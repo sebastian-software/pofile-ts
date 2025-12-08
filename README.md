@@ -194,7 +194,8 @@ The following APIs remain unchanged:
 
 ## Credits
 
-Originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
+This is a modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch, which was originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
+
 Maintained by [Sebastian Software](https://sebastian-software.de/).
 
 ## License
