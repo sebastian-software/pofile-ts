@@ -151,6 +151,46 @@ item.msgstr = [
 po.items.push(item)
 ```
 
+## Migrating from `pofile` 1.x
+
+This package is a modernized fork of the original [pofile](https://github.com/rubenv/pofile) package. If you're upgrading from version 1.x, note the following breaking changes:
+
+### Requirements
+
+- **Node.js 22+** is now required (was Node.js 0.8+)
+- **ESM-first** with full TypeScript support
+
+### API Changes
+
+The `load()` and `save()` methods now use Promises instead of callbacks:
+
+```typescript
+// ❌ Old API (pofile 1.x)
+PO.load("messages.po", (err, po) => {
+  if (err) throw err
+  // use po
+})
+
+po.save("output.po", (err) => {
+  if (err) throw err
+})
+
+// ✅ New API (pofile 2.x)
+const po = await PO.load("messages.po")
+
+await po.save("output.po")
+```
+
+### Unchanged APIs
+
+The following APIs remain unchanged:
+
+- `PO.parse(string)` — parse PO content from string
+- `po.toString()` — serialize PO to string
+- `new PO()` — create new PO file
+- `new PO.Item()` — create new translation item
+- All properties on `PO` and `PO.Item` classes
+
 ## Credits
 
 Originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
