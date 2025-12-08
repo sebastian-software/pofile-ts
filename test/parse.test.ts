@@ -188,4 +188,215 @@ describe("Parse", () => {
       )
     })
   })
+
+  describe("Edge cases", () => {
+    it("handles multiple consecutive flag lines", () => {
+      const content = `
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\\n"
+
+#, fuzzy
+#, no-wrap
+msgid "test"
+msgstr "test"
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.flags.fuzzy).toBe(true)
+      expect(po.items[0]?.flags["no-wrap"]).toBe(true)
+    })
+
+    it("handles multiple consecutive reference lines", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+#: path/a.ts:1
+#: path/b.ts:2
+msgid "test"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.references).toEqual(["path/a.ts:1", "path/b.ts:2"])
+    })
+
+    it("handles empty first line in msgid_plural", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "one"
+msgid_plural ""
+"many"
+msgstr[0] ""
+msgstr[1] ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid_plural).toBe("many")
+    })
+
+    it("handles escaped single quote", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "\\'test\\'"
+msgstr "\\'result\\'"
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("'test'")
+      expect(po.items[0]?.msgstr[0]).toBe("'result'")
+    })
+
+    it("handles double-escaped backslash before quote", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "test\\\\"-end"
+msgstr "result"
+`
+      const po = PO.parse(content)
+      // \\\" in PO = \" in result (backslash followed by quote)
+      expect(po.items[0]?.msgid).toBe('test\\"-end')
+    })
+
+    it("handles mixed comment types in sequence", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+# translator comment
+#. extracted comment
+#: reference.ts:42
+#, fuzzy
+msgid "test"
+msgstr ""
+`
+      const po = PO.parse(content)
+      const item = po.items[0]
+      expect(item?.comments).toEqual(["translator comment"])
+      expect(item?.extractedComments).toEqual(["extracted comment"])
+      expect(item?.references).toEqual(["reference.ts:42"])
+      expect(item?.flags.fuzzy).toBe(true)
+    })
+
+    it("handles msgstr with empty first line continuation", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "test"
+msgstr ""
+"continued on next line"
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgstr[0]).toBe("continued on next line")
+    })
+
+    it("handles all single-character escape sequences", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "\\a\\b\\t\\n\\v\\f\\r"
+msgstr "result"
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("\x07\b\t\n\v\f\r")
+    })
+
+    it("handles hex escape sequences", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "\\x41\\x42\\x43"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("ABC")
+    })
+
+    it("handles 3-digit octal escape sequences", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "\\101\\102\\103"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("ABC")
+    })
+
+    it("handles 1-2 digit octal escape sequences", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "\\0 \\7 \\77"
+msgstr ""
+`
+      const po = PO.parse(content)
+      // \0 = NUL, \7 = BEL, \77 = ?
+      expect(po.items[0]?.msgid).toBe("\x00 \x07 ?")
+    })
+
+    it("handles null byte in string", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "before\\000after"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("before\x00after")
+    })
+
+    it("handles backslash at end of line continuation", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "line1\\n"
+"line2"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("line1\nline2")
+    })
+
+    it("handles empty msgid with only continuation lines", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid ""
+"actual content"
+msgstr ""
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("actual content")
+    })
+
+    it("handles CRLF line endings", () => {
+      const content = "msgid \"\"\r\nmsgstr \"\"\r\n\r\nmsgid \"test\"\r\nmsgstr \"result\"\r\n"
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("test")
+      expect(po.items[0]?.msgstr[0]).toBe("result")
+    })
+
+    it("handles trailing whitespace on lines", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "test"
+msgstr "result"
+`
+      const po = PO.parse(content)
+      expect(po.items[0]?.msgid).toBe("test")
+    })
+  })
 })

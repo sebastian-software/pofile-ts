@@ -22,10 +22,11 @@ export function escapeString(str: string): string {
 /**
  * Unescapes C-style escape sequences in a string.
  * Handles: \a \b \t \n \v \f \r \' \" \\ \? and octal/hex escapes.
+ * Octal escapes can be 1-3 digits (e.g., \0, \77, \123).
  */
 export function unescapeString(str: string): string {
   return str.replace(
-    /\\([abtnvfr'"\\?]|([0-7]{3})|x([0-9a-fA-F]{2}))/g,
+    /\\([abtnvfr'"\\?]|([0-7]{1,3})|x([0-9a-fA-F]{2}))/g,
     (_, esc: string, oct: string | undefined, hex: string | undefined) => {
       if (oct) {
         return String.fromCharCode(parseInt(oct, 8))
