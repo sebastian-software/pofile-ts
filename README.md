@@ -5,9 +5,11 @@
 [![Build Status](https://travis-ci.org/rubenv/pofile.png?branch=master)](https://travis-ci.org/rubenv/pofile)
 
 ## Usage
+
 Add pofile to your project:
 
 ### Installation (Node.JS, browser via Browserified)
+
 ```
 npm install --save pofile
 ```
@@ -15,10 +17,11 @@ npm install --save pofile
 Reference it in your code:
 
 ```js
-var PO = require('pofile');
+var PO = require("pofile")
 ```
 
 ### Installation (via bower)
+
 ```
 bower install --save pofile
 ```
@@ -32,7 +35,7 @@ Add it to your HTML file:
 Reference it in your code:
 
 ```js
-var PO = require('pofile');
+var PO = require("pofile")
 ```
 
 ### Loading and parsing
@@ -40,61 +43,60 @@ var PO = require('pofile');
 You can create a new empty PO file by using the class:
 
 ```js
-var po = new PO();
+var po = new PO()
 ```
 
 Or by loading a file (Node.JS only):
 
 ```js
-PO.load('text.po', function (err, po) {
-    // Handle err if needed
-    // Do things with po
-});
+PO.load("text.po", function (err, po) {
+  // Handle err if needed
+  // Do things with po
+})
 ```
 
 Or by parsing a string:
 
 ```js
-var po = PO.parse(myString);
+var po = PO.parse(myString)
 ```
 
 ### The PO class
 
 The `PO` class exposes three members:
 
-* `comments`: An array of comments (found at the header of the file).
-* `headers`: A dictionary of the headers.
-* `items`: An array of `PO.Item` objects, each of which represents a string
+- `comments`: An array of comments (found at the header of the file).
+- `headers`: A dictionary of the headers.
+- `items`: An array of `PO.Item` objects, each of which represents a string
   from the gettext catalog.
 
 There are two methods available:
 
-* `save`: Accepts a filename and callback, writes the po file to disk.
+- `save`: Accepts a filename and callback, writes the po file to disk.
 
 ```js
-po.save('out.po', function (err) {
-    // Handle err if needed
-});
+po.save("out.po", function (err) {
+  // Handle err if needed
+})
 ```
 
-* `toString`: Serializes the po file to a string.
+- `toString`: Serializes the po file to a string.
 
 ### The PO.Item class
 
 The `PO.Item` class exposes the following members:
 
-* `msgid`: The message id.
-* `msgid_plural`: The plural message id (null if absent).
-* `msgstr`: An array of translated strings. Items that have no plural msgid
+- `msgid`: The message id.
+- `msgid_plural`: The plural message id (null if absent).
+- `msgstr`: An array of translated strings. Items that have no plural msgid
   only have one element in this array.
-* `references`: An array of reference strings.
-* `comments`: An array of string translator comments.
-* `extractedComments`: An array of string extracted comments.
-* `flags`: A dictionary of the string flags. Each flag is mapped to a key with
+- `references`: An array of reference strings.
+- `comments`: An array of string translator comments.
+- `extractedComments`: An array of string extracted comments.
+- `flags`: A dictionary of the string flags. Each flag is mapped to a key with
   value true. For instance, a string with the fuzzy flag set will have
   `item.flags.fuzzy == true`.
-* `msgctxt`: Context of the message, an arbitrary string, can be used for disambiguation.
-
+- `msgctxt`: Context of the message, an arbitrary string, can be used for disambiguation.
 
 ## Contributing
 
@@ -110,11 +112,11 @@ Node.JS: it works in the browser too.
 
 ### Changes compared to node-po
 
-* Proper handling of async methods that won't crash your Node.JS process when
+- Proper handling of async methods that won't crash your Node.JS process when
   something goes wrong.
-* Support for parsing string flags (e.g. fuzzy).
-* A test suite.
-* Browser support (through Browserified and bower).
+- Support for parsing string flags (e.g. fuzzy).
+- A test suite.
+- Browser support (through Browserified and bower).
 
 ### Migrating from node-po
 
@@ -139,7 +141,7 @@ PO.load('text.po', function (err, po) {
     // Handle err if needed
 ```
 
-## License 
+## License
 
     (The MIT License)
 
