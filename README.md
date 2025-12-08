@@ -2,6 +2,7 @@
 
 > Parse and serialize Gettext PO files.
 
+[![CI](https://github.com/rubenv/pofile/actions/workflows/ci.yml/badge.svg)](https://github.com/rubenv/pofile/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/pofile.svg)](https://www.npmjs.com/package/pofile)
 [![npm downloads](https://img.shields.io/npm/dm/pofile.svg)](https://www.npmjs.com/package/pofile)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-green.svg)](https://nodejs.org/)
