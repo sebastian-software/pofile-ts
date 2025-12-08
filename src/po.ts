@@ -1,4 +1,4 @@
-import * as fs from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
 import type { Headers, ParsedPluralForms } from "./types"
 import { DEFAULT_HEADERS } from "./constants"
 import { Item } from "./Item"
@@ -76,27 +76,18 @@ export class PO {
   }
 
   /**
-   * Loads a PO file from disk (Node.js only).
+   * Loads a PO file from disk.
    */
-  static load(
-    filename: string,
-    callback: (err: NodeJS.ErrnoException | null, po?: PO) => void
-  ): void {
-    fs.readFile(filename, "utf-8", (err, data) => {
-      if (err) {
-        callback(err)
-        return
-      }
-      const po = PO.parse(data)
-      callback(null, po)
-    })
+  static async load(filename: string): Promise<PO> {
+    const data = await readFile(filename, "utf-8")
+    return PO.parse(data)
   }
 
   /**
-   * Saves this PO file to disk (Node.js only).
+   * Saves this PO file to disk.
    */
-  save(filename: string, callback: (err: NodeJS.ErrnoException | null) => void): void {
-    fs.writeFile(filename, this.toString(), callback)
+  async save(filename: string): Promise<void> {
+    await writeFile(filename, this.toString())
   }
 
   /**
@@ -106,8 +97,12 @@ export class PO {
     const lines: string[] = []
 
     // File-level comments
-    this.comments.forEach((c) => lines.push(("# " + c).trim()))
-    this.extractedComments.forEach((c) => lines.push(("#. " + c).trim()))
+    for (const comment of this.comments) {
+      lines.push(("# " + comment).trim())
+    }
+    for (const comment of this.extractedComments) {
+      lines.push(("#. " + comment).trim())
+    }
 
     // Empty msgid/msgstr for headers
     lines.push('msgid ""')

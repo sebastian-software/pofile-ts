@@ -4,8 +4,9 @@
 
 [![npm version](https://img.shields.io/npm/v/pofile.svg)](https://www.npmjs.com/package/pofile)
 [![npm downloads](https://img.shields.io/npm/dm/pofile.svg)](https://www.npmjs.com/package/pofile)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS](https://lingui.dev/) and other i18n tools.
 
@@ -75,15 +76,13 @@ Parses a PO file string and returns a `PO` instance.
 const po = PO.parse(poFileContent)
 ```
 
-##### `PO.load(filename: string, callback: (err, po) => void): void`
+##### `PO.load(filename: string): Promise<PO>`
 
 Loads a PO file from disk (Node.js only).
 
 ```typescript
-PO.load("messages.po", (err, po) => {
-  if (err) throw err
-  console.log(po.items.length)
-})
+const po = await PO.load("messages.po")
+console.log(po.items.length)
 ```
 
 #### Instance Methods
@@ -96,14 +95,12 @@ Serializes the PO file to a string.
 const output = po.toString()
 ```
 
-##### `po.save(filename: string, callback: (err) => void): void`
+##### `po.save(filename: string): Promise<void>`
 
 Saves the PO file to disk (Node.js only).
 
 ```typescript
-po.save("output.po", (err) => {
-  if (err) throw err
-})
+await po.save("output.po")
 ```
 
 ---

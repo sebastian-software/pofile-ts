@@ -38,17 +38,7 @@ describe("Parse", () => {
   })
 
   it("handles empty comments", async () => {
-    const po = await new Promise<PO>((resolve, reject) => {
-      PO.load(__dirname + "/fixtures/comment.po", (err, result) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        if (result) {
-          resolve(result)
-        }
-      })
-    })
+    const po = await PO.load(__dirname + "/fixtures/comment.po")
 
     const item = po.items[1]
     expect(item?.msgid).toBe("Empty comment")

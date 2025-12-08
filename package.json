@@ -20,12 +20,12 @@
     "url": "https://github.com/rubenv/pofile.git"
   },
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/po.js",
+  "types": "./dist/po.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/po.d.ts",
+      "default": "./dist/po.js"
     }
   },
   "files": [
@@ -51,16 +51,16 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "@eslint/js": "^9.16.0",
-    "@types/node": "^22.10.1",
-    "eslint": "^9.16.0",
-    "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.17.0",
-    "vitest": "^2.1.8"
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.19.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.15"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

@@ -5,17 +5,7 @@ describe("Comments", () => {
   let po: PO
 
   beforeAll(async () => {
-    po = await new Promise<PO>((resolve, reject) => {
-      PO.load(__dirname + "/fixtures/big.po", (err, result) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        if (result) {
-          resolve(result)
-        }
-      })
-    })
+    po = await PO.load(__dirname + "/fixtures/big.po")
   })
 
   it("parses the po file", () => {

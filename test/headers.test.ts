@@ -5,17 +5,7 @@ describe("Headers", () => {
   let po: PO
 
   beforeAll(async () => {
-    po = await new Promise<PO>((resolve, reject) => {
-      PO.load(__dirname + "/fixtures/big.po", (err, result) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        if (result) {
-          resolve(result)
-        }
-      })
-    })
+    po = await PO.load(__dirname + "/fixtures/big.po")
   })
 
   it("parses the po file", () => {
@@ -60,17 +50,7 @@ describe("PO files with no headers", () => {
     let po: PO
 
     beforeAll(async () => {
-      po = await new Promise<PO>((resolve, reject) => {
-        PO.load(__dirname + "/fixtures/no_header.po", (err, result) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          if (result) {
-            resolve(result)
-          }
-        })
-      })
+      po = await PO.load(__dirname + "/fixtures/no_header.po")
     })
 
     it("parses the po file", () => {
@@ -86,17 +66,7 @@ describe("PO files with no headers", () => {
     let po: PO
 
     beforeAll(async () => {
-      po = await new Promise<PO>((resolve, reject) => {
-        PO.load(__dirname + "/fixtures/no_header_extra_spaces.po", (err, result) => {
-          if (err) {
-            reject(err)
-            return
-          }
-          if (result) {
-            resolve(result)
-          }
-        })
-      })
+      po = await PO.load(__dirname + "/fixtures/no_header_extra_spaces.po")
     })
 
     it("parses the po file", () => {
