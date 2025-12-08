@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { PO } from "../src/po"
+import { PO } from "../src/index"
 
 describe(".parsePluralForms()", () => {
   it("should return an object with empty nplurals and plural expression when there is no plural forms header", () => {

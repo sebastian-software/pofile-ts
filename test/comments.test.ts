@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest"
-import { PO } from "../src/po"
+import { PO } from "../src/index"
 
 describe("Comments", () => {
   let po: PO
