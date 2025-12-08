@@ -11,7 +11,21 @@ export default tseslint.config(
     ignores: ["dist/", "node_modules/"]
   },
   {
-    files: ["**/*.ts"],
+    files: ["src/**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.eslint.json",
+        tsconfigRootDir: import.meta.dirname
+      }
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/restrict-template-expressions": "off",
+      complexity: ["error", { max: 10 }]
+    }
+  },
+  {
+    files: ["test/**/*.ts"],
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.eslint.json",
