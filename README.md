@@ -1,167 +1,164 @@
-# pofile - gettext .po parsing for JavaScript
+# pofile
 
 > Parse and serialize Gettext PO files.
 
-[![Build Status](https://travis-ci.org/rubenv/pofile.png?branch=master)](https://travis-ci.org/rubenv/pofile)
+[![npm version](https://img.shields.io/npm/v/pofile.svg)](https://www.npmjs.com/package/pofile)
+[![npm downloads](https://img.shields.io/npm/dm/pofile.svg)](https://www.npmjs.com/package/pofile)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-## Usage
+A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS](https://lingui.dev/) and other i18n tools.
 
-Add pofile to your project:
+## Features
 
-### Installation (Node.JS, browser via Browserified)
+- 📖 **Parse** PO files from strings or files
+- ✍️ **Write** PO files back to strings or files
+- 🎯 **Full PO support** — headers, comments, flags, plurals, context
+- 📦 **Zero dependencies**
+- 🔷 **TypeScript** — full type definitions included
+- ⚡ **ESM & CommonJS** — works everywhere
 
-```
-npm install --save pofile
-```
+## Installation
 
-Reference it in your code:
-
-```js
-var PO = require("pofile")
-```
-
-### Installation (via bower)
-
-```
-bower install --save pofile
+```bash
+npm install pofile
 ```
 
-Add it to your HTML file:
+## Quick Start
 
-```html
-<script src="bower_components/pofile/dist/pofile.js"></script>
+```typescript
+import PO from "pofile"
+
+// Parse a PO file
+const po = PO.parse(`
+msgid "Hello"
+msgstr "Hallo"
+`)
+
+console.log(po.items[0].msgid)  // "Hello"
+console.log(po.items[0].msgstr) // ["Hallo"]
+
+// Create a new PO file
+const newPo = new PO()
+newPo.headers["Content-Type"] = "text/plain; charset=UTF-8"
+
+const item = new PO.Item()
+item.msgid = "Welcome"
+item.msgstr = ["Willkommen"]
+newPo.items.push(item)
+
+console.log(newPo.toString())
 ```
 
-Reference it in your code:
+## API
 
-```js
-var PO = require("pofile")
+### `PO` Class
+
+The main class representing a PO file.
+
+#### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `headers` | `Record<string, string>` | PO file headers (Content-Type, Language, etc.) |
+| `comments` | `string[]` | Translator comments at file header |
+| `extractedComments` | `string[]` | Extracted comments at file header |
+| `items` | `Item[]` | Translation entries |
+
+#### Static Methods
+
+##### `PO.parse(data: string): PO`
+
+Parses a PO file string and returns a `PO` instance.
+
+```typescript
+const po = PO.parse(poFileContent)
 ```
 
-### Loading and parsing
+##### `PO.load(filename: string, callback: (err, po) => void): void`
 
-You can create a new empty PO file by using the class:
+Loads a PO file from disk (Node.js only).
 
-```js
-var po = new PO()
-```
-
-Or by loading a file (Node.JS only):
-
-```js
-PO.load("text.po", function (err, po) {
-  // Handle err if needed
-  // Do things with po
+```typescript
+PO.load("messages.po", (err, po) => {
+  if (err) throw err
+  console.log(po.items.length)
 })
 ```
 
-Or by parsing a string:
+#### Instance Methods
 
-```js
-var po = PO.parse(myString)
+##### `po.toString(): string`
+
+Serializes the PO file to a string.
+
+```typescript
+const output = po.toString()
 ```
 
-### The PO class
+##### `po.save(filename: string, callback: (err) => void): void`
 
-The `PO` class exposes three members:
+Saves the PO file to disk (Node.js only).
 
-- `comments`: An array of comments (found at the header of the file).
-- `headers`: A dictionary of the headers.
-- `items`: An array of `PO.Item` objects, each of which represents a string
-  from the gettext catalog.
-
-There are two methods available:
-
-- `save`: Accepts a filename and callback, writes the po file to disk.
-
-```js
-po.save("out.po", function (err) {
-  // Handle err if needed
+```typescript
+po.save("output.po", (err) => {
+  if (err) throw err
 })
 ```
 
-- `toString`: Serializes the po file to a string.
+---
 
-### The PO.Item class
+### `PO.Item` Class
 
-The `PO.Item` class exposes the following members:
+Represents a single translation entry.
 
-- `msgid`: The message id.
-- `msgid_plural`: The plural message id (null if absent).
-- `msgstr`: An array of translated strings. Items that have no plural msgid
-  only have one element in this array.
-- `references`: An array of reference strings.
-- `comments`: An array of string translator comments.
-- `extractedComments`: An array of string extracted comments.
-- `flags`: A dictionary of the string flags. Each flag is mapped to a key with
-  value true. For instance, a string with the fuzzy flag set will have
-  `item.flags.fuzzy == true`.
-- `msgctxt`: Context of the message, an arbitrary string, can be used for disambiguation.
+#### Properties
 
-## Contributing
+| Property | Type | Description |
+|----------|------|-------------|
+| `msgid` | `string` | Source string |
+| `msgid_plural` | `string \| null` | Plural form of source string |
+| `msgstr` | `string[]` | Translated string(s) |
+| `msgctxt` | `string \| null` | Message context for disambiguation |
+| `references` | `string[]` | Source file references |
+| `comments` | `string[]` | Translator comments |
+| `extractedComments` | `string[]` | Automatically extracted comments |
+| `flags` | `Record<string, boolean>` | Flags like `fuzzy` |
+| `obsolete` | `boolean` | Whether entry is obsolete |
 
-In lieu of a formal styleguide, take care to maintain the existing coding
-style. Add unit tests for any new or changed functionality. Lint and test your
-code using [Grunt](http://gruntjs.com/).
+#### Example
+
+```typescript
+const item = new PO.Item()
+item.msgid = "Hello, {name}!"
+item.msgstr = ["Hallo, {name}!"]
+item.references = ["src/greeting.ts:42"]
+item.flags.fuzzy = true
+
+po.items.push(item)
+```
+
+## Working with Plurals
+
+PO files support plural forms. The number of plural forms depends on the language.
+
+```typescript
+const item = new PO.Item()
+item.msgid = "One item"
+item.msgid_plural = "{count} items"
+item.msgstr = [
+  "Ein Element",      // singular
+  "{count} Elemente"  // plural
+]
+
+po.items.push(item)
+```
 
 ## Credits
 
-Originally based on node-po (written by Michael Holly). Rebranded because
-node-po is unmaintained and because this library is no longer limited to
-Node.JS: it works in the browser too.
-
-### Changes compared to node-po
-
-- Proper handling of async methods that won't crash your Node.JS process when
-  something goes wrong.
-- Support for parsing string flags (e.g. fuzzy).
-- A test suite.
-- Browser support (through Browserified and bower).
-
-### Migrating from node-po
-
-You'll need to update the module reference: `require('pofile')` instead of
-`require('node-po')`.
-
-At the initial release, node-po and pofile have identical APIs, with one small
-exception: the `save` and `load` methods now take a callback that has an `err`
-parameter: `(err)` for `save` and `(err, po)` for `load`. This is similar to
-Node.JS conventions.
-
-Change code such as:
-
-```js
-PO.load('text.po', function (po) {
-```
-
-To:
-
-```js
-PO.load('text.po', function (err, po) {
-    // Handle err if needed
-```
+Originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
+Maintained by [Sebastian Software](https://sebastian-software.de/).
 
 ## License
 
-    (The MIT License)
-
-    Copyright (C) 2013-2017 by Ruben Vermeersch <ruben@rocketeer.be>
-    Copyright (C) 2012 by Michael Holly
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
+[MIT](LICENSE)
