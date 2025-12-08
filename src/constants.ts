@@ -40,4 +40,3 @@ export const UNESCAPE_MAP: Record<string, string> = {
   f: "\f",
   r: "\r"
 }
-

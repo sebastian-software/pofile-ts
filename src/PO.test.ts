@@ -166,8 +166,11 @@ describe("PO", () => {
         expect(po2.items.length, `Item count mismatch for ${fixture}`).toBe(po1.items.length)
 
         for (let i = 0; i < po1.items.length; i++) {
-          const item1 = po1.items[i]!
-          const item2 = po2.items[i]!
+          const item1 = po1.items[i]
+          const item2 = po2.items[i]
+          if (!item1 || !item2) {
+            throw new Error(`Missing item at index ${i} in ${fixture}`)
+          }
           expect(item2.msgid, `msgid mismatch at index ${i} in ${fixture}`).toBe(item1.msgid)
           expect(item2.msgstr, `msgstr mismatch at index ${i} in ${fixture}`).toEqual(item1.msgstr)
           expect(item2.msgctxt, `msgctxt mismatch at index ${i} in ${fixture}`).toBe(item1.msgctxt)
@@ -190,4 +193,3 @@ describe("PO", () => {
     })
   })
 })
-

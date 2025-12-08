@@ -384,4 +384,3 @@ msgstr "result"
     })
   })
 })
-

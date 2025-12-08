@@ -16,7 +16,9 @@ export function splitHeaderAndBody(data: string): {
   // Collect sections until we find one with 'msgid ""'
   while (sections[0]) {
     const hasHeaderMsgid = headerParts.some((h) => h.includes('msgid ""'))
-    if (hasHeaderMsgid) break
+    if (hasHeaderMsgid) {
+      break
+    }
 
     if (/msgid\s+"[^"]/.exec(sections[0])) {
       // Found first real msgid, add dummy header marker
@@ -84,7 +86,9 @@ function mergeMultilineHeaders(lines: string[]): string[] {
 function parseHeaderLine(line: string, po: PO): void {
   const cleaned = line.trim().replace(/^"/, "").replace(/\\n"$/, "")
   const colonIndex = cleaned.indexOf(":")
-  if (colonIndex === -1) return
+  if (colonIndex === -1) {
+    return
+  }
 
   const name = cleaned.substring(0, colonIndex).trim()
   const value = cleaned.substring(colonIndex + 1).trim()
@@ -136,12 +140,7 @@ function preprocessLine(rawLine: string): { line: string; isObsolete: boolean } 
 /**
  * Parses a single line and updates parser state.
  */
-function parseLine(
-  line: string,
-  state: ParserState,
-  po: PO,
-  nplurals: string | undefined
-): void {
+function parseLine(line: string, state: ParserState, po: PO, nplurals: string | undefined): void {
   // Try parsing as comment first
   if (parseCommentLine(line, state, po, nplurals)) {
     return
@@ -269,7 +268,9 @@ function appendMultilineValue(line: string, state: ParserState): void {
  * Finishes the current item and prepares for the next one.
  */
 function finishItem(state: ParserState, po: PO, nplurals: string | undefined): void {
-  if (state.item.msgid.length === 0) return
+  if (state.item.msgid.length === 0) {
+    return
+  }
 
   if (state.obsoleteCount >= state.noCommentLineCount) {
     state.item.obsolete = true
@@ -284,4 +285,3 @@ function finishItem(state: ParserState, po: PO, nplurals: string | undefined): v
   state.obsoleteCount = 0
   state.noCommentLineCount = 0
 }
-

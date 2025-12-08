@@ -37,7 +37,7 @@ msgid "Hello"
 msgstr "Hallo"
 `)
 
-console.log(po.items[0].msgid)  // "Hello"
+console.log(po.items[0].msgid) // "Hello"
 console.log(po.items[0].msgstr) // ["Hallo"]
 
 // Create a new PO file
@@ -60,12 +60,12 @@ The main class representing a PO file.
 
 #### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `headers` | `Record<string, string>` | PO file headers (Content-Type, Language, etc.) |
-| `comments` | `string[]` | Translator comments at file header |
-| `extractedComments` | `string[]` | Extracted comments at file header |
-| `items` | `Item[]` | Translation entries |
+| Property            | Type                     | Description                                    |
+| ------------------- | ------------------------ | ---------------------------------------------- |
+| `headers`           | `Record<string, string>` | PO file headers (Content-Type, Language, etc.) |
+| `comments`          | `string[]`               | Translator comments at file header             |
+| `extractedComments` | `string[]`               | Extracted comments at file header              |
+| `items`             | `Item[]`                 | Translation entries                            |
 
 #### Static Methods
 
@@ -112,17 +112,17 @@ Represents a single translation entry.
 
 #### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `msgid` | `string` | Source string |
-| `msgid_plural` | `string \| null` | Plural form of source string |
-| `msgstr` | `string[]` | Translated string(s) |
-| `msgctxt` | `string \| null` | Message context for disambiguation |
-| `references` | `string[]` | Source file references |
-| `comments` | `string[]` | Translator comments |
-| `extractedComments` | `string[]` | Automatically extracted comments |
-| `flags` | `Record<string, boolean>` | Flags like `fuzzy` |
-| `obsolete` | `boolean` | Whether entry is obsolete |
+| Property            | Type                      | Description                        |
+| ------------------- | ------------------------- | ---------------------------------- |
+| `msgid`             | `string`                  | Source string                      |
+| `msgid_plural`      | `string \| null`          | Plural form of source string       |
+| `msgstr`            | `string[]`                | Translated string(s)               |
+| `msgctxt`           | `string \| null`          | Message context for disambiguation |
+| `references`        | `string[]`                | Source file references             |
+| `comments`          | `string[]`                | Translator comments                |
+| `extractedComments` | `string[]`                | Automatically extracted comments   |
+| `flags`             | `Record<string, boolean>` | Flags like `fuzzy`                 |
+| `obsolete`          | `boolean`                 | Whether entry is obsolete          |
 
 #### Example
 
@@ -145,8 +145,8 @@ const item = new PO.Item()
 item.msgid = "One item"
 item.msgid_plural = "{count} items"
 item.msgstr = [
-  "Ein Element",      // singular
-  "{count} Elemente"  // plural
+  "Ein Element", // singular
+  "{count} Elemente" // plural
 ]
 
 po.items.push(item)

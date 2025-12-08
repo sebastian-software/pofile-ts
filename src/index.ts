@@ -7,4 +7,3 @@ export type { Headers, ParsedPluralForms, ItemOptions } from "./types"
 
 // Default export for backwards compatibility
 export { PO as default } from "./PO"
-

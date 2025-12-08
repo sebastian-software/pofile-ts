@@ -48,4 +48,3 @@ export function extractString(line: string): string {
   str = str.replace(/^[^"]*"|"$/g, "")
   return unescapeString(str)
 }
-

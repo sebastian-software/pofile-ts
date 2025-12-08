@@ -41,4 +41,3 @@ export function formatKeywordWithLineBreaks(
 
   return lines
 }
-

@@ -40,4 +40,3 @@ export interface ParserState {
   obsoleteCount: number
   noCommentLineCount: number
 }
-
