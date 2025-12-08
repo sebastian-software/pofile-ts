@@ -1,7 +1,7 @@
 {
   "name": "pofile",
   "description": "Parse and serialize Gettext PO files.",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "author": {
     "name": "Ruben Vermeersch",
     "email": "ruben@savanne.be",
@@ -14,14 +14,23 @@
     "Mike Holly",
     "Sander Houttekier"
   ],
-  "homepage": "http://github.com/rubenv/pofile",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/rubenv/pofile.git"
+    "url": "https://github.com/rubenv/pofile.git"
   },
-  "main": "./lib/po",
-  "types": "./pofile.d.ts",
+  "type": "module",
+  "main": "./dist/po.js",
+  "types": "./dist/po.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/po.d.ts",
+      "default": "./dist/po.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "i18n",
     "l10n",
@@ -30,24 +39,28 @@
     "po"
   ],
   "scripts": {
-    "test": "grunt test",
-    "prepublish": "grunt build"
-  },
-  "directories": {
-    "test": "test"
+    "build": "rm -rf dist && tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "browserify": "~14.0.0",
-    "coffeescript": "^2.6.1",
-    "grunt": "~1.5.2",
-    "grunt-browserify": "~5.0.0",
-    "grunt-bump": "0.8.0",
-    "grunt-contrib-clean": "~1.0.0",
-    "grunt-contrib-jshint": "~1.1.0",
-    "grunt-contrib-uglify": "~2.1.0",
-    "grunt-contrib-watch": "~1.1.0",
-    "grunt-jscs": "~3.0.1",
-    "grunt-mocha-cli": "~7.0.0"
+    "@eslint/js": "^9.16.0",
+    "@types/node": "^22.10.1",
+    "eslint": "^9.16.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0",
+    "vitest": "^2.1.8"
   },
-  "dependencies": {}
+  "engines": {
+    "node": ">=18"
+  }
 }
