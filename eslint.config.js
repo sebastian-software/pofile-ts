@@ -8,18 +8,16 @@ export default tseslint.config(
   tseslint.configs.stylisticTypeChecked,
   eslintConfigPrettier,
   {
-    ignores: ["dist/", "node_modules/", "lib/", "test/*.js"]
+    ignores: ["dist/", "node_modules/"]
   },
   {
+    files: ["**/*.ts"],
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.eslint.json",
         tsconfigRootDir: import.meta.dirname
       }
-    }
-  },
-  {
-    files: ["**/*.ts"],
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "@typescript-eslint/restrict-template-expressions": "off"
