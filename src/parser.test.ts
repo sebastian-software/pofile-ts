@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest"
 import * as fs from "node:fs"
 import * as path from "node:path"
 import { PO } from "./PO"
+import type { Item } from "./Item"
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
@@ -115,7 +116,7 @@ describe("parser", () => {
   describe("context", () => {
     it("parses item context", () => {
       const po = PO.parse(readFixture("big.po"))
-      const ambiguousItems = po.items.filter((item) => item.msgid === "Empty folder")
+      const ambiguousItems = po.items.filter((item: Item) => item.msgid === "Empty folder")
 
       expect(ambiguousItems[0]?.msgctxt).toBe("folder display")
       expect(ambiguousItems[1]?.msgctxt).toBe("folder action")
@@ -124,7 +125,7 @@ describe("parser", () => {
     it("parses item multiline context", () => {
       const po = PO.parse(readFixture("big.po"))
       const item = po.items.find(
-        (item) => item.msgid === "Created Date" && item.msgctxt === "folder meta"
+        (item: Item) => item.msgid === "Created Date" && item.msgctxt === "folder meta"
       )
 
       expect(item).not.toBeUndefined()
@@ -154,7 +155,7 @@ describe("parser", () => {
   describe("C-string escapes", () => {
     it("extracts strings containing quotes and backslashes", () => {
       const po = PO.parse(readFixture("c-strings.po"))
-      const items = po.items.filter((item) =>
+      const items = po.items.filter((item: Item) =>
         item.msgid.startsWith("The name field must not contain")
       )
       expect(items[0]?.msgid).toBe('The name field must not contain characters like " or \\')
