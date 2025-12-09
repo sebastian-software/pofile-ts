@@ -1,12 +1,6 @@
-// Re-export main classes
-export { PO } from "./PO"
-export { Item } from "./Item"
+// Main functions
+export { parsePo, stringifyPo, createPoFile, parsePluralForms } from "./PO"
+export { createItem, stringifyItem } from "./Item"
 
-// Re-export utility functions
-export { parsePluralForms } from "./PO"
-
-// Re-export types
-export type { Headers, ParsedPluralForms, ItemOptions } from "./types"
-
-// Default export for backwards compatibility
-export { PO as default } from "./PO"
+// Types
+export type { Headers, ParsedPluralForms, PoFile, PoItem, CreateItemOptions } from "./types"

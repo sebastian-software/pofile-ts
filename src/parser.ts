@@ -1,6 +1,5 @@
-import type { ParserState } from "./types"
-import type { PO } from "./PO"
-import { Item } from "./Item"
+import type { ParserState, PoFile, PoItem } from "./types"
+import { createItem } from "./Item"
 import { trim, extractString } from "./utils"
 
 /**
@@ -38,9 +37,9 @@ export function splitHeaderAndBody(data: string): {
 }
 
 /**
- * Parses the header section and populates the PO object.
+ * Parses the header section and populates the PO file.
  */
-export function parseHeaders(headerSection: string, po: PO): void {
+export function parseHeaders(headerSection: string, po: PoFile): void {
   const lines = mergeMultilineHeaders(headerSection.split(/\n/))
 
   for (const line of lines) {
@@ -83,7 +82,7 @@ function mergeMultilineHeaders(lines: string[]): string[] {
 /**
  * Parses a single header line like "Content-Type: text/plain\n"
  */
-function parseHeaderLine(line: string, po: PO): void {
+function parseHeaderLine(line: string, po: PoFile): void {
   const cleaned = line.trim().replace(/^"/, "").replace(/\\n"$/, "")
   const colonIndex = cleaned.indexOf(":")
   if (colonIndex === -1) {
@@ -98,11 +97,11 @@ function parseHeaderLine(line: string, po: PO): void {
 }
 
 /**
- * Parses item lines and populates the PO object.
+ * Parses item lines and populates the PO file.
  */
-export function parseItems(lines: string[], po: PO, nplurals: string | undefined): void {
+export function parseItems(lines: string[], po: PoFile, nplurals: string | undefined): void {
   const state: ParserState = {
-    item: new Item({ nplurals }),
+    item: createItem({ nplurals }),
     context: null,
     plural: 0,
     obsoleteCount: 0,
@@ -140,7 +139,12 @@ function preprocessLine(rawLine: string): { line: string; isObsolete: boolean } 
 /**
  * Parses a single line and updates parser state.
  */
-function parseLine(line: string, state: ParserState, po: PO, nplurals: string | undefined): void {
+function parseLine(
+  line: string,
+  state: ParserState,
+  po: PoFile,
+  nplurals: string | undefined
+): void {
   // Try parsing as comment first
   if (parseCommentLine(line, state, po, nplurals)) {
     return
@@ -164,7 +168,7 @@ function parseLine(line: string, state: ParserState, po: PO, nplurals: string | 
 function parseCommentLine(
   line: string,
   state: ParserState,
-  po: PO,
+  po: PoFile,
   nplurals: string | undefined
 ): boolean {
   if (/^#:/.exec(line)) {
@@ -197,7 +201,7 @@ function parseCommentLine(
 function parseKeywordLine(
   line: string,
   state: ParserState,
-  po: PO,
+  po: PoFile,
   nplurals: string | undefined
 ): boolean {
   if (/^msgid_plural/.exec(line)) {
@@ -234,7 +238,7 @@ function parseKeywordLine(
 /**
  * Parses flag line and adds flags to item.
  */
-function parseFlags(line: string, item: Item): void {
+function parseFlags(line: string, item: PoItem): void {
   const flags = trim(line.replace(/^#,/, "")).split(",")
   for (const flag of flags) {
     item.flags[flag.trim()] = true
@@ -267,7 +271,7 @@ function appendMultilineValue(line: string, state: ParserState): void {
 /**
  * Finishes the current item and prepares for the next one.
  */
-function finishItem(state: ParserState, po: PO, nplurals: string | undefined): void {
+function finishItem(state: ParserState, po: PoFile, nplurals: string | undefined): void {
   if (state.item.msgid.length === 0) {
     return
   }
@@ -279,7 +283,7 @@ function finishItem(state: ParserState, po: PO, nplurals: string | undefined): v
   po.items.push(state.item)
 
   // Reset state for next item
-  state.item = new Item({ nplurals })
+  state.item = createItem({ nplurals })
   state.context = null
   state.plural = 0
   state.obsoleteCount = 0

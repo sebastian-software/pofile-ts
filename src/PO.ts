@@ -1,6 +1,6 @@
-import type { Headers, ParsedPluralForms } from "./types"
+import type { ParsedPluralForms, PoFile } from "./types"
 import { DEFAULT_HEADERS } from "./constants"
-import { Item } from "./Item"
+import { stringifyItem } from "./Item"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./parser"
 
 /**
@@ -28,105 +28,90 @@ export function parsePluralForms(pluralFormsString: string | undefined): ParsedP
 }
 
 /**
- * Represents a complete PO (Portable Object) file.
- *
- * A PO file consists of:
- * - File-level comments and headers
- * - A list of translation items
+ * Creates a new empty PO file structure with default headers.
  */
-export class PO {
-  /** Translator comments at the top of the file */
-  comments: string[] = []
+export function createPoFile(): PoFile {
+  return {
+    comments: [],
+    extractedComments: [],
+    headers: { ...DEFAULT_HEADERS },
+    headerOrder: [],
+    items: []
+  }
+}
 
-  /** Extracted comments at the top of the file */
-  extractedComments: string[] = []
+/**
+ * Parses a PO file string into a PoFile structure.
+ */
+export function parsePo(data: string): PoFile {
+  // Normalize line endings
+  data = data.replace(/\r\n/g, "\n")
 
-  /** PO file headers (Content-Type, Language, etc.) */
-  headers: Partial<Headers> = {}
+  const po = createPoFile()
+  const { headerSection, bodyLines } = splitHeaderAndBody(data)
 
-  /** Order of headers as they appeared in the source file */
-  headerOrder: string[] = []
+  // Parse headers
+  parseHeaders(headerSection, po)
 
-  /** Translation entries */
-  items: Item[] = []
+  // Parse items
+  const nplurals = parsePluralForms(po.headers["Plural-Forms"]).nplurals
+  parseItems(bodyLines, po, nplurals)
 
-  /** Reference to the Item class for creating new items */
-  static Item = Item
+  return po
+}
 
-  /**
-   * Parses a PO file string.
-   */
-  static parse(data: string): PO {
-    // Normalize line endings
-    data = data.replace(/\r\n/g, "\n")
+/**
+ * Serializes a PoFile structure to a string.
+ */
+export function stringifyPo(po: PoFile): string {
+  const lines: string[] = []
 
-    const po = new PO()
-    const { headerSection, bodyLines } = splitHeaderAndBody(data)
-
-    // Parse headers
-    po.headers = { ...DEFAULT_HEADERS }
-    parseHeaders(headerSection, po)
-
-    // Parse items
-    const nplurals = parsePluralForms(po.headers["Plural-Forms"]).nplurals
-    parseItems(bodyLines, po, nplurals)
-
-    return po
+  // File-level comments
+  for (const comment of po.comments) {
+    lines.push(("# " + comment).trim())
+  }
+  for (const comment of po.extractedComments) {
+    lines.push(("#. " + comment).trim())
   }
 
-  /**
-   * Serializes this PO file to a string.
-   */
-  toString(): string {
-    const lines: string[] = []
+  // Empty msgid/msgstr for headers
+  lines.push('msgid ""')
+  lines.push('msgstr ""')
 
-    // File-level comments
-    for (const comment of this.comments) {
-      lines.push(("# " + comment).trim())
-    }
-    for (const comment of this.extractedComments) {
-      lines.push(("#. " + comment).trim())
-    }
+  // Headers (preserve order, then add any new ones)
+  const orderedKeys = getOrderedHeaderKeys(po)
+  for (const key of orderedKeys) {
+    lines.push(`"${key}: ${po.headers[key] ?? ""}\\n"`)
+  }
 
-    // Empty msgid/msgstr for headers
-    lines.push('msgid ""')
-    lines.push('msgstr ""')
+  lines.push("")
 
-    // Headers (preserve order, then add any new ones)
-    const orderedKeys = this.getOrderedHeaderKeys()
-    for (const key of orderedKeys) {
-      lines.push(`"${key}: ${this.headers[key] ?? ""}\\n"`)
-    }
-
+  // Items
+  for (const item of po.items) {
+    lines.push(stringifyItem(item))
     lines.push("")
-
-    // Items
-    for (const item of this.items) {
-      lines.push(item.toString())
-      lines.push("")
-    }
-
-    return lines.join("\n")
   }
 
-  /** Returns header keys in the correct order */
-  private getOrderedHeaderKeys(): string[] {
-    const result: string[] = []
+  return lines.join("\n")
+}
 
-    // First, add keys from headerOrder that still exist
-    for (const key of this.headerOrder) {
-      if (key in this.headers) {
-        result.push(key)
-      }
+/** Returns header keys in the correct order */
+function getOrderedHeaderKeys(po: PoFile): string[] {
+  const result: string[] = []
+
+  // First, add keys from headerOrder that still exist
+  for (const key of po.headerOrder) {
+    if (key in po.headers) {
+      result.push(key)
     }
-
-    // Then add any new keys not in headerOrder
-    for (const key of Object.keys(this.headers)) {
-      if (!result.includes(key)) {
-        result.push(key)
-      }
-    }
-
-    return result
   }
+
+  // Then add any new keys not in headerOrder
+  for (const key of Object.keys(po.headers)) {
+    if (!result.includes(key)) {
+      result.push(key)
+    }
+  }
+
+  return result
 }

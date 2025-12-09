@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest"
 import * as fs from "node:fs"
 import * as path from "node:path"
-import { PO, parsePluralForms } from "./PO"
+import { parsePo, stringifyPo, parsePluralForms } from "./PO"
+import type { PoFile } from "./types"
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
@@ -9,12 +10,12 @@ function readFixture(name: string): string {
   return fs.readFileSync(path.join(FIXTURES_DIR, name), "utf8")
 }
 
-describe("PO", () => {
+describe("parsePo", () => {
   describe("headers", () => {
-    let po: PO
+    let po: PoFile
 
     beforeAll(() => {
-      po = PO.parse(readFixture("big.po"))
+      po = parsePo(readFixture("big.po"))
     })
 
     it("parses headers correctly", () => {
@@ -31,10 +32,10 @@ describe("PO", () => {
   })
 
   describe("comments", () => {
-    let po: PO
+    let po: PoFile
 
     beforeAll(() => {
-      po = PO.parse(readFixture("big.po"))
+      po = parsePo(readFixture("big.po"))
     })
 
     it("parses the comments", () => {
@@ -47,7 +48,7 @@ describe("PO", () => {
 
   describe("files with no headers", () => {
     it("parses an empty string", () => {
-      const po = PO.parse("")
+      const po = parsePo("")
       expect(po).not.toBeNull()
       for (const key in po.headers) {
         expect(po.headers[key]).toBe("")
@@ -56,7 +57,7 @@ describe("PO", () => {
     })
 
     it("parses a minimal example", () => {
-      const po = PO.parse('msgid "minimal PO"\nmsgstr ""')
+      const po = parsePo('msgid "minimal PO"\nmsgstr ""')
       expect(po).not.toBeNull()
       for (const key in po.headers) {
         expect(po.headers[key]).toBe("")
@@ -65,10 +66,10 @@ describe("PO", () => {
     })
 
     describe("advanced example", () => {
-      let po: PO
+      let po: PoFile
 
       beforeAll(() => {
-        po = PO.parse(readFixture("no_header.po"))
+        po = parsePo(readFixture("no_header.po"))
       })
 
       it("parses the po file", () => {
@@ -81,10 +82,10 @@ describe("PO", () => {
     })
 
     describe("advanced example with extra spaces", () => {
-      let po: PO
+      let po: PoFile
 
       beforeAll(() => {
-        po = PO.parse(readFixture("no_header_extra_spaces.po"))
+        po = parsePo(readFixture("no_header_extra_spaces.po"))
       })
 
       it("parses the po file", () => {
@@ -131,10 +132,10 @@ describe("PO", () => {
     })
   })
 
-  describe("toString", () => {
+  describe("stringifyPo", () => {
     it("keeps the header order", () => {
-      const po = PO.parse(readFixture("big.po"))
-      const str = po.toString()
+      const po = parsePo(readFixture("big.po"))
+      const str = stringifyPo(po)
 
       const expectedHeaders = [
         '"Project-Id-Version: Link (6.x-2.9)\\n"',
@@ -159,9 +160,9 @@ describe("PO", () => {
 
       for (const fixture of fixtures) {
         const input = readFixture(fixture)
-        const po1 = PO.parse(input)
-        const serialized = po1.toString()
-        const po2 = PO.parse(serialized)
+        const po1 = parsePo(input)
+        const serialized = stringifyPo(po1)
+        const po2 = parsePo(serialized)
 
         expect(po2.items.length, `Item count mismatch for ${fixture}`).toBe(po1.items.length)
 
@@ -187,8 +188,8 @@ describe("PO", () => {
 
     it("produces identical output for normalized files", () => {
       const input = readFixture("c-strings.po")
-      const po = PO.parse(input)
-      const output = po.toString()
+      const po = parsePo(input)
+      const output = stringifyPo(po)
       expect(output).toBe(input)
     })
   })

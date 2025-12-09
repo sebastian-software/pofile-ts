@@ -1,112 +1,88 @@
-import type { ItemOptions } from "./types"
+import type { CreateItemOptions, PoItem } from "./types"
 import { formatKeyword, formatKeywordWithLineBreaks } from "./serialization"
 
 /**
- * Represents a single translation entry in a PO file.
- *
- * Each item contains:
- * - Source string (msgid) and optional plural form (msgid_plural)
- * - Translated string(s) (msgstr)
- * - Optional context (msgctxt) for disambiguation
- * - Metadata: references, comments, flags
+ * Creates a new translation item with default values.
  */
-export class Item {
-  /** The source string to translate */
-  msgid = ""
+export function createItem(options?: CreateItemOptions): PoItem {
+  const npluralsValue = options?.nplurals
+  const npluralsNumber = Number(npluralsValue)
 
-  /** Message context for disambiguation */
-  msgctxt: string | null = null
+  return {
+    msgid: "",
+    msgctxt: null,
+    references: [],
+    msgid_plural: null,
+    msgstr: [],
+    comments: [],
+    extractedComments: [],
+    flags: {},
+    obsolete: false,
+    nplurals: isNaN(npluralsNumber) ? 2 : npluralsNumber
+  }
+}
 
-  /** Source file references (e.g., "src/app.ts:42") */
-  references: string[] = []
+/**
+ * Serializes an item to PO file format.
+ */
+export function stringifyItem(item: PoItem): string {
+  const lines: string[] = []
+  const obsoletePrefix = item.obsolete ? "#~ " : ""
 
-  /** Plural form of the source string */
-  msgid_plural: string | null = null
+  // Comments (order: translator, extracted, references, flags)
+  item.comments.forEach((c) => lines.push("# " + c))
+  item.extractedComments.forEach((c) => lines.push("#. " + c))
+  item.references.forEach((ref) => lines.push("#: " + ref))
 
-  /** Translated string(s). Multiple entries for plural forms. */
-  msgstr: string[] = []
-
-  /** Translator comments (lines starting with #) */
-  comments: string[] = []
-
-  /** Automatically extracted comments (lines starting with #.) */
-  extractedComments: string[] = []
-
-  /** Flags like "fuzzy", "no-wrap", etc. */
-  flags: Record<string, boolean> = {}
-
-  /** Whether this entry is marked as obsolete (#~) */
-  obsolete = false
-
-  /** Number of plural forms for this item's language */
-  nplurals: number
-
-  constructor(options?: ItemOptions) {
-    const npluralsValue = options?.nplurals
-    const npluralsNumber = Number(npluralsValue)
-    this.nplurals = isNaN(npluralsNumber) ? 2 : npluralsNumber
+  const activeFlags = Object.keys(item.flags).filter((f) => Boolean(item.flags[f]))
+  if (activeFlags.length > 0) {
+    lines.push("#, " + activeFlags.join(","))
   }
 
-  /** Serializes this item to PO file format */
-  toString(): string {
-    const lines: string[] = []
-    const obsoletePrefix = this.obsolete ? "#~ " : ""
-
-    // Comments (order: translator, extracted, references, flags)
-    this.comments.forEach((c) => lines.push("# " + c))
-    this.extractedComments.forEach((c) => lines.push("#. " + c))
-    this.references.forEach((ref) => lines.push("#: " + ref))
-
-    const activeFlags = Object.keys(this.flags).filter((f) => Boolean(this.flags[f]))
-    if (activeFlags.length > 0) {
-      lines.push("#, " + activeFlags.join(","))
-    }
-
-    // Message fields
-    if (this.msgctxt != null) {
-      this.appendKeyword(lines, "msgctxt", this.msgctxt, obsoletePrefix)
-    }
-
-    this.appendKeyword(lines, "msgid", this.msgid, obsoletePrefix)
-
-    if (this.msgid_plural != null) {
-      this.appendKeyword(lines, "msgid_plural", this.msgid_plural, obsoletePrefix)
-    }
-
-    this.appendMsgstr(lines, obsoletePrefix)
-
-    return lines.join("\n")
+  // Message fields
+  if (item.msgctxt != null) {
+    appendKeyword(lines, "msgctxt", item.msgctxt, obsoletePrefix)
   }
 
-  /** Appends a single keyword line to the output */
-  private appendKeyword(lines: string[], keyword: string, text: string, prefix: string): void {
-    const formatted = formatKeywordWithLineBreaks(keyword, text)
-    lines.push(prefix + formatted.join("\n" + prefix))
+  appendKeyword(lines, "msgid", item.msgid, obsoletePrefix)
+
+  if (item.msgid_plural != null) {
+    appendKeyword(lines, "msgid_plural", item.msgid_plural, obsoletePrefix)
   }
 
-  /** Appends msgstr line(s) to the output, handling plurals */
-  private appendMsgstr(lines: string[], prefix: string): void {
-    const hasTranslation = this.msgstr.some((t) => t)
-    const hasPlural = this.msgid_plural != null
+  appendMsgstr(lines, item, obsoletePrefix)
 
-    if (this.msgstr.length > 1) {
-      // Multiple msgstr entries (plurals with translations)
-      this.msgstr.forEach((text, i) => {
-        const formatted = formatKeywordWithLineBreaks("msgstr", text, i)
-        lines.push(prefix + formatted.join("\n" + prefix))
-      })
-    } else if (hasPlural && !hasTranslation) {
-      // Plural form but no translations yet - output empty msgstr[n] for each plural
-      for (let i = 0; i < this.nplurals; i++) {
-        const formatted = formatKeyword("msgstr", "", i)
-        lines.push(prefix + formatted.join(""))
-      }
-    } else {
-      // Single msgstr (possibly with index 0 for plurals)
-      const index = hasPlural ? 0 : undefined
-      const text = this.msgstr.join("")
-      const formatted = formatKeywordWithLineBreaks("msgstr", text, index)
+  return lines.join("\n")
+}
+
+/** Appends a single keyword line to the output */
+function appendKeyword(lines: string[], keyword: string, text: string, prefix: string): void {
+  const formatted = formatKeywordWithLineBreaks(keyword, text)
+  lines.push(prefix + formatted.join("\n" + prefix))
+}
+
+/** Appends msgstr line(s) to the output, handling plurals */
+function appendMsgstr(lines: string[], item: PoItem, prefix: string): void {
+  const hasTranslation = item.msgstr.some((t) => t)
+  const hasPlural = item.msgid_plural != null
+
+  if (item.msgstr.length > 1) {
+    // Multiple msgstr entries (plurals with translations)
+    item.msgstr.forEach((text, i) => {
+      const formatted = formatKeywordWithLineBreaks("msgstr", text, i)
       lines.push(prefix + formatted.join("\n" + prefix))
+    })
+  } else if (hasPlural && !hasTranslation) {
+    // Plural form but no translations yet - output empty msgstr[n] for each plural
+    for (let i = 0; i < item.nplurals; i++) {
+      const formatted = formatKeyword("msgstr", "", i)
+      lines.push(prefix + formatted.join(""))
     }
+  } else {
+    // Single msgstr (possibly with index 0 for plurals)
+    const index = hasPlural ? 0 : undefined
+    const text = item.msgstr.join("")
+    const formatted = formatKeywordWithLineBreaks("msgstr", text, index)
+    lines.push(prefix + formatted.join("\n" + prefix))
   }
 }

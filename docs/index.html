@@ -768,8 +768,8 @@
           </div>
           <div class="feature">
             <div class="feature-icon">⚡</div>
-            <h4>ESM Native</h4>
-            <p>Modern JavaScript with native ES modules</p>
+            <h4>Named Exports Only</h4>
+            <p>No default export for better CJS/ESM compatibility</p>
           </div>
         </div>
       </section>
@@ -778,10 +778,10 @@
         <h2>Quick Start</h2>
         <p>Get up and running in seconds with pofile-ts:</p>
 
-        <pre><span class="code-keyword">import</span> PO <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+        <pre><span class="code-keyword">import</span> { parsePo, stringifyPo, createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
 
 <span class="code-comment">// Parse a PO file</span>
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(<span class="code-string">`
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(<span class="code-string">`
 msgid "Hello"
 msgstr "Hallo"
 `</span>)
@@ -791,22 +791,86 @@ console.<span class="code-function">log</span>(po.items[<span class="code-number
 
         <h3>Create a new PO file</h3>
 
-        <pre><span class="code-keyword">const</span> newPo = <span class="code-keyword">new</span> <span class="code-type">PO</span>()
-newPo.headers[<span class="code-string">"Content-Type"</span>] = <span class="code-string">"text/plain; charset=UTF-8"</span>
+        <pre><span class="code-keyword">import</span> { createPoFile, createItem, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
 
-<span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
+<span class="code-keyword">const</span> po = <span class="code-function">createPoFile</span>()
+po.headers[<span class="code-string">"Content-Type"</span>] = <span class="code-string">"text/plain; charset=UTF-8"</span>
+
+<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
 item.msgid = <span class="code-string">"Welcome"</span>
 item.msgstr = [<span class="code-string">"Willkommen"</span>]
-newPo.items.<span class="code-function">push</span>(item)
+po.items.<span class="code-function">push</span>(item)
 
-console.<span class="code-function">log</span>(newPo.<span class="code-function">toString</span>())</pre>
+console.<span class="code-function">log</span>(<span class="code-function">stringifyPo</span>(po))</pre>
       </section>
 
       <section id="api">
         <h2>API Reference</h2>
 
-        <h3>PO Class</h3>
-        <p>The main class representing a PO file.</p>
+        <h3>Functions</h3>
+        <p>All exports are named functions — no classes, no default export.</p>
+
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Function</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>parsePo(content)</code></td>
+              <td>Parse a PO file string into a <code>PoFile</code> object</td>
+            </tr>
+            <tr>
+              <td><code>stringifyPo(po)</code></td>
+              <td>Serialize a <code>PoFile</code> to string</td>
+            </tr>
+            <tr>
+              <td><code>createPoFile()</code></td>
+              <td>Create a new empty <code>PoFile</code></td>
+            </tr>
+            <tr>
+              <td><code>createItem(options?)</code></td>
+              <td>Create a new translation item</td>
+            </tr>
+            <tr>
+              <td><code>stringifyItem(item)</code></td>
+              <td>Serialize a single item to string</td>
+            </tr>
+            <tr>
+              <td><code>parsePluralForms(header)</code></td>
+              <td>Parse the Plural-Forms header value</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Types</h3>
+
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PoFile</code></td>
+              <td>Complete PO file with headers and items</td>
+            </tr>
+            <tr>
+              <td><code>PoItem</code></td>
+              <td>Single translation entry</td>
+            </tr>
+            <tr>
+              <td><code>Headers</code></td>
+              <td>Standard PO file headers interface</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>PoFile Properties</h3>
 
         <table class="api-table">
           <thead>
@@ -819,7 +883,7 @@ console.<span class="code-function">log</span>(newPo.<span class="code-function"
           <tbody>
             <tr>
               <td><code>headers</code></td>
-              <td><code>Record&lt;string, string&gt;</code></td>
+              <td><code>Partial&lt;Headers&gt;</code></td>
               <td>PO file headers (Content-Type, Language, etc.)</td>
             </tr>
             <tr>
@@ -834,44 +898,26 @@ console.<span class="code-function">log</span>(newPo.<span class="code-function"
             </tr>
             <tr>
               <td><code>items</code></td>
-              <td><code>Item[]</code></td>
+              <td><code>PoItem[]</code></td>
               <td>Translation entries</td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Static Methods</h3>
-
-        <pre><span class="code-comment">// Parse from string</span>
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(poFileContent)</pre>
-
-        <h3>Instance Methods</h3>
-
-        <pre><span class="code-comment">// Serialize to string</span>
-<span class="code-keyword">const</span> output = po.<span class="code-function">toString</span>()</pre>
-
-        <h3>Utility Functions</h3>
-
-        <pre><span class="code-keyword">import</span> { parsePluralForms } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Parse Plural-Forms header value</span>
-<span class="code-keyword">const</span> { nplurals, plural } = <span class="code-function">parsePluralForms</span>(<span class="code-string">"nplurals=2; plural=(n != 1);"</span>)
-<span class="code-comment">// → { nplurals: "2", plural: "(n != 1)" }</span></pre>
-
         <h3>File I/O (Node.js)</h3>
         <p>Use native <code>fs</code> module for file operations:</p>
 
         <pre><span class="code-keyword">import</span> { readFile, writeFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
+<span class="code-keyword">import</span> { parsePo, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
 
 <span class="code-comment">// Load from file</span>
 <span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)
 
 <span class="code-comment">// Save to file</span>
-<span class="code-keyword">await</span> <span class="code-function">writeFile</span>(<span class="code-string">"output.po"</span>, po.<span class="code-function">toString</span>())</pre>
+<span class="code-keyword">await</span> <span class="code-function">writeFile</span>(<span class="code-string">"output.po"</span>, <span class="code-function">stringifyPo</span>(po))</pre>
 
-        <h3>PO.Item Class</h3>
-        <p>Represents a single translation entry.</p>
+        <h3>PoItem Properties</h3>
 
         <table class="api-table">
           <thead>
@@ -930,7 +976,9 @@ console.<span class="code-function">log</span>(newPo.<span class="code-function"
         <h2>Working with Plurals</h2>
         <p>PO files support plural forms. The number of plural forms depends on the language.</p>
 
-        <pre><span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
+        <pre><span class="code-keyword">import</span> { createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
 item.msgid = <span class="code-string">"One item"</span>
 item.msgid_plural = <span class="code-string">"{count} items"</span>
 item.msgstr = [
@@ -946,16 +994,31 @@ po.items.<span class="code-function">push</span>(item)</pre>
         <p>
           This package is a modernized fork of the original
           <a href="https://github.com/rubenv/pofile" style="color: var(--accent)">pofile</a>
-          package.
+          package with a functional API.
         </p>
 
         <h3>Requirements</h3>
         <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 24px">
           <li><strong>Node.js 20+</strong> or modern browsers</li>
           <li><strong>ESM-first</strong> with full TypeScript support</li>
+          <li><strong>Named exports only</strong> — no default export</li>
         </ul>
 
         <h3>API Changes</h3>
+        <p>The class-based API has been replaced with pure functions:</p>
+
+        <pre><span class="code-comment">// ❌ Old API (pofile 1.x)</span>
+<span class="code-keyword">import</span> PO <span class="code-keyword">from</span> <span class="code-string">"pofile"</span>
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)
+<span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
+po.<span class="code-function">toString</span>()
+
+<span class="code-comment">// ✅ New API (pofile-ts)</span>
+<span class="code-keyword">import</span> { parsePo, stringifyPo, createPoFile, createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)
+<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
+<span class="code-function">stringifyPo</span>(po)</pre>
+
         <p>
           The <code>load()</code> and <code>save()</code> methods have been removed. Use native file
           system APIs instead:
@@ -970,7 +1033,7 @@ PO.<span class="code-function">load</span>(<span class="code-string">"messages.p
 <span class="code-comment">// ✅ New API (pofile-ts)</span>
 <span class="code-keyword">import</span> { readFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
 <span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)</pre>
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)</pre>
       </section>
 
       <footer>

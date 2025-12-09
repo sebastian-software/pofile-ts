@@ -37,7 +37,7 @@ A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
 - 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
 - 🔷 **TypeScript** — full type definitions included
-- ⚡ **ESM-first** — modern JavaScript
+- ⚡ **ESM-first** — modern JavaScript with named exports only
 
 ## Installation
 
@@ -48,10 +48,10 @@ npm install pofile-ts
 ## Quick Start
 
 ```typescript
-import PO from "pofile-ts"
+import { parsePo, stringifyPo, createPoFile, createItem } from "pofile-ts"
 
 // Parse a PO file
-const po = PO.parse(`
+const po = parsePo(`
 msgid "Hello"
 msgstr "Hallo"
 `)
@@ -60,16 +60,62 @@ console.log(po.items[0].msgid) // "Hello"
 console.log(po.items[0].msgstr) // ["Hallo"]
 
 // Create a new PO file
-const newPo = new PO()
-const item = new PO.Item()
+const newPo = createPoFile()
+const item = createItem()
 item.msgid = "Welcome"
 item.msgstr = ["Willkommen"]
 newPo.items.push(item)
 
-console.log(newPo.toString())
+console.log(stringifyPo(newPo))
 ```
 
-For comprehensive documentation including API reference, plurals support, and migration guide from the original `pofile` package, visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
+## API
+
+### Functions
+
+| Function                              | Description                   |
+| ------------------------------------- | ----------------------------- |
+| `parsePo(content: string): PoFile`    | Parse a PO file string        |
+| `stringifyPo(po: PoFile): string`     | Serialize a PO file to string |
+| `createPoFile(): PoFile`              | Create a new empty PO file    |
+| `createItem(options?): PoItem`        | Create a new translation item |
+| `stringifyItem(item: PoItem): string` | Serialize a single item       |
+| `parsePluralForms(header: string)`    | Parse the Plural-Forms header |
+
+### Types
+
+| Type      | Description                             |
+| --------- | --------------------------------------- |
+| `PoFile`  | Complete PO file with headers and items |
+| `PoItem`  | Single translation entry                |
+| `Headers` | Standard PO file headers                |
+
+## Migration from `pofile`
+
+If you're migrating from the original `pofile` package:
+
+```typescript
+// Before (pofile)
+import PO from "pofile"
+const po = PO.parse(content)
+const item = new PO.Item()
+po.toString()
+
+// After (pofile-ts)
+import { parsePo, stringifyPo, createPoFile, createItem } from "pofile-ts"
+const po = parsePo(content)
+const item = createItem()
+stringifyPo(po)
+```
+
+Key differences:
+
+- **Functional API** — no classes, just functions and plain objects
+- **Named exports only** — no default export for better CJS/ESM compatibility
+- **TypeScript-first** — full type definitions included
+- `PoFile` and `PoItem` are plain interfaces, not class instances
+
+For comprehensive documentation including plurals support, visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
 
 ## Credits
 

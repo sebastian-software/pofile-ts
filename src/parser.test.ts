@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest"
 import * as fs from "node:fs"
 import * as path from "node:path"
-import { PO } from "./PO"
-import type { Item } from "./Item"
+import { parsePo } from "./PO"
+import type { PoItem } from "./types"
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
@@ -13,7 +13,7 @@ function readFixture(name: string): string {
 describe("parser", () => {
   describe("basic parsing", () => {
     it("parses the big po file", () => {
-      const po = PO.parse(readFixture("big.po"))
+      const po = parsePo(readFixture("big.po"))
       expect(po).not.toBeNull()
       expect(po.items.length).toBe(70)
 
@@ -23,7 +23,7 @@ describe("parser", () => {
     })
 
     it("handles multi-line strings", () => {
-      const po = PO.parse(readFixture("multi-line.po"))
+      const po = parsePo(readFixture("multi-line.po"))
       expect(po).not.toBeNull()
       expect(po.items.length).toBe(1)
 
@@ -37,7 +37,7 @@ describe("parser", () => {
     })
 
     it("handles multi-line headers", () => {
-      const po = PO.parse(readFixture("multi-line.po"))
+      const po = parsePo(readFixture("multi-line.po"))
       expect(po.headers["Plural-Forms"]).toBe(
         "nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;"
       )
@@ -46,7 +46,7 @@ describe("parser", () => {
 
   describe("comments", () => {
     it("handles empty comments", () => {
-      const po = PO.parse(readFixture("comment.po"))
+      const po = parsePo(readFixture("comment.po"))
 
       const item = po.items[1]
       expect(item?.msgid).toBe("Empty comment")
@@ -57,7 +57,7 @@ describe("parser", () => {
     })
 
     it("handles translator comments", () => {
-      const po = PO.parse(readFixture("comment.po"))
+      const po = parsePo(readFixture("comment.po"))
       expect(po.items.length).toBe(2)
 
       const item = po.items[0]
@@ -67,7 +67,7 @@ describe("parser", () => {
     })
 
     it("handles extracted comments", () => {
-      const po = PO.parse(readFixture("comment.po"))
+      const po = parsePo(readFixture("comment.po"))
 
       expect(po.extractedComments.length).toBe(1)
       expect(po.extractedComments[0]).toBe("extracted from test")
@@ -79,7 +79,7 @@ describe("parser", () => {
 
   describe("references", () => {
     it("handles simple references", () => {
-      const po = PO.parse(readFixture("reference.po"))
+      const po = parsePo(readFixture("reference.po"))
       expect(po.items.length).toBe(3)
 
       const item = po.items[0]
@@ -88,14 +88,14 @@ describe("parser", () => {
     })
 
     it("handles multiple references", () => {
-      const po = PO.parse(readFixture("reference.po"))
+      const po = parsePo(readFixture("reference.po"))
       const item = po.items[1]
       expect(item?.msgid).toBe("X")
       expect(item?.references).toEqual(["a", "b"])
     })
 
     it("does not split space-separated references", () => {
-      const po = PO.parse(readFixture("reference.po"))
+      const po = parsePo(readFixture("reference.po"))
       const item = po.items[2]
       expect(item?.msgid).toBe("Z")
       expect(item?.references).toEqual(["standard input:12 standard input:17"])
@@ -104,7 +104,7 @@ describe("parser", () => {
 
   describe("flags", () => {
     it("parses flags", () => {
-      const po = PO.parse(readFixture("fuzzy.po"))
+      const po = parsePo(readFixture("fuzzy.po"))
       expect(po.items.length).toBe(1)
 
       const item = po.items[0]
@@ -115,17 +115,17 @@ describe("parser", () => {
 
   describe("context", () => {
     it("parses item context", () => {
-      const po = PO.parse(readFixture("big.po"))
-      const ambiguousItems = po.items.filter((item: Item) => item.msgid === "Empty folder")
+      const po = parsePo(readFixture("big.po"))
+      const ambiguousItems = po.items.filter((item: PoItem) => item.msgid === "Empty folder")
 
       expect(ambiguousItems[0]?.msgctxt).toBe("folder display")
       expect(ambiguousItems[1]?.msgctxt).toBe("folder action")
     })
 
     it("parses item multiline context", () => {
-      const po = PO.parse(readFixture("big.po"))
+      const po = parsePo(readFixture("big.po"))
       const item = po.items.find(
-        (item: Item) => item.msgid === "Created Date" && item.msgctxt === "folder meta"
+        (item: PoItem) => item.msgid === "Created Date" && item.msgctxt === "folder meta"
       )
 
       expect(item).not.toBeUndefined()
@@ -135,7 +135,7 @@ describe("parser", () => {
 
   describe("obsolete items", () => {
     it("handles obsolete items", () => {
-      const po = PO.parse(readFixture("commented.po"))
+      const po = parsePo(readFixture("commented.po"))
       expect(po.items.length).toBe(4)
 
       expect(po.items[0]?.obsolete).toBe(false)
@@ -154,21 +154,21 @@ describe("parser", () => {
 
   describe("C-string escapes", () => {
     it("extracts strings containing quotes and backslashes", () => {
-      const po = PO.parse(readFixture("c-strings.po"))
-      const items = po.items.filter((item: Item) =>
+      const po = parsePo(readFixture("c-strings.po"))
+      const items = po.items.filter((item: PoItem) =>
         item.msgid.startsWith("The name field must not contain")
       )
       expect(items[0]?.msgid).toBe('The name field must not contain characters like " or \\')
     })
 
     it("handles \\n characters", () => {
-      const po = PO.parse(readFixture("c-strings.po"))
+      const po = parsePo(readFixture("c-strings.po"))
       const item = po.items[1]
       expect(item?.msgid).toBe("%1$s\n%2$s %3$s\n%4$s\n%5$s")
     })
 
     it("handles \\t characters", () => {
-      const po = PO.parse(readFixture("c-strings.po"))
+      const po = parsePo(readFixture("c-strings.po"))
       const item = po.items[2]
       expect(item?.msgid).toBe(
         "define('some/test/module', function () {\n\t'use strict';\n\treturn {};\n});\n"
@@ -187,7 +187,7 @@ msgstr "Content-Type: text/plain; charset=utf-8\\n"
 msgid "test"
 msgstr "test"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.flags.fuzzy).toBe(true)
       expect(po.items[0]?.flags["no-wrap"]).toBe(true)
     })
@@ -202,7 +202,7 @@ msgstr ""
 msgid "test"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.references).toEqual(["path/a.ts:1", "path/b.ts:2"])
     })
 
@@ -217,7 +217,7 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid_plural).toBe("many")
     })
 
@@ -229,7 +229,7 @@ msgstr ""
 msgid "\\'test\\'"
 msgstr "\\'result\\'"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("'test'")
       expect(po.items[0]?.msgstr[0]).toBe("'result'")
     })
@@ -242,7 +242,7 @@ msgstr ""
 msgid "test\\\\"-end"
 msgstr "result"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe('test\\"-end')
     })
 
@@ -258,7 +258,7 @@ msgstr ""
 msgid "test"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       const item = po.items[0]
       expect(item?.comments).toEqual(["translator comment"])
       expect(item?.extractedComments).toEqual(["extracted comment"])
@@ -275,7 +275,7 @@ msgid "test"
 msgstr ""
 "continued on next line"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgstr[0]).toBe("continued on next line")
     })
 
@@ -287,7 +287,7 @@ msgstr ""
 msgid "\\a\\b\\t\\n\\v\\f\\r"
 msgstr "result"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("\x07\b\t\n\v\f\r")
     })
 
@@ -299,7 +299,7 @@ msgstr ""
 msgid "\\x41\\x42\\x43"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("ABC")
     })
 
@@ -311,7 +311,7 @@ msgstr ""
 msgid "\\101\\102\\103"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("ABC")
     })
 
@@ -323,7 +323,7 @@ msgstr ""
 msgid "\\0 \\7 \\77"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("\x00 \x07 ?")
     })
 
@@ -335,7 +335,7 @@ msgstr ""
 msgid "before\\000after"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("before\x00after")
     })
 
@@ -348,7 +348,7 @@ msgid "line1\\n"
 "line2"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("line1\nline2")
     })
 
@@ -361,13 +361,13 @@ msgid ""
 "actual content"
 msgstr ""
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("actual content")
     })
 
     it("handles CRLF line endings", () => {
       const content = 'msgid ""\r\nmsgstr ""\r\n\r\nmsgid "test"\r\nmsgstr "result"\r\n'
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("test")
       expect(po.items[0]?.msgstr[0]).toBe("result")
     })
@@ -380,7 +380,7 @@ msgstr ""
 msgid "test"
 msgstr "result"
 `
-      const po = PO.parse(content)
+      const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("test")
     })
   })
