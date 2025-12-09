@@ -78,7 +78,7 @@
     "vitest": "^4.0.15"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "lint-staged": {
     "*": "prettier --write --ignore-unknown"
