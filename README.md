@@ -1,13 +1,30 @@
-# pofile-ts
+<p align="center">
+  <a href="https://sebastian-software.github.io/pofile-ts/">
+    <img src="https://sebastian-software.github.io/pofile-ts/logo.svg" alt="pofile-ts" width="120" height="120">
+  </a>
+</p>
 
-> Parse and serialize Gettext PO files.
+<h1 align="center">pofile-ts</h1>
 
-[![CI](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
-[![npm downloads](https://img.shields.io/npm/dm/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <strong>Parse and serialize Gettext PO files</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml"><img src="https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/pofile-ts"><img src="https://img.shields.io/npm/v/pofile-ts.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/pofile-ts"><img src="https://img.shields.io/npm/dm/pofile-ts.svg" alt="npm downloads"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue.svg" alt="TypeScript"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  <a href="https://sebastian-software.github.io/pofile-ts/">📖 Documentation</a> ·
+  <a href="https://sebastian-software.github.io/pofile-ts/#api">API Reference</a> ·
+  <a href="https://github.com/sebastian-software/pofile-ts/issues">Report Bug</a>
+</p>
+
+---
 
 A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS](https://lingui.dev/) and other i18n tools.
 
@@ -42,8 +59,6 @@ console.log(po.items[0].msgstr) // ["Hallo"]
 
 // Create a new PO file
 const newPo = new PO()
-newPo.headers["Content-Type"] = "text/plain; charset=UTF-8"
-
 const item = new PO.Item()
 item.msgid = "Welcome"
 item.msgstr = ["Willkommen"]
@@ -52,145 +67,7 @@ newPo.items.push(item)
 console.log(newPo.toString())
 ```
 
-## API
-
-### `PO` Class
-
-The main class representing a PO file.
-
-#### Properties
-
-| Property            | Type                     | Description                                    |
-| ------------------- | ------------------------ | ---------------------------------------------- |
-| `headers`           | `Record<string, string>` | PO file headers (Content-Type, Language, etc.) |
-| `comments`          | `string[]`               | Translator comments at file header             |
-| `extractedComments` | `string[]`               | Extracted comments at file header              |
-| `items`             | `Item[]`                 | Translation entries                            |
-
-#### Static Methods
-
-##### `PO.parse(data: string): PO`
-
-Parses a PO file string and returns a `PO` instance.
-
-```typescript
-const po = PO.parse(poFileContent)
-```
-
-##### `PO.load(filename: string): Promise<PO>`
-
-Loads a PO file from disk (Node.js only).
-
-```typescript
-const po = await PO.load("messages.po")
-console.log(po.items.length)
-```
-
-#### Instance Methods
-
-##### `po.toString(): string`
-
-Serializes the PO file to a string.
-
-```typescript
-const output = po.toString()
-```
-
-##### `po.save(filename: string): Promise<void>`
-
-Saves the PO file to disk (Node.js only).
-
-```typescript
-await po.save("output.po")
-```
-
----
-
-### `PO.Item` Class
-
-Represents a single translation entry.
-
-#### Properties
-
-| Property            | Type                      | Description                        |
-| ------------------- | ------------------------- | ---------------------------------- |
-| `msgid`             | `string`                  | Source string                      |
-| `msgid_plural`      | `string \| null`          | Plural form of source string       |
-| `msgstr`            | `string[]`                | Translated string(s)               |
-| `msgctxt`           | `string \| null`          | Message context for disambiguation |
-| `references`        | `string[]`                | Source file references             |
-| `comments`          | `string[]`                | Translator comments                |
-| `extractedComments` | `string[]`                | Automatically extracted comments   |
-| `flags`             | `Record<string, boolean>` | Flags like `fuzzy`                 |
-| `obsolete`          | `boolean`                 | Whether entry is obsolete          |
-
-#### Example
-
-```typescript
-const item = new PO.Item()
-item.msgid = "Hello, {name}!"
-item.msgstr = ["Hallo, {name}!"]
-item.references = ["src/greeting.ts:42"]
-item.flags.fuzzy = true
-
-po.items.push(item)
-```
-
-## Working with Plurals
-
-PO files support plural forms. The number of plural forms depends on the language.
-
-```typescript
-const item = new PO.Item()
-item.msgid = "One item"
-item.msgid_plural = "{count} items"
-item.msgstr = [
-  "Ein Element", // singular
-  "{count} Elemente" // plural
-]
-
-po.items.push(item)
-```
-
-## Migrating from `pofile`
-
-This package is a modernized fork of the original [pofile](https://github.com/rubenv/pofile) package.
-
-### Requirements
-
-- **Node.js 22+** is now required (was Node.js 0.8+)
-- **ESM-first** with full TypeScript support
-
-### API Changes
-
-The `load()` and `save()` methods now use Promises instead of callbacks:
-
-```typescript
-// ❌ Old API (pofile 1.x)
-PO.load("messages.po", (err, po) => {
-  if (err) throw err
-  // use po
-})
-
-po.save("output.po", (err) => {
-  if (err) throw err
-})
-
-// ✅ New API (pofile-ts)
-const po = await PO.load("messages.po")
-
-await po.save("output.po")
-```
-
-### Unchanged APIs
-
-The following APIs remain unchanged:
-
-- `PO.parse(string)` — parse PO content from string
-- `po.toString()` — serialize PO to string
-- `new PO()` — create new PO file
-- `new PO.Item()` — create new translation item
-- All properties on `PO` and `PO.Item` classes
+For comprehensive documentation including API reference, plurals support, and migration guide from the original `pofile` package, visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
 
 ## Credits
 

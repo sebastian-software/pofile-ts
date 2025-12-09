@@ -16,6 +16,7 @@
     "Sander Houttekier"
   ],
   "license": "MIT",
+  "homepage": "https://sebastian-software.github.io/pofile-ts/",
   "repository": {
     "type": "git",
     "url": "https://github.com/sebastian-software/pofile-ts.git"
