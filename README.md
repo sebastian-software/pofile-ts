@@ -1,10 +1,10 @@
-# pofile
+# pofile-ts
 
 > Parse and serialize Gettext PO files.
 
-[![CI](https://github.com/rubenv/pofile/actions/workflows/ci.yml/badge.svg)](https://github.com/rubenv/pofile/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/pofile.svg)](https://www.npmjs.com/package/pofile)
-[![npm downloads](https://img.shields.io/npm/dm/pofile.svg)](https://www.npmjs.com/package/pofile)
+[![CI](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
+[![npm downloads](https://img.shields.io/npm/dm/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -18,18 +18,18 @@ A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
 - 📦 **Zero dependencies**
 - 🔷 **TypeScript** — full type definitions included
-- ⚡ **ESM & CommonJS** — works everywhere
+- ⚡ **ESM-first** — modern JavaScript
 
 ## Installation
 
 ```bash
-npm install pofile
+npm install pofile-ts
 ```
 
 ## Quick Start
 
 ```typescript
-import PO from "pofile"
+import PO from "pofile-ts"
 
 // Parse a PO file
 const po = PO.parse(`
@@ -152,9 +152,9 @@ item.msgstr = [
 po.items.push(item)
 ```
 
-## Migrating from `pofile` 1.x
+## Migrating from `pofile`
 
-This package is a modernized fork of the original [pofile](https://github.com/rubenv/pofile) package. If you're upgrading from version 1.x, note the following breaking changes:
+This package is a modernized fork of the original [pofile](https://github.com/rubenv/pofile) package.
 
 ### Requirements
 
@@ -176,7 +176,7 @@ po.save("output.po", (err) => {
   if (err) throw err
 })
 
-// ✅ New API (pofile 2.x)
+// ✅ New API (pofile-ts)
 const po = await PO.load("messages.po")
 
 await po.save("output.po")

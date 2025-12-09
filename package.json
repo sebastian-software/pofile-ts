@@ -1,13 +1,14 @@
 {
-  "name": "pofile",
+  "name": "pofile-ts",
   "description": "Parse and serialize Gettext PO files.",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "author": {
-    "name": "Ruben Vermeersch",
-    "email": "ruben@savanne.be",
-    "url": "http://savanne.be/"
+    "name": "Sebastian Software GmbH",
+    "email": "s.werner@sebastian-software.de",
+    "url": "https://sebastian-software.de/"
   },
   "contributors": [
+    "Ruben Vermeersch",
     "Eyal Lewinsohn",
     "Gabe Gorelick",
     "Julian Bäume",
@@ -17,7 +18,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rubenv/pofile.git"
+    "url": "https://github.com/sebastian-software/pofile-ts.git"
   },
   "type": "module",
   "main": "./dist/po.js",
