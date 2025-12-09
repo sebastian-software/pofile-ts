@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.2](///compare/v2.0.1...v2.0.2) (2025-12-09)
+
+### Bug Fixes
+
+- switch to Vite build with dual ESM/CJS output 2417e09
+
 ## [2.0.1](///compare/v2.0.0...v2.0.1) (2025-12-09)
 
 ## 2.0.0 (2025-12-09)
