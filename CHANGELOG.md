@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0](///compare/v2.1.0...v2.2.0) (2025-12-09)
+
+### Features
+
+- remove load() and save() methods for browser compatibility 5217fe7
+
 ## [2.1.0](///compare/v2.0.3...v2.1.0) (2025-12-09)
 
 ### Features
