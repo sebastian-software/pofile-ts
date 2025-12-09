@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.0.0](///compare/v2.2.1...v3.0.0) (2025-12-09)
+
+### ⚠ BREAKING CHANGES
+
+- The API has been completely redesigned to use pure functions instead of classes.
+
+* Remove PO and Item classes
+* Add parsePo(), stringifyPo(), createPoFile() functions
+* Add createItem(), stringifyItem() functions
+* Export PoFile and PoItem as interfaces instead of classes
+* Remove default export (named exports only)
+* Update all tests to use new functional API
+* Update README with new API and migration guide
+* Update docs/index.html with new examples
+
+Migration:
+import PO from 'pofile-ts' → import { parsePo, stringifyPo } from 'pofile-ts'
+PO.parse(content) → parsePo(content)
+po.toString() → stringifyPo(po)
+new PO() → createPoFile()
+new Item() → createItem()
+
+### Code Refactoring
+
+- replace class-based API with functional exports af268d7
+
 ## [2.2.1](///compare/v2.2.0...v2.2.1) (2025-12-09)
 
 ## [2.2.0](///compare/v2.1.0...v2.2.0) (2025-12-09)
