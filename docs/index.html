@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pofile-ts — Parse and serialize Gettext PO files</title>
+    <meta
+      name="description"
+      content="A robust TypeScript library for reading and writing GNU gettext PO files. Zero dependencies, full type safety."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-deep: #0a0f1a;
+        --bg-card: #111827;
+        --bg-code: #1e293b;
+        --accent: #22d3ee;
+        --accent-glow: rgba(34, 211, 238, 0.15);
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --border: #1e293b;
+        --success: #4ade80;
+        --warning: #fbbf24;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Outfit", system-ui, sans-serif;
+        background: var(--bg-deep);
+        color: var(--text);
+        line-height: 1.7;
+        min-height: 100vh;
+      }
+
+      /* Background pattern */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background:
+          radial-gradient(ellipse at 20% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 100px,
+            rgba(34, 211, 238, 0.02) 100px,
+            rgba(34, 211, 238, 0.02) 101px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 100px,
+            rgba(34, 211, 238, 0.02) 100px,
+            rgba(34, 211, 238, 0.02) 101px
+          );
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* Header */
+      header {
+        padding: 80px 0 60px;
+        text-align: center;
+      }
+
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--accent), #8b5cf6);
+        border-radius: 24px;
+        margin-bottom: 32px;
+        box-shadow:
+          0 0 60px var(--accent-glow),
+          0 20px 40px rgba(0, 0, 0, 0.3);
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .logo svg {
+        width: 56px;
+        height: 56px;
+        color: white;
+      }
+
+      h1 {
+        font-size: clamp(2.5rem, 6vw, 3.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+        background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .tagline {
+        font-size: 1.25rem;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin: 0 auto 32px;
+      }
+
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 40px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+
+      .badge:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .badge svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .badge--ts {
+        background: linear-gradient(135deg, #3178c6 0%, #235a97 100%);
+        border-color: transparent;
+        color: white;
+      }
+
+      .badge--ts:hover {
+        color: white;
+        box-shadow: 0 0 20px rgba(49, 120, 198, 0.4);
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+
+      .btn--primary {
+        background: linear-gradient(135deg, var(--accent), #06b6d4);
+        color: var(--bg-deep);
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+
+      .btn--primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px var(--accent-glow);
+      }
+
+      .btn--secondary {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+
+      .btn--secondary:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Install command */
+      .install {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 24px;
+        margin: 40px auto;
+        max-width: 400px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.95rem;
+      }
+
+      .install code {
+        color: var(--accent);
+      }
+
+      .install button {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .install button:hover {
+        color: var(--accent);
+        background: var(--accent-glow);
+      }
+
+      /* Sections */
+      section {
+        padding: 60px 0;
+      }
+
+      h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 32px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h2::before {
+        content: "";
+        width: 4px;
+        height: 28px;
+        background: linear-gradient(180deg, var(--accent), #8b5cf6);
+        border-radius: 2px;
+      }
+
+      h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 32px 0 16px;
+        color: var(--text);
+      }
+
+      p {
+        color: var(--text-muted);
+        margin-bottom: 16px;
+      }
+
+      /* Features grid */
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 32px;
+      }
+
+      .feature {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.2s;
+      }
+
+      .feature:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .feature-icon {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+      }
+
+      .feature h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .feature p {
+        font-size: 0.9rem;
+        margin: 0;
+      }
+
+      /* Code blocks */
+      pre {
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        overflow-x: auto;
+        margin: 16px 0 24px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+      }
+
+      code {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .code-keyword {
+        color: #c792ea;
+      }
+      .code-string {
+        color: #c3e88d;
+      }
+      .code-comment {
+        color: #546e7a;
+        font-style: italic;
+      }
+      .code-function {
+        color: #82aaff;
+      }
+      .code-property {
+        color: #f07178;
+      }
+      .code-number {
+        color: #f78c6c;
+      }
+      .code-type {
+        color: #ffcb6b;
+      }
+      .code-variable {
+        color: #89ddff;
+      }
+
+      /* API Reference */
+      .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0 32px;
+        font-size: 0.9rem;
+      }
+
+      .api-table th,
+      .api-table td {
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .api-table th {
+        background: var(--bg-card);
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .api-table td {
+        color: var(--text-muted);
+      }
+
+      .api-table code {
+        background: var(--bg-code);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: var(--accent);
+      }
+
+      /* Footer */
+      footer {
+        padding: 60px 0 40px;
+        text-align: center;
+        border-top: 1px solid var(--border);
+        margin-top: 40px;
+      }
+
+      footer p {
+        font-size: 0.9rem;
+      }
+
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      .credits {
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      /* Responsive */
+      @media (max-width: 640px) {
+        header {
+          padding: 60px 0 40px;
+        }
+
+        .logo {
+          width: 80px;
+          height: 80px;
+        }
+
+        .logo svg {
+          width: 44px;
+          height: 44px;
+        }
+
+        section {
+          padding: 40px 0;
+        }
+
+        .api-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo">
+          <!-- Globe SVG Icon -->
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <ellipse cx="12" cy="12" rx="4" ry="10" />
+            <path d="M2 12h20" />
+            <path
+              d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+            />
+          </svg>
+        </div>
+
+        <h1>pofile-ts</h1>
+        <p class="tagline">Parse and serialize Gettext PO files with full TypeScript support</p>
+
+        <div class="badges">
+          <a href="https://www.typescriptlang.org/" class="badge badge--ts">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"
+              />
+            </svg>
+            TypeScript 5.x
+          </a>
+          <a href="https://github.com/sebastian-software/pofile-ts" class="badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+              />
+            </svg>
+            GitHub
+          </a>
+          <a href="https://www.npmjs.com/package/pofile-ts" class="badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"
+              />
+            </svg>
+            npm
+          </a>
+          <span class="badge">📦 Zero Dependencies</span>
+          <span class="badge">⚡ ESM-first</span>
+        </div>
+
+        <div class="cta-buttons">
+          <a href="#quick-start" class="btn btn--primary">Get Started</a>
+          <a href="https://github.com/sebastian-software/pofile-ts" class="btn btn--secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+              />
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+
+        <div class="install">
+          <code>npm install pofile-ts</code>
+          <button
+            onclick="navigator.clipboard.writeText('npm install pofile-ts')"
+            title="Copy to clipboard"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section>
+        <h2>Features</h2>
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">📖</div>
+            <h4>Parse PO Files</h4>
+            <p>Read PO files from strings or directly from the filesystem</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">✍️</div>
+            <h4>Write PO Files</h4>
+            <p>Serialize PO data back to strings or save to disk</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🎯</div>
+            <h4>Full PO Support</h4>
+            <p>Headers, comments, flags, plurals, and message context</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">📦</div>
+            <h4>Zero Dependencies</h4>
+            <p>Lightweight and secure with no external dependencies</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">🔷</div>
+            <h4>TypeScript First</h4>
+            <p>Full type definitions for excellent IDE support</p>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h4>ESM Native</h4>
+            <p>Modern JavaScript with native ES modules</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="quick-start">
+        <h2>Quick Start</h2>
+        <p>Get up and running in seconds with pofile-ts:</p>
+
+        <pre><span class="code-keyword">import</span> PO <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Parse a PO file</span>
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(<span class="code-string">`
+msgid "Hello"
+msgstr "Hallo"
+`</span>)
+
+console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgid)   <span class="code-comment">// "Hello"</span>
+console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgstr)  <span class="code-comment">// ["Hallo"]</span></pre>
+
+        <h3>Create a new PO file</h3>
+
+        <pre><span class="code-keyword">const</span> newPo = <span class="code-keyword">new</span> <span class="code-type">PO</span>()
+newPo.headers[<span class="code-string">"Content-Type"</span>] = <span class="code-string">"text/plain; charset=UTF-8"</span>
+
+<span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
+item.msgid = <span class="code-string">"Welcome"</span>
+item.msgstr = [<span class="code-string">"Willkommen"</span>]
+newPo.items.<span class="code-function">push</span>(item)
+
+console.<span class="code-function">log</span>(newPo.<span class="code-function">toString</span>())</pre>
+      </section>
+
+      <section id="api">
+        <h2>API Reference</h2>
+
+        <h3>PO Class</h3>
+        <p>The main class representing a PO file.</p>
+
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>headers</code></td>
+              <td><code>Record&lt;string, string&gt;</code></td>
+              <td>PO file headers (Content-Type, Language, etc.)</td>
+            </tr>
+            <tr>
+              <td><code>comments</code></td>
+              <td><code>string[]</code></td>
+              <td>Translator comments at file header</td>
+            </tr>
+            <tr>
+              <td><code>extractedComments</code></td>
+              <td><code>string[]</code></td>
+              <td>Extracted comments at file header</td>
+            </tr>
+            <tr>
+              <td><code>items</code></td>
+              <td><code>Item[]</code></td>
+              <td>Translation entries</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Static Methods</h3>
+
+        <pre><span class="code-comment">// Parse from string</span>
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(poFileContent)
+
+<span class="code-comment">// Load from file (Node.js)</span>
+<span class="code-keyword">const</span> po = <span class="code-keyword">await</span> PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>)</pre>
+
+        <h3>Instance Methods</h3>
+
+        <pre><span class="code-comment">// Serialize to string</span>
+<span class="code-keyword">const</span> output = po.<span class="code-function">toString</span>()
+
+<span class="code-comment">// Save to file (Node.js)</span>
+<span class="code-keyword">await</span> po.<span class="code-function">save</span>(<span class="code-string">"output.po"</span>)</pre>
+
+        <h3>PO.Item Class</h3>
+        <p>Represents a single translation entry.</p>
+
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>msgid</code></td>
+              <td><code>string</code></td>
+              <td>Source string</td>
+            </tr>
+            <tr>
+              <td><code>msgid_plural</code></td>
+              <td><code>string | null</code></td>
+              <td>Plural form of source string</td>
+            </tr>
+            <tr>
+              <td><code>msgstr</code></td>
+              <td><code>string[]</code></td>
+              <td>Translated string(s)</td>
+            </tr>
+            <tr>
+              <td><code>msgctxt</code></td>
+              <td><code>string | null</code></td>
+              <td>Message context for disambiguation</td>
+            </tr>
+            <tr>
+              <td><code>references</code></td>
+              <td><code>string[]</code></td>
+              <td>Source file references</td>
+            </tr>
+            <tr>
+              <td><code>comments</code></td>
+              <td><code>string[]</code></td>
+              <td>Translator comments</td>
+            </tr>
+            <tr>
+              <td><code>flags</code></td>
+              <td><code>Record&lt;string, boolean&gt;</code></td>
+              <td>Flags like <code>fuzzy</code></td>
+            </tr>
+            <tr>
+              <td><code>obsolete</code></td>
+              <td><code>boolean</code></td>
+              <td>Whether entry is obsolete</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="plurals">
+        <h2>Working with Plurals</h2>
+        <p>PO files support plural forms. The number of plural forms depends on the language.</p>
+
+        <pre><span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
+item.msgid = <span class="code-string">"One item"</span>
+item.msgid_plural = <span class="code-string">"{count} items"</span>
+item.msgstr = [
+  <span class="code-string">"Ein Element"</span>,      <span class="code-comment">// singular</span>
+  <span class="code-string">"{count} Elemente"</span>  <span class="code-comment">// plural</span>
+]
+
+po.items.<span class="code-function">push</span>(item)</pre>
+      </section>
+
+      <section id="migration">
+        <h2>Migrating from pofile</h2>
+        <p>
+          This package is a modernized fork of the original
+          <a href="https://github.com/rubenv/pofile" style="color: var(--accent)">pofile</a>
+          package.
+        </p>
+
+        <h3>Requirements</h3>
+        <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 24px">
+          <li><strong>Node.js 22+</strong> is now required (was Node.js 0.8+)</li>
+          <li><strong>ESM-first</strong> with full TypeScript support</li>
+        </ul>
+
+        <h3>API Changes</h3>
+        <p>
+          The <code>load()</code> and <code>save()</code> methods now use Promises instead of
+          callbacks:
+        </p>
+
+        <pre><span class="code-comment">// ❌ Old API (pofile 1.x)</span>
+PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>, (err, po) => {
+  <span class="code-keyword">if</span> (err) <span class="code-keyword">throw</span> err
+  <span class="code-comment">// use po</span>
+})
+
+<span class="code-comment">// ✅ New API (pofile-ts)</span>
+<span class="code-keyword">const</span> po = <span class="code-keyword">await</span> PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>)</pre>
+      </section>
+
+      <footer>
+        <p>
+          Released under the
+          <a href="https://github.com/sebastian-software/pofile-ts/blob/main/LICENSE"
+            >MIT License</a
+          >
+        </p>
+        <p class="credits">
+          Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a><br />
+          Fork of <a href="https://github.com/rubenv/pofile">pofile</a> by Ruben Vermeersch
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
