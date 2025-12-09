@@ -1,7 +1,7 @@
 {
   "name": "pofile-ts",
   "description": "Parse and serialize Gettext PO files.",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "author": {
     "name": "Sebastian Software GmbH",
     "email": "s.werner@sebastian-software.de",
@@ -21,12 +21,12 @@
     "url": "https://github.com/sebastian-software/pofile-ts.git"
   },
   "type": "module",
-  "main": "./dist/po.js",
-  "types": "./dist/po.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/po.d.ts",
-      "default": "./dist/po.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
