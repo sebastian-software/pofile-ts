@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.3](///compare/v2.0.2...v2.0.3) (2025-12-09)
+
+### Bug Fixes
+
+- use separate type declarations for ESM and CJS exports 34a76de
+
 ## [2.0.2](///compare/v2.0.1...v2.0.2) (2025-12-09)
 
 ### Bug Fixes
