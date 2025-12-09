@@ -45,8 +45,8 @@ describe("parser", () => {
   })
 
   describe("comments", () => {
-    it("handles empty comments", async () => {
-      const po = await PO.load(path.join(FIXTURES_DIR, "comment.po"))
+    it("handles empty comments", () => {
+      const po = PO.parse(readFixture("comment.po"))
 
       const item = po.items[1]
       expect(item?.msgid).toBe("Empty comment")

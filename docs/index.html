@@ -722,12 +722,12 @@
           <div class="feature">
             <div class="feature-icon">📖</div>
             <h4>Parse PO Files</h4>
-            <p>Read PO files from strings or directly from the filesystem</p>
+            <p>Read PO files from strings with full escape sequence support</p>
           </div>
           <div class="feature">
             <div class="feature-icon">✍️</div>
-            <h4>Write PO Files</h4>
-            <p>Serialize PO data back to strings or save to disk</p>
+            <h4>Serialize PO Files</h4>
+            <p>Convert PO data back to properly formatted strings</p>
           </div>
           <div class="feature">
             <div class="feature-icon">🎯</div>
@@ -737,7 +737,7 @@
           <div class="feature">
             <div class="feature-icon">📦</div>
             <h4>Zero Dependencies</h4>
-            <p>Lightweight and secure with no external dependencies</p>
+            <p>No Node.js APIs required — works in browsers too</p>
           </div>
           <div class="feature">
             <div class="feature-icon">🔷</div>
@@ -821,18 +821,32 @@ console.<span class="code-function">log</span>(newPo.<span class="code-function"
         <h3>Static Methods</h3>
 
         <pre><span class="code-comment">// Parse from string</span>
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(poFileContent)
-
-<span class="code-comment">// Load from file (Node.js)</span>
-<span class="code-keyword">const</span> po = <span class="code-keyword">await</span> PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>)</pre>
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(poFileContent)</pre>
 
         <h3>Instance Methods</h3>
 
         <pre><span class="code-comment">// Serialize to string</span>
-<span class="code-keyword">const</span> output = po.<span class="code-function">toString</span>()
+<span class="code-keyword">const</span> output = po.<span class="code-function">toString</span>()</pre>
 
-<span class="code-comment">// Save to file (Node.js)</span>
-<span class="code-keyword">await</span> po.<span class="code-function">save</span>(<span class="code-string">"output.po"</span>)</pre>
+        <h3>Utility Functions</h3>
+
+        <pre><span class="code-keyword">import</span> { parsePluralForms } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Parse Plural-Forms header value</span>
+<span class="code-keyword">const</span> { nplurals, plural } = <span class="code-function">parsePluralForms</span>(<span class="code-string">"nplurals=2; plural=(n != 1);"</span>)
+<span class="code-comment">// → { nplurals: "2", plural: "(n != 1)" }</span></pre>
+
+        <h3>File I/O (Node.js)</h3>
+        <p>Use native <code>fs</code> module for file operations:</p>
+
+        <pre><span class="code-keyword">import</span> { readFile, writeFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
+
+<span class="code-comment">// Load from file</span>
+<span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)
+
+<span class="code-comment">// Save to file</span>
+<span class="code-keyword">await</span> <span class="code-function">writeFile</span>(<span class="code-string">"output.po"</span>, po.<span class="code-function">toString</span>())</pre>
 
         <h3>PO.Item Class</h3>
         <p>Represents a single translation entry.</p>
@@ -915,14 +929,14 @@ po.items.<span class="code-function">push</span>(item)</pre>
 
         <h3>Requirements</h3>
         <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 24px">
-          <li><strong>Node.js 20+</strong> is now required (was Node.js 0.8+)</li>
+          <li><strong>Node.js 20+</strong> or modern browsers</li>
           <li><strong>ESM-first</strong> with full TypeScript support</li>
         </ul>
 
         <h3>API Changes</h3>
         <p>
-          The <code>load()</code> and <code>save()</code> methods now use Promises instead of
-          callbacks:
+          The <code>load()</code> and <code>save()</code> methods have been removed. Use native file
+          system APIs instead:
         </p>
 
         <pre><span class="code-comment">// ❌ Old API (pofile 1.x)</span>
@@ -932,7 +946,9 @@ PO.<span class="code-function">load</span>(<span class="code-string">"messages.p
 })
 
 <span class="code-comment">// ✅ New API (pofile-ts)</span>
-<span class="code-keyword">const</span> po = <span class="code-keyword">await</span> PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>)</pre>
+<span class="code-keyword">import</span> { readFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
+<span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
+<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)</pre>
       </section>
 
       <footer>
@@ -944,7 +960,9 @@ PO.<span class="code-function">load</span>(<span class="code-string">"messages.p
         </p>
         <p class="credits">
           Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a><br />
-          Fork of <a href="https://github.com/rubenv/pofile">pofile</a> by Ruben Vermeersch
+          Fork of <a href="https://github.com/rubenv/pofile">pofile</a> by Ruben Vermeersch<br />
+          Inspired by <a href="https://github.com/timofei-iatsenko/pofile">@lingui/pofile</a> by
+          Timofei Iatsenko
         </p>
       </footer>
     </div>

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest"
 import * as fs from "node:fs"
 import * as path from "node:path"
-import { PO } from "./PO"
+import { PO, parsePluralForms } from "./PO"
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
@@ -13,8 +13,8 @@ describe("PO", () => {
   describe("headers", () => {
     let po: PO
 
-    beforeAll(async () => {
-      po = await PO.load(path.join(FIXTURES_DIR, "big.po"))
+    beforeAll(() => {
+      po = PO.parse(readFixture("big.po"))
     })
 
     it("parses headers correctly", () => {
@@ -33,8 +33,8 @@ describe("PO", () => {
   describe("comments", () => {
     let po: PO
 
-    beforeAll(async () => {
-      po = await PO.load(path.join(FIXTURES_DIR, "big.po"))
+    beforeAll(() => {
+      po = PO.parse(readFixture("big.po"))
     })
 
     it("parses the comments", () => {
@@ -67,8 +67,8 @@ describe("PO", () => {
     describe("advanced example", () => {
       let po: PO
 
-      beforeAll(async () => {
-        po = await PO.load(path.join(FIXTURES_DIR, "no_header.po"))
+      beforeAll(() => {
+        po = PO.parse(readFixture("no_header.po"))
       })
 
       it("parses the po file", () => {
@@ -83,8 +83,8 @@ describe("PO", () => {
     describe("advanced example with extra spaces", () => {
       let po: PO
 
-      beforeAll(async () => {
-        po = await PO.load(path.join(FIXTURES_DIR, "no_header_extra_spaces.po"))
+      beforeAll(() => {
+        po = PO.parse(readFixture("no_header_extra_spaces.po"))
       })
 
       it("parses the po file", () => {
@@ -100,14 +100,14 @@ describe("PO", () => {
   describe("parsePluralForms", () => {
     it("returns undefined values when there is no plural forms header", () => {
       const expected = { nplurals: undefined, plural: undefined }
-      expect(PO.parsePluralForms(undefined)).toEqual(expected)
-      expect(PO.parsePluralForms("")).toEqual(expected)
+      expect(parsePluralForms(undefined)).toEqual(expected)
+      expect(parsePluralForms("")).toEqual(expected)
     })
 
     it("parses xgettext's default output", () => {
       const pluralForms = "nplurals=INTEGER; plural=EXPRESSION;"
       const expected = { nplurals: "INTEGER", plural: "EXPRESSION" }
-      expect(PO.parsePluralForms(pluralForms)).toEqual(expected)
+      expect(parsePluralForms(pluralForms)).toEqual(expected)
     })
 
     it("parses typical plural forms string", () => {
@@ -117,7 +117,7 @@ describe("PO", () => {
         nplurals: "3",
         plural: "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)"
       }
-      expect(PO.parsePluralForms(pluralForms)).toEqual(expected)
+      expect(parsePluralForms(pluralForms)).toEqual(expected)
     })
 
     it("handles spaces around assignments", () => {
@@ -127,7 +127,7 @@ describe("PO", () => {
         nplurals: "3",
         plural: "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)"
       }
-      expect(PO.parsePluralForms(pluralForms)).toEqual(expected)
+      expect(parsePluralForms(pluralForms)).toEqual(expected)
     })
   })
 

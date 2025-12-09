@@ -1,8 +1,31 @@
-import { readFile, writeFile } from "node:fs/promises"
 import type { Headers, ParsedPluralForms } from "./types"
 import { DEFAULT_HEADERS } from "./constants"
 import { Item } from "./Item"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./parser"
+
+/**
+ * Parses the Plural-Forms header value.
+ * Example: "nplurals=2; plural=(n != 1);"
+ */
+export function parsePluralForms(pluralFormsString: string | undefined): ParsedPluralForms {
+  const parts = (pluralFormsString ?? "").split(";")
+  const results: Record<string, string> = {}
+
+  for (const part of parts) {
+    const trimmed = part.trim()
+    const eqIndex = trimmed.indexOf("=")
+    if (eqIndex > 0) {
+      const key = trimmed.substring(0, eqIndex).trim()
+      const value = trimmed.substring(eqIndex + 1).trim()
+      results[key] = value
+    }
+  }
+
+  return {
+    nplurals: results.nplurals,
+    plural: results.plural
+  }
+}
 
 /**
  * Represents a complete PO (Portable Object) file.
@@ -31,30 +54,6 @@ export class PO {
   static Item = Item
 
   /**
-   * Parses the Plural-Forms header value.
-   * Example: "nplurals=2; plural=(n != 1);"
-   */
-  static parsePluralForms(pluralFormsString: string | undefined): ParsedPluralForms {
-    const parts = (pluralFormsString ?? "").split(";")
-    const results: Record<string, string> = {}
-
-    for (const part of parts) {
-      const trimmed = part.trim()
-      const eqIndex = trimmed.indexOf("=")
-      if (eqIndex > 0) {
-        const key = trimmed.substring(0, eqIndex).trim()
-        const value = trimmed.substring(eqIndex + 1).trim()
-        results[key] = value
-      }
-    }
-
-    return {
-      nplurals: results.nplurals,
-      plural: results.plural
-    }
-  }
-
-  /**
    * Parses a PO file string.
    */
   static parse(data: string): PO {
@@ -69,25 +68,10 @@ export class PO {
     parseHeaders(headerSection, po)
 
     // Parse items
-    const nplurals = PO.parsePluralForms(po.headers["Plural-Forms"]).nplurals
+    const nplurals = parsePluralForms(po.headers["Plural-Forms"]).nplurals
     parseItems(bodyLines, po, nplurals)
 
     return po
-  }
-
-  /**
-   * Loads a PO file from disk.
-   */
-  static async load(filename: string): Promise<PO> {
-    const data = await readFile(filename, "utf-8")
-    return PO.parse(data)
-  }
-
-  /**
-   * Saves this PO file to disk.
-   */
-  async save(filename: string): Promise<void> {
-    await writeFile(filename, this.toString())
   }
 
   /**

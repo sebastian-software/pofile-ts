@@ -16,6 +16,7 @@
   <a href="https://www.npmjs.com/package/pofile-ts"><img src="https://img.shields.io/npm/dm/pofile-ts.svg" alt="npm downloads"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue.svg" alt="TypeScript"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-%3E%3D20-339933.svg" alt="Node.js"></a>
+  <img src="https://img.shields.io/badge/Browser-compatible-E34F26.svg" alt="Browser">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
@@ -31,10 +32,10 @@ A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS
 
 ## Features
 
-- 📖 **Parse** PO files from strings or files
-- ✍️ **Write** PO files back to strings or files
+- 📖 **Parse** PO files from strings
+- ✍️ **Serialize** PO files back to strings
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
-- 📦 **Zero dependencies**
+- 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
 - 🔷 **TypeScript** — full type definitions included
 - ⚡ **ESM-first** — modern JavaScript
 
@@ -73,6 +74,8 @@ For comprehensive documentation including API reference, plurals support, and mi
 ## Credits
 
 This is a modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch, which was originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
+
+Also inspired by [@lingui/pofile](https://github.com/timofei-iatsenko/pofile) by Timofei Iatsenko.
 
 Maintained by [Sebastian Software](https://sebastian-software.de/).
 
