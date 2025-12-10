@@ -1,5 +1,5 @@
-import type { CreateItemOptions, PoItem } from "./types"
-import { formatKeyword, formatKeywordWithLineBreaks } from "./serialization"
+import type { CreateItemOptions, PoItem, SerializeOptions } from "./types"
+import { formatKeyword } from "./serialization"
 
 /**
  * Creates a new translation item with default values.
@@ -24,8 +24,11 @@ export function createItem(options?: CreateItemOptions): PoItem {
 
 /**
  * Serializes an item to PO file format.
+ *
+ * @param item - The translation item to serialize
+ * @param options - Serialization options for controlling output format
  */
-export function stringifyItem(item: PoItem): string {
+export function stringifyItem(item: PoItem, options?: SerializeOptions): string {
   const lines: string[] = []
   const obsoletePrefix = item.obsolete ? "#~ " : ""
 
@@ -41,48 +44,59 @@ export function stringifyItem(item: PoItem): string {
 
   // Message fields
   if (item.msgctxt != null) {
-    appendKeyword(lines, "msgctxt", item.msgctxt, obsoletePrefix)
+    appendKeyword(lines, "msgctxt", item.msgctxt, obsoletePrefix, options)
   }
 
-  appendKeyword(lines, "msgid", item.msgid, obsoletePrefix)
+  appendKeyword(lines, "msgid", item.msgid, obsoletePrefix, options)
 
   if (item.msgid_plural != null) {
-    appendKeyword(lines, "msgid_plural", item.msgid_plural, obsoletePrefix)
+    appendKeyword(lines, "msgid_plural", item.msgid_plural, obsoletePrefix, options)
   }
 
-  appendMsgstr(lines, item, obsoletePrefix)
+  appendMsgstr(lines, item, obsoletePrefix, options)
 
   return lines.join("\n")
 }
 
 /** Appends a single keyword line to the output */
-function appendKeyword(lines: string[], keyword: string, text: string, prefix: string): void {
-  const formatted = formatKeywordWithLineBreaks(keyword, text)
+function appendKeyword(
+  lines: string[],
+  keyword: string,
+  text: string,
+  prefix: string,
+  options?: SerializeOptions
+): void {
+  const formatted = formatKeyword(keyword, text, undefined, options)
   lines.push(prefix + formatted.join("\n" + prefix))
 }
 
 /** Appends msgstr line(s) to the output, handling plurals */
-function appendMsgstr(lines: string[], item: PoItem, prefix: string): void {
+function appendMsgstr(
+  lines: string[],
+  item: PoItem,
+  prefix: string,
+  options?: SerializeOptions
+): void {
   const hasTranslation = item.msgstr.some((t) => t)
   const hasPlural = item.msgid_plural != null
 
   if (item.msgstr.length > 1) {
     // Multiple msgstr entries (plurals with translations)
     item.msgstr.forEach((text, i) => {
-      const formatted = formatKeywordWithLineBreaks("msgstr", text, i)
+      const formatted = formatKeyword("msgstr", text, i, options)
       lines.push(prefix + formatted.join("\n" + prefix))
     })
   } else if (hasPlural && !hasTranslation) {
     // Plural form but no translations yet - output empty msgstr[n] for each plural
     for (let i = 0; i < item.nplurals; i++) {
-      const formatted = formatKeyword("msgstr", "", i)
+      const formatted = formatKeyword("msgstr", "", i, options)
       lines.push(prefix + formatted.join(""))
     }
   } else {
     // Single msgstr (possibly with index 0 for plurals)
     const index = hasPlural ? 0 : undefined
     const text = item.msgstr.join("")
-    const formatted = formatKeywordWithLineBreaks("msgstr", text, index)
+    const formatted = formatKeyword("msgstr", text, index, options)
     lines.push(prefix + formatted.join("\n" + prefix))
   }
 }

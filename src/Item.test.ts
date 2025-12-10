@@ -142,17 +142,34 @@ describe("stringifyItem", () => {
 
     it("escapes \\n", () => {
       const item = createItem()
+      // String starting with \n - first part is empty, so uses empty first line
       item.msgid = "\n should be written escaped"
       assertHasLine(stringifyItem(item), 'msgid ""')
       assertHasLine(stringifyItem(item), '"\\n"')
       assertHasLine(stringifyItem(item), '" should be written escaped"')
     })
 
-    it("writes identical file after parsing", () => {
+    it("roundtrips c-strings file correctly", () => {
+      // Note: Output format may differ from input (compact vs traditional),
+      // but the data should roundtrip correctly
       const input = readFixture("c-strings.po")
       const po = parsePo(input)
       const str = stringifyPo(po)
-      expect(str).toBe(input)
+      const reparsed = parsePo(str)
+
+      expect(reparsed.items.length).toBe(po.items.length)
+      for (let i = 0; i < po.items.length; i++) {
+        expect(reparsed.items[i]?.msgid).toBe(po.items[i]?.msgid)
+        expect(reparsed.items[i]?.msgstr).toEqual(po.items[i]?.msgstr)
+      }
+    })
+
+    it("produces traditional format with compactMultiline: false", () => {
+      const input = readFixture("c-strings.po")
+      const po = parsePo(input)
+      const str = stringifyPo(po, { compactMultiline: false, foldLength: 0 })
+      // Traditional format has empty first line for multiline strings
+      expect(str).toContain('msgid ""\n"%1$s\\n"')
     })
   })
 
@@ -182,14 +199,16 @@ describe("stringifyItem", () => {
       const item = createItem()
       item.msgid = "line1\nline2\nline3"
       const str = stringifyItem(item)
-      assertHasContiguousLines(str, ['msgid ""', '"line1\\n"', '"line2\\n"', '"line3"'])
+      // Compact format: first line has content
+      assertHasContiguousLines(str, ['msgid "line1\\n"', '"line2\\n"', '"line3"'])
     })
 
     it("handles string ending with newline", () => {
       const item = createItem()
       item.msgid = "ends with newline\n"
       const str = stringifyItem(item)
-      assertHasContiguousLines(str, ['msgid ""', '"ends with newline\\n"', '""'])
+      // Compact format: first line has content
+      assertHasContiguousLines(str, ['msgid "ends with newline\\n"', '""'])
     })
 
     it("handles empty string", () => {
@@ -201,6 +220,7 @@ describe("stringifyItem", () => {
 
     it("handles string with only newlines", () => {
       const item = createItem()
+      // String starting with \n - first part is empty, so uses empty first line
       item.msgid = "\n\n"
       const str = stringifyItem(item)
       assertHasContiguousLines(str, ['msgid ""', '"\\n"', '"\\n"', '""'])
@@ -217,9 +237,9 @@ describe("stringifyItem", () => {
       const item = createItem()
       item.msgid = 'quote: " backslash: \\ tab: \t newline:\n'
       const str = stringifyItem(item)
+      // Compact format: first line has content
       assertHasContiguousLines(str, [
-        'msgid ""',
-        '"quote: \\" backslash: \\\\ tab: \\t newline:\\n"',
+        'msgid "quote: \\" backslash: \\\\ tab: \\t newline:\\n"',
         '""'
       ])
     })

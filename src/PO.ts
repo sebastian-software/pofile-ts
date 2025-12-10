@@ -1,4 +1,4 @@
-import type { ParsedPluralForms, PoFile } from "./types"
+import type { ParsedPluralForms, PoFile, SerializeOptions } from "./types"
 import { DEFAULT_HEADERS } from "./constants"
 import { stringifyItem } from "./Item"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./parser"
@@ -62,8 +62,23 @@ export function parsePo(data: string): PoFile {
 
 /**
  * Serializes a PoFile structure to a string.
+ *
+ * @param po - The PO file structure to serialize
+ * @param options - Serialization options for controlling output format
+ *
+ * @example
+ * // Default: compact format, 80 char fold length (Crowdin-compatible)
+ * const output = stringifyPo(po)
+ *
+ * @example
+ * // GNU gettext traditional format
+ * const output = stringifyPo(po, { compactMultiline: false })
+ *
+ * @example
+ * // No line folding
+ * const output = stringifyPo(po, { foldLength: 0 })
  */
-export function stringifyPo(po: PoFile): string {
+export function stringifyPo(po: PoFile, options?: SerializeOptions): string {
   const lines: string[] = []
 
   // File-level comments
@@ -88,7 +103,7 @@ export function stringifyPo(po: PoFile): string {
 
   // Items
   for (const item of po.items) {
-    lines.push(stringifyItem(item))
+    lines.push(stringifyItem(item, options))
     lines.push("")
   }
 

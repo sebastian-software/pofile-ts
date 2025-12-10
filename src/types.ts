@@ -95,3 +95,56 @@ export interface ParserState {
   obsoleteCount: number
   noCommentLineCount: number
 }
+
+/**
+ * Options for serializing PO files.
+ *
+ * These options control the output format when converting a PoFile object
+ * back to a string. The defaults are optimized for compatibility with
+ * translation platforms like Crowdin.
+ */
+export interface SerializeOptions {
+  /**
+   * Maximum line width before folding long strings.
+   *
+   * When a string exceeds this length, it will be split across multiple lines.
+   * Set to 0 to disable folding (strings will only break on actual newlines).
+   *
+   * @default 80
+   *
+   * @example
+   * // With foldLength: 40
+   * msgid "This is a long string that will be "
+   * "folded across multiple lines"
+   *
+   * // With foldLength: 0
+   * msgid "This is a long string that stays on one line"
+   */
+  foldLength?: number
+
+  /**
+   * Use compact format for multiline strings.
+   *
+   * When true (default), multiline strings start with content on the first line:
+   * ```po
+   * msgid "First line\n"
+   * "Second line"
+   * ```
+   *
+   * When false, uses GNU gettext's traditional format with an empty first line:
+   * ```po
+   * msgid ""
+   * "First line\n"
+   * "Second line"
+   * ```
+   *
+   * The compact format is recommended as it's compatible with translation
+   * platforms like Crowdin that may strip empty first lines, avoiding
+   * unnecessary diffs. Both formats are valid PO syntax.
+   *
+   * @default true
+   *
+   * @see https://github.com/lingui/js-lingui/issues/2235
+   */
+  compactMultiline?: boolean
+}

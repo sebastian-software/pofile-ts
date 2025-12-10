@@ -186,11 +186,23 @@ describe("parsePo", () => {
       }
     })
 
-    it("produces identical output for normalized files", () => {
+    it("produces identical output with traditional format option", () => {
+      // Using compactMultiline: false produces the traditional GNU gettext format
+      // which matches the original fixture files
       const input = readFixture("c-strings.po")
       const po = parsePo(input)
-      const output = stringifyPo(po)
+      const output = stringifyPo(po, { compactMultiline: false, foldLength: 0 })
       expect(output).toBe(input)
+    })
+
+    it("produces stable output on repeated serialization", () => {
+      // Default compact format should be stable across multiple parse/stringify cycles
+      const input = readFixture("c-strings.po")
+      const po1 = parsePo(input)
+      const output1 = stringifyPo(po1)
+      const po2 = parsePo(output1)
+      const output2 = stringifyPo(po2)
+      expect(output2).toBe(output1)
     })
   })
 })
