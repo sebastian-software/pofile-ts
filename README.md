@@ -28,16 +28,16 @@
 
 ---
 
-A robust library for reading and writing GNU gettext PO files. Used by [LinguiJS](https://lingui.dev/) and other i18n tools.
+A robust library for reading and writing GNU gettext PO files. Optimized for seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
 
 ## Features
 
 - 📖 **Parse** PO files from strings
-- ✍️ **Serialize** PO files back to strings
+- ✍️ **Serialize** PO files back to strings with configurable formatting
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
+- 🔄 **Crowdin-compatible** — avoids unnecessary diffs when syncing translations
 - 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
-- 🔷 **TypeScript** — full type definitions included
-- ⚡ **ESM-first** — modern JavaScript with named exports only
+- 🔷 **TypeScript-first** — full type definitions included
 
 ## Installation
 
@@ -69,129 +69,35 @@ newPo.items.push(item)
 console.log(stringifyPo(newPo))
 ```
 
-## API
-
-### Functions
-
-| Function                                        | Description                   |
-| ----------------------------------------------- | ----------------------------- |
-| `parsePo(content: string): PoFile`              | Parse a PO file string        |
-| `stringifyPo(po: PoFile, options?): string`     | Serialize a PO file to string |
-| `createPoFile(): PoFile`                        | Create a new empty PO file    |
-| `createItem(options?): PoItem`                  | Create a new translation item |
-| `stringifyItem(item: PoItem, options?): string` | Serialize a single item       |
-| `parsePluralForms(header: string)`              | Parse the Plural-Forms header |
-
-### Types
-
-| Type               | Description                             |
-| ------------------ | --------------------------------------- |
-| `PoFile`           | Complete PO file with headers and items |
-| `PoItem`           | Single translation entry                |
-| `Headers`          | Standard PO file headers                |
-| `SerializeOptions` | Options for controlling output format   |
-
 ## Serialization Options
 
-The `stringifyPo` and `stringifyItem` functions accept an optional `SerializeOptions` object:
+Control output formatting with `SerializeOptions`:
 
 ```typescript
-interface SerializeOptions {
-  /** Maximum line width before folding. Set to 0 to disable. Default: 80 */
-  foldLength?: number
-
-  /** Use compact multiline format. Default: true */
-  compactMultiline?: boolean
-}
+stringifyPo(po, {
+  foldLength: 80, // Line width (0 = no folding)
+  compactMultiline: true // Crowdin-compatible format (default)
+})
 ```
 
-### `foldLength` (default: 80)
+The compact multiline format is the default because translation platforms like Crowdin normalize multiline strings. Using the same format avoids unnecessary diffs. Both formats represent the exact same data — the difference is purely cosmetic.
 
-Controls line wrapping for long strings. When a string exceeds this length, it will be split across multiple lines at word boundaries.
+See the [documentation](https://sebastian-software.github.io/pofile-ts/#options) for details.
 
-```typescript
-// With foldLength: 80 (default)
-stringifyPo(po)
-// msgid "This is a moderately long string that will be wrapped at around 80 "
-// "characters"
+## Documentation
 
-// With foldLength: 0 (disabled)
-stringifyPo(po, { foldLength: 0 })
-// msgid "This is a moderately long string that stays on one line regardless of length"
-```
+For comprehensive documentation including:
 
-### `compactMultiline` (default: true)
+- Full API reference
+- Working with plurals
+- Serialization options explained
+- Migration guide from `pofile`
 
-Controls the format of multiline strings (strings containing `\n`).
-
-**Compact format (default, Crowdin-compatible):**
-
-```po
-msgid "First line\n"
-"Second line"
-```
-
-**Traditional GNU gettext format:**
-
-```po
-msgid ""
-"First line\n"
-"Second line"
-```
-
-> **Important:** Both formats represent the exact same `msgid` value (`"First line\nSecond line"`). The difference is purely cosmetic — no translation data is changed. This is about avoiding unnecessary diffs in version control, not about changing message identifiers.
-
-The compact format is the default because it's compatible with translation platforms like [Crowdin](https://crowdin.com/) that normalize multiline strings by removing empty first lines. Without this, you'd see constant diffs when syncing with Crowdin:
-
-1. You commit with traditional format (empty first line)
-2. Crowdin normalizes to compact format
-3. You pull from Crowdin → Git shows diff
-4. You re-extract → back to traditional format → another diff
-
-By using the compact format as default, the roundtrip is stable. See [lingui/js-lingui#2235](https://github.com/lingui/js-lingui/issues/2235) for background.
-
-Both formats are valid PO syntax according to the [GNU gettext specification](https://www.gnu.org/software/gettext/manual/gettext.html).
-
-```typescript
-// Compact format (default) - Crowdin-compatible
-stringifyPo(po)
-
-// Traditional GNU gettext format
-stringifyPo(po, { compactMultiline: false })
-```
-
-## Migration from `pofile`
-
-If you're migrating from the original `pofile` package:
-
-```typescript
-// Before (pofile)
-import PO from "pofile"
-const po = PO.parse(content)
-const item = new PO.Item()
-po.toString()
-
-// After (pofile-ts)
-import { parsePo, stringifyPo, createPoFile, createItem } from "pofile-ts"
-const po = parsePo(content)
-const item = createItem()
-stringifyPo(po)
-```
-
-Key differences:
-
-- **Functional API** — no classes, just functions and plain objects
-- **Named exports only** — no default export for better CJS/ESM compatibility
-- **TypeScript-first** — full type definitions included
-- `PoFile` and `PoItem` are plain interfaces, not class instances
-
-For comprehensive documentation including plurals support, visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
+Visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
 
 ## Credits
 
-This is a modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch, which was originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly.
-
-Also inspired by [@lingui/pofile](https://github.com/timofei-iatsenko/pofile) by Timofei Iatsenko.
+This is a modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch, originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly. Inspired by [@lingui/pofile](https://github.com/timofei-iatsenko/pofile) by Timofei Iatsenko.
 
 Maintained by [Sebastian Software](https://sebastian-software.de/).
 
