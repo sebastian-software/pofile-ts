@@ -7,17 +7,8 @@
   </defs>
   <!-- Rounded square background -->
   <rect x="10" y="10" width="180" height="180" rx="40" fill="url(#bgGradient)"/>
-  <!-- Globe -->
-  <circle cx="100" cy="105" r="55" stroke="white" stroke-width="4" fill="none"/>
-  <ellipse cx="100" cy="105" rx="22" ry="55" stroke="white" stroke-width="3" fill="none"/>
-  <path d="M45 105h110" stroke="white" stroke-width="3"/>
-  <path d="M55 75h90" stroke="white" stroke-width="2" opacity="0.7"/>
-  <path d="M55 135h90" stroke="white" stroke-width="2" opacity="0.7"/>
-  <!-- Speech bubble -->
-  <rect x="120" y="25" width="60" height="40" rx="10" fill="white"/>
-  <path d="M135 65l-10 15 20-10" fill="white"/>
-  <!-- Translation symbols -->
-  <text x="130" y="52" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#0891b2">A</text>
-  <text x="152" y="52" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#7c3aed">文</text>
+  <!-- Back speech bubble (source) - pointing left -->
+  <path d="M140 50 L140 100 Q140 110 130 110 L70 110 L50 130 L58 110 L50 110 Q40 110 40 100 L40 50 Q40 40 50 40 L130 40 Q140 40 140 50Z" fill="white" opacity="0.4"/>
+  <!-- Front speech bubble (translated) - pointing right -->
+  <path d="M60 90 L60 140 Q60 150 70 150 L130 150 L150 170 L142 150 L150 150 Q160 150 160 140 L160 90 Q160 80 150 80 L70 80 Q60 80 60 90Z" fill="white"/>
 </svg>
-
