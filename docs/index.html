@@ -25,7 +25,6 @@
         --text: #e2e8f0;
         --text-muted: #94a3b8;
         --border: #1e293b;
-        --logo-bg: linear-gradient(135deg, var(--accent), var(--accent-secondary));
       }
 
       [data-theme="light"] {
@@ -38,7 +37,6 @@
         --text: #0f172a;
         --text-muted: #64748b;
         --border: #e2e8f0;
-        --logo-bg: linear-gradient(135deg, #06b6d4, #8b5cf6);
       }
 
       * {
@@ -72,7 +70,14 @@
         bottom: 0;
         background:
           radial-gradient(ellipse at 20% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+          radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+          linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+        background-size:
+          100% 100%,
+          100% 100%,
+          40px 40px,
+          40px 40px;
         pointer-events: none;
         z-index: -1;
         transition: opacity 0.3s;
@@ -81,7 +86,14 @@
       [data-theme="light"] body::before {
         background:
           radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+          radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
+          linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+        background-size:
+          100% 100%,
+          100% 100%,
+          40px 40px,
+          40px 40px;
       }
 
       .container {
@@ -143,15 +155,12 @@
         justify-content: center;
         width: 120px;
         height: 120px;
-        background: var(--logo-bg);
-        border-radius: 28px;
         margin-bottom: 32px;
         box-shadow:
           0 0 80px var(--accent-glow),
           0 25px 50px rgba(0, 0, 0, 0.25);
         animation: float 6s ease-in-out infinite;
-        position: relative;
-        overflow: visible;
+        border-radius: 28px;
       }
 
       @keyframes float {
@@ -164,41 +173,10 @@
         }
       }
 
-      .logo svg {
-        width: 70px;
-        height: 70px;
-      }
-
-      /* Orbiting dots */
-      .logo::before,
-      .logo::after {
-        content: "";
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        background: var(--accent);
-        border-radius: 50%;
-        animation: orbit 8s linear infinite;
-      }
-
-      .logo::before {
-        box-shadow: 0 0 20px var(--accent);
-      }
-
-      .logo::after {
-        background: var(--accent-secondary);
-        box-shadow: 0 0 20px var(--accent-secondary);
-        animation-delay: -4s;
-        animation-direction: reverse;
-      }
-
-      @keyframes orbit {
-        from {
-          transform: rotate(0deg) translateX(75px) rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg) translateX(75px) rotate(-360deg);
-        }
+      .logo img {
+        width: 100%;
+        height: 100%;
+        border-radius: 28px;
       }
 
       h1 {
@@ -401,13 +379,31 @@
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 24px;
-        transition: all 0.2s;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .feature::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: 17px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s;
       }
 
       .feature:hover {
-        border-color: var(--accent);
+        border-color: transparent;
         transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        box-shadow:
+          0 10px 40px rgba(0, 0, 0, 0.15),
+          0 0 30px var(--accent-glow);
+      }
+
+      .feature:hover::before {
+        opacity: 1;
       }
 
       .feature-icon {
@@ -621,24 +617,8 @@
           height: 100px;
         }
 
-        .logo svg {
-          width: 56px;
-          height: 56px;
-        }
-
-        .logo::before,
-        .logo::after {
-          width: 10px;
-          height: 10px;
-        }
-
-        @keyframes orbit {
-          from {
-            transform: rotate(0deg) translateX(60px) rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg) translateX(60px) rotate(-360deg);
-          }
+        .logo img {
+          border-radius: 24px;
         }
 
         section {
@@ -694,38 +674,7 @@
     <div class="container">
       <header>
         <div class="logo">
-          <!-- Creative Globe with Translation Symbol -->
-          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Globe -->
-            <circle cx="32" cy="32" r="26" stroke="white" stroke-width="2.5" fill="none" />
-            <ellipse cx="32" cy="32" rx="10" ry="26" stroke="white" stroke-width="2" fill="none" />
-            <path d="M6 32h52" stroke="white" stroke-width="2" />
-            <path d="M10 20h44" stroke="white" stroke-width="1.5" opacity="0.6" />
-            <path d="M10 44h44" stroke="white" stroke-width="1.5" opacity="0.6" />
-            <!-- Speech bubble with "A文" -->
-            <rect x="38" y="6" width="22" height="16" rx="4" fill="white" />
-            <path d="M44 22l-4 6 8-4" fill="white" />
-            <text
-              x="42"
-              y="17"
-              font-family="Arial, sans-serif"
-              font-size="10"
-              font-weight="bold"
-              fill="#0891b2"
-            >
-              A
-            </text>
-            <text
-              x="50"
-              y="17"
-              font-family="Arial, sans-serif"
-              font-size="9"
-              font-weight="bold"
-              fill="#7c3aed"
-            >
-              文
-            </text>
-          </svg>
+          <img src="logo.svg" alt="pofile-ts logo" />
         </div>
 
         <h1>pofile-ts</h1>
