@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.1.0](///compare/v3.0.0...v3.1.0) (2025-12-10)
+
+### Features
+
+- add SerializeOptions for Crowdin-compatible output format dfd63ca
+
+### Bug Fixes
+
+- updated logos 2a50307
+
 ## [3.0.0](///compare/v2.2.1...v3.0.0) (2025-12-09)
 
 ### ⚠ BREAKING CHANGES
