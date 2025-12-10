@@ -1079,7 +1079,16 @@ console.<span class="code-function">log</span>(<span class="code-function">strin
         <h3>Multiline Format Comparison</h3>
         <p>
           Strings containing newlines (<code>\n</code>) can be formatted in two ways. Both are valid
-          PO syntax and represent the <strong>exact same msgid value</strong>:
+          PO syntax and represent the <strong>exact same msgid value</strong>. This format is
+          defined in the
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >GNU gettext manual</a
+          >
+          and uses C-style string literal concatenation (adjacent quoted strings are joined).
         </p>
 
         <pre><span class="code-comment">// Compact (default) — Crowdin-compatible</span>
