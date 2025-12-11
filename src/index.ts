@@ -2,6 +2,9 @@
 export { parsePo, stringifyPo, createPoFile, parsePluralForms } from "./PO"
 export { createItem, stringifyItem } from "./Item"
 
+// Header utilities
+export { createDefaultHeaders, formatPoDate } from "./headers"
+
 // Serialization utilities
 export { DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
 
@@ -14,3 +17,5 @@ export type {
   CreateItemOptions,
   SerializeOptions
 } from "./types"
+
+export type { CreateHeadersOptions } from "./headers"
