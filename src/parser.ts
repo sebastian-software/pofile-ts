@@ -2,18 +2,8 @@ import type { ParserState, PoFile, PoItem } from "./types"
 import { createItem } from "./Item"
 import { extractString } from "./utils"
 import {
-  RE_REFERENCE,
-  RE_FLAGS,
-  RE_COMMENT,
-  RE_EXTRACTED,
-  RE_OBSOLETE,
-  RE_MSGID_PLURAL,
-  RE_MSGID,
-  RE_MSGSTR,
   RE_MSGSTR_INDEX,
-  RE_MSGCTXT,
   RE_HEADER_MSGID,
-  RE_QUOTED_LINE,
   RE_HEADER_CONTINUATION,
   RE_HEADER_COMPLETE
 } from "./constants"
@@ -27,21 +17,25 @@ export function splitHeaderAndBody(data: string): {
 } {
   const sections = data.split("\n\n")
   const headerParts: string[] = []
+  let foundHeaderMsgid = false
 
   // Collect sections until we find one with 'msgid ""'
   while (sections[0]) {
-    const hasHeaderMsgid = headerParts.some((h) => h.includes('msgid ""'))
-    if (hasHeaderMsgid) {
+    if (foundHeaderMsgid) {
       break
     }
 
     if (RE_HEADER_MSGID.test(sections[0])) {
       // Found first real msgid, add dummy header marker
       headerParts.push('msgid ""')
+      foundHeaderMsgid = true
     } else {
       const shifted = sections.shift()
       if (shifted !== undefined) {
         headerParts.push(shifted)
+        if (shifted.includes('msgid ""')) {
+          foundHeaderMsgid = true
+        }
       }
     }
   }
@@ -134,31 +128,19 @@ export function parseItems(lines: string[], po: PoFile, nplurals: string | undef
   }
 
   for (const rawLine of lines) {
-    const { line, isObsolete } = preprocessLine(rawLine)
-    parseLine(line, state, po, nplurals)
+    let line = rawLine.trim()
 
-    if (isObsolete) {
+    // Handle obsolete markers inline to avoid object allocation
+    if (line.startsWith("#~")) {
+      line = line.substring(2).trim()
       state.obsoleteCount++
     }
+
+    parseLine(line, state, po, nplurals)
   }
 
   // Finish last item
   finishItem(state, po, nplurals)
-}
-
-/**
- * Preprocesses a line, handling obsolete markers.
- */
-function preprocessLine(rawLine: string): { line: string; isObsolete: boolean } {
-  let line = rawLine.trim()
-  let isObsolete = false
-
-  if (RE_OBSOLETE.test(line)) {
-    line = line.substring(2).trim()
-    isObsolete = true
-  }
-
-  return { line, isObsolete }
 }
 
 /**
@@ -196,26 +178,37 @@ function parseCommentLine(
   po: PoFile,
   nplurals: string | undefined
 ): boolean {
-  if (RE_REFERENCE.test(line)) {
+  if (!line.startsWith("#")) {
+    return false
+  }
+
+  const secondChar = line[1]
+
+  if (secondChar === ":") {
+    // Reference comment: #:
     finishItem(state, po, nplurals)
     state.item.references.push(line.slice(2).trim())
     return true
   }
-  if (RE_FLAGS.test(line)) {
+  if (secondChar === ",") {
+    // Flags comment: #,
     finishItem(state, po, nplurals)
     parseFlags(line, state.item)
     return true
   }
-  if (RE_COMMENT.test(line)) {
-    finishItem(state, po, nplurals)
-    state.item.comments.push(line.slice(1).trim())
-    return true
-  }
-  if (RE_EXTRACTED.test(line)) {
+  if (secondChar === ".") {
+    // Extracted comment: #.
     finishItem(state, po, nplurals)
     state.item.extractedComments.push(line.slice(2).trim())
     return true
   }
+  if (secondChar === undefined || secondChar === " ") {
+    // Translator comment: # or #<space>
+    finishItem(state, po, nplurals)
+    state.item.comments.push(line.slice(1).trim())
+    return true
+  }
+
   return false
 }
 
@@ -229,20 +222,20 @@ function parseKeywordLine(
   po: PoFile,
   nplurals: string | undefined
 ): boolean {
-  if (RE_MSGID_PLURAL.test(line)) {
+  if (line.startsWith("msgid_plural")) {
     state.item.msgid_plural = extractString(line)
     state.context = "msgid_plural"
     state.noCommentLineCount++
     return true
   }
-  if (RE_MSGID.test(line)) {
+  if (line.startsWith("msgid")) {
     finishItem(state, po, nplurals)
     state.item.msgid = extractString(line)
     state.context = "msgid"
     state.noCommentLineCount++
     return true
   }
-  if (RE_MSGSTR.test(line)) {
+  if (line.startsWith("msgstr")) {
     const match = RE_MSGSTR_INDEX.exec(line)
     state.plural = match?.[1] ? parseInt(match[1], 10) : 0
     state.item.msgstr[state.plural] = extractString(line)
@@ -250,7 +243,7 @@ function parseKeywordLine(
     state.noCommentLineCount++
     return true
   }
-  if (RE_MSGCTXT.test(line)) {
+  if (line.startsWith("msgctxt")) {
     finishItem(state, po, nplurals)
     state.item.msgctxt = extractString(line)
     state.context = "msgctxt"
