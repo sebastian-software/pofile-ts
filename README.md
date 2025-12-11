@@ -30,7 +30,7 @@
 
 A modern, focused library for reading and writing GNU gettext PO files. Hand-optimized for speed and seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
 
-> **Why pofile-ts?** We focus on what modern i18n workflows actually need: fast PO file processing with UTF-8 support. No legacy baggage like binary `.mo` files or obscure charset encodings — just clean, optimized code that runs everywhere.
+> **Why pofile-ts?** We focus on what modern i18n workflows actually need: fast PO file processing with UTF-8 support. Clean, optimized code that runs everywhere.
 
 ## Features
 
@@ -44,20 +44,18 @@ A modern, focused library for reading and writing GNU gettext PO files. Hand-opt
 
 ## Why pofile-ts?
 
-Other libraries like [gettext-parser](https://github.com/smhg/gettext-parser) try to do everything: binary `.mo` files, streaming, legacy charset encodings. That flexibility comes at a cost — complexity and performance overhead.
+We built pofile-ts with a clear philosophy: do one thing exceptionally well.
 
-**pofile-ts takes a different approach:**
-
-- <img src="https://sebastian-software.github.io/pofile-ts/icons/target.svg" width="16" height="16" alt=""> **Focused** — PO files only, no binary formats
-- <img src="https://sebastian-software.github.io/pofile-ts/icons/globe.svg" width="16" height="16" alt=""> **Modern** — UTF-8 exclusively, like every tool since 2010
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/target.svg" width="16" height="16" alt=""> **Focused** — PO files only, optimized for the 99% use case
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/globe.svg" width="16" height="16" alt=""> **Modern** — UTF-8 all the way, as you'd expect in 2024
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/monitor.svg" width="16" height="16" alt=""> **Universal** — runs in Node.js and browsers without polyfills
-- <img src="https://sebastian-software.github.io/pofile-ts/icons/zap.svg" width="16" height="16" alt=""> **Hand-optimized** — every hot path tuned for maximum throughput
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/zap.svg" width="16" height="16" alt=""> **Hand-optimized** — we spent way too much time making this fast 😅
 
-The result? **36x faster parsing** while being simpler to use.
+The result? **36x faster parsing** — and yes, we benchmarked it.
 
 ## Performance
 
-pofile-ts is highly optimized for speed. Benchmarked on a 1.5 MB PO file with 10,000 entries:
+We're pretty proud of this one. Benchmarked on a 1.5 MB PO file with 10,000 entries:
 
 | Library                                                  |       Parsing | Serialization |
 | -------------------------------------------------------- | ------------: | ------------: |
@@ -65,12 +63,7 @@ pofile-ts is highly optimized for speed. Benchmarked on a 1.5 MB PO file with 10
 | [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s |      31 ops/s |
 | [pofile](https://github.com/rubenv/pofile)               |       4 ops/s |      87 ops/s |
 
-**Speedup:**
-
-- **36x faster** parsing than [pofile](https://github.com/rubenv/pofile)
-- **8x faster** parsing than [gettext-parser](https://github.com/smhg/gettext-parser)
-- **2x faster** serialization than pofile
-- **5.5x faster** serialization than gettext-parser
+Both [gettext-parser](https://github.com/smhg/gettext-parser) and [pofile](https://github.com/rubenv/pofile) are great libraries that inspired this project. They support features we intentionally skipped (like `.mo` files). We just happen to be faster for the PO-only use case. 🏎️
 
 Run the benchmark yourself:
 
