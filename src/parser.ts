@@ -1,12 +1,7 @@
 import type { ParserState, PoFile, PoItem } from "./types"
 import { createItem } from "./Item"
 import { extractString } from "./utils"
-import {
-  RE_MSGSTR_INDEX,
-  RE_HEADER_MSGID,
-  RE_HEADER_CONTINUATION,
-  RE_HEADER_COMPLETE
-} from "./constants"
+import { RE_HEADER_MSGID, RE_HEADER_CONTINUATION, RE_HEADER_COMPLETE } from "./constants"
 
 /**
  * Splits PO file content into header section and body lines.
@@ -102,7 +97,12 @@ function mergeMultilineHeaders(lines: string[]): string[] {
  * Parses a single header line like "Content-Type: text/plain\n"
  */
 function parseHeaderLine(line: string, po: PoFile): void {
-  const cleaned = line.trim().replace(/^"/, "").replace(/\\n"$/, "")
+  // Line format: "Header-Name: value\n" - extract content between quotes
+  const trimmed = line.trim()
+  // Skip opening quote, remove trailing \n" (3 chars: \, n, ")
+  const endOffset = trimmed.endsWith('\\n"') ? 3 : 1
+  const cleaned = trimmed.substring(1, trimmed.length - endOffset)
+
   const colonIndex = cleaned.indexOf(":")
   if (colonIndex === -1) {
     return
@@ -152,105 +152,98 @@ function parseLine(
   po: PoFile,
   nplurals: string | undefined
 ): void {
-  // Try parsing as comment first
-  if (parseCommentLine(line, state, po, nplurals)) {
+  if (line.length === 0) {
     return
   }
 
-  // Then try parsing as keyword
-  if (parseKeywordLine(line, state, po, nplurals)) {
-    return
-  }
+  const firstChar = line[0]
 
-  // Otherwise it's a continuation line
-  if (line.length > 0) {
+  // Continuation line (starts with quote)
+  if (firstChar === '"') {
     appendMultilineValue(line, state)
+    return
+  }
+
+  // Comment line (starts with #)
+  if (firstChar === "#") {
+    parseCommentLine(line, state, po, nplurals)
+    return
+  }
+
+  // Keyword line (starts with m for msgid/msgstr/msgctxt)
+  if (firstChar === "m") {
+    parseKeywordLine(line, state, po, nplurals)
   }
 }
 
 /**
  * Parses comment lines (#: #, # #.)
- * Returns true if line was handled.
+ * Assumes line starts with '#' (checked by caller).
  */
 function parseCommentLine(
   line: string,
   state: ParserState,
   po: PoFile,
   nplurals: string | undefined
-): boolean {
-  if (!line.startsWith("#")) {
-    return false
-  }
-
+): void {
   const secondChar = line[1]
 
   if (secondChar === ":") {
     // Reference comment: #:
     finishItem(state, po, nplurals)
     state.item.references.push(line.slice(2).trim())
-    return true
-  }
-  if (secondChar === ",") {
+  } else if (secondChar === ",") {
     // Flags comment: #,
     finishItem(state, po, nplurals)
     parseFlags(line, state.item)
-    return true
-  }
-  if (secondChar === ".") {
+  } else if (secondChar === ".") {
     // Extracted comment: #.
     finishItem(state, po, nplurals)
     state.item.extractedComments.push(line.slice(2).trim())
-    return true
-  }
-  if (secondChar === undefined || secondChar === " ") {
+  } else if (secondChar === undefined || secondChar === " ") {
     // Translator comment: # or #<space>
     finishItem(state, po, nplurals)
     state.item.comments.push(line.slice(1).trim())
-    return true
   }
-
-  return false
 }
 
 /**
  * Parses keyword lines (msgid, msgstr, etc.)
- * Returns true if line was handled.
+ * Assumes line starts with 'm' (checked by caller).
  */
 function parseKeywordLine(
   line: string,
   state: ParserState,
   po: PoFile,
   nplurals: string | undefined
-): boolean {
+): void {
+  // Check msgid_plural before msgid (longer match first)
   if (line.startsWith("msgid_plural")) {
     state.item.msgid_plural = extractString(line)
     state.context = "msgid_plural"
     state.noCommentLineCount++
-    return true
-  }
-  if (line.startsWith("msgid")) {
+  } else if (line.startsWith("msgid")) {
     finishItem(state, po, nplurals)
     state.item.msgid = extractString(line)
     state.context = "msgid"
     state.noCommentLineCount++
-    return true
-  }
-  if (line.startsWith("msgstr")) {
-    const match = RE_MSGSTR_INDEX.exec(line)
-    state.plural = match?.[1] ? parseInt(match[1], 10) : 0
+  } else if (line.startsWith("msgstr")) {
+    // Fast path: check for plural index only if bracket present
+    if (line[6] === "[") {
+      const closeBracket = line.indexOf("]", 7)
+      state.plural = closeBracket > 7 ? parseInt(line.substring(7, closeBracket), 10) : 0
+    } else {
+      state.plural = 0
+    }
     state.item.msgstr[state.plural] = extractString(line)
     state.context = "msgstr"
     state.noCommentLineCount++
-    return true
-  }
-  if (line.startsWith("msgctxt")) {
+  } else if (line.startsWith("msgctxt")) {
     finishItem(state, po, nplurals)
     state.item.msgctxt = extractString(line)
     state.context = "msgctxt"
     state.noCommentLineCount++
-    return true
   }
-  return false
 }
 
 /**
