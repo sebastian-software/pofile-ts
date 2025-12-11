@@ -28,7 +28,9 @@
 
 ---
 
-A robust library for reading and writing GNU gettext PO files. Optimized for seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
+A modern, focused library for reading and writing GNU gettext PO files. Hand-optimized for speed and seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
+
+> **Why pofile-ts?** We focus on what modern i18n workflows actually need: fast PO file processing with UTF-8 support. No legacy baggage like binary `.mo` files or obscure charset encodings — just clean, optimized code that runs everywhere.
 
 ## Features
 
@@ -38,7 +40,20 @@ A robust library for reading and writing GNU gettext PO files. Optimized for sea
 - 🔄 **Crowdin-compatible** — avoids unnecessary diffs when syncing translations
 - 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
 - 🔷 **TypeScript-first** — full type definitions included
-- ⚡ **Blazing fast** — up to 36x faster than alternatives
+- ⚡ **Blazing fast** — up to 36x faster than alternatives (see [benchmarks](#performance))
+
+## Why pofile-ts?
+
+Other libraries like [gettext-parser](https://github.com/smhg/gettext-parser) try to do everything: binary `.mo` files, streaming, legacy charset encodings. That flexibility comes at a cost — complexity and performance overhead.
+
+**pofile-ts takes a different approach:**
+
+- 🎯 **Focused** — PO files only, no binary formats
+- 🌐 **Modern** — UTF-8 exclusively, like every tool since 2010
+- 🖥️ **Universal** — runs in Node.js and browsers without polyfills
+- ⚡ **Hand-optimized** — every hot path tuned for maximum throughput
+
+The result? **36x faster parsing** while being simpler to use.
 
 ## Performance
 

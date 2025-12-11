@@ -569,6 +569,58 @@
         color: #2e8857;
       }
 
+      /* Why Section */
+      .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+      }
+
+      .why-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.2s;
+      }
+
+      .why-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+
+      .why-icon {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+      }
+
+      .why-card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .why-card p {
+        font-size: 0.85rem;
+        margin: 0;
+        color: var(--text-muted);
+      }
+
+      .why-result {
+        text-align: center;
+        font-size: 1.1rem;
+        margin-top: 24px;
+        padding: 16px;
+        background: var(--accent-glow);
+        border-radius: 12px;
+      }
+
+      .why-result strong {
+        color: var(--accent);
+      }
+
       /* Performance Section */
       .perf-table a {
         color: var(--text-muted);
@@ -736,8 +788,8 @@
 
         <h1>pofile-ts</h1>
         <p class="tagline">
-          A lightweight, dependency-free library to parse and serialize GNU gettext PO files. Works
-          in Node.js and browsers with full TypeScript support.
+          A modern, focused library for GNU gettext PO files. Hand-optimized for speed, runs
+          everywhere — Node.js and browsers alike.
         </p>
 
         <div class="badges">
@@ -846,6 +898,44 @@
             <p>Up to 36x faster than alternatives — optimized hot paths</p>
           </div>
         </div>
+      </section>
+
+      <!-- Why Section -->
+      <section id="why">
+        <h2>Why pofile-ts?</h2>
+        <p>
+          Other libraries try to do everything: binary <code>.mo</code> files, streaming APIs,
+          legacy charset encodings from the 90s. That flexibility comes at a cost — complexity and
+          performance overhead.
+        </p>
+        <p><strong>pofile-ts takes a different approach:</strong></p>
+
+        <div class="why-grid">
+          <div class="why-card">
+            <div class="why-icon">🎯</div>
+            <h4>Focused</h4>
+            <p>PO files only — no binary <code>.mo</code> format baggage</p>
+          </div>
+          <div class="why-card">
+            <div class="why-icon">🌐</div>
+            <h4>Modern</h4>
+            <p>UTF-8 exclusively, like every tool since 2010</p>
+          </div>
+          <div class="why-card">
+            <div class="why-icon">🖥️</div>
+            <h4>Universal</h4>
+            <p>Runs in Node.js and browsers without polyfills</p>
+          </div>
+          <div class="why-card">
+            <div class="why-icon">⚡</div>
+            <h4>Hand-optimized</h4>
+            <p>Every hot path tuned for maximum throughput</p>
+          </div>
+        </div>
+
+        <p class="why-result">
+          The result? <strong>36× faster parsing</strong> while being simpler to use.
+        </p>
       </section>
 
       <!-- Performance Section -->
