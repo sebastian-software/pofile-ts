@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.2.0](///compare/v3.1.0...v3.2.0) (2025-12-11)
+
+### Features
+
+- add benchmark comparing pofile-ts with pofile and gettext-parser e5f7d9d
+- add Lucide SVG icons for README feature lists fb2ce5e, closes #22d3ee
+- use Lucide SVG icons on homepage, add credits 0da991a
+
+### Bug Fixes
+
+- added note on po file format cee734e
+- change browser badge to green for positive connotation cabea12
+- corrected repo url 9c25228
+- improve homepage card hover and table layout 527367d
+- resolve eslint errors from performance optimizations ed53975
+- simplify performance table, remove visual bars 31ac8be
+- use unicode blocks instead of emojis in perf table 033c585
+
+### Performance Improvements
+
+- add fast-path for simple strings and optimize line folding 63c0fe4
+- first-char dispatch and inline plural-index extraction 0f8da57
+- optimize extractString with indexOf and fast-path unescape 775d540
+- optimize parser with pre-compiled regex and native methods 5137298
+- optimize serialization with fast-path escape and loop improvements c771394
+- replace regex with startsWith and inline obsolete check 203fe43
+
 ## [3.1.0](///compare/v3.0.0...v3.1.0) (2025-12-10)
 
 ### Features
