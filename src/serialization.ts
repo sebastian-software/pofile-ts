@@ -143,7 +143,7 @@ export function formatKeyword(
   const keywordPrefix = `${keyword}${indexStr} `
 
   // Split on actual newlines in the text
-  const parts = text.split(/\n/)
+  const parts = text.split("\n")
   const hasMultipleLines = parts.length > 1
   const firstPartIsEmpty = parts[0] === ""
 

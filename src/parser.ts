@@ -1,6 +1,22 @@
 import type { ParserState, PoFile, PoItem } from "./types"
 import { createItem } from "./Item"
-import { trim, extractString } from "./utils"
+import { extractString } from "./utils"
+import {
+  RE_REFERENCE,
+  RE_FLAGS,
+  RE_COMMENT,
+  RE_EXTRACTED,
+  RE_OBSOLETE,
+  RE_MSGID_PLURAL,
+  RE_MSGID,
+  RE_MSGSTR,
+  RE_MSGSTR_INDEX,
+  RE_MSGCTXT,
+  RE_HEADER_MSGID,
+  RE_QUOTED_LINE,
+  RE_HEADER_CONTINUATION,
+  RE_HEADER_COMPLETE
+} from "./constants"
 
 /**
  * Splits PO file content into header section and body lines.
@@ -9,7 +25,7 @@ export function splitHeaderAndBody(data: string): {
   headerSection: string
   bodyLines: string[]
 } {
-  const sections = data.split(/\n\n/)
+  const sections = data.split("\n\n")
   const headerParts: string[] = []
 
   // Collect sections until we find one with 'msgid ""'
@@ -19,7 +35,7 @@ export function splitHeaderAndBody(data: string): {
       break
     }
 
-    if (/msgid\s+"[^"]/.exec(sections[0])) {
+    if (RE_HEADER_MSGID.test(sections[0])) {
       // Found first real msgid, add dummy header marker
       headerParts.push('msgid ""')
     } else {
@@ -30,9 +46,18 @@ export function splitHeaderAndBody(data: string): {
     }
   }
 
+  // Flatten remaining sections into lines without intermediate join
+  const bodyLines: string[] = []
+  for (const section of sections) {
+    const lines = section.split("\n")
+    for (const line of lines) {
+      bodyLines.push(line)
+    }
+  }
+
   return {
     headerSection: headerParts.join("\n"),
-    bodyLines: sections.join("\n").split(/\n/)
+    bodyLines
   }
 }
 
@@ -40,14 +65,14 @@ export function splitHeaderAndBody(data: string): {
  * Parses the header section and populates the PO file.
  */
 export function parseHeaders(headerSection: string, po: PoFile): void {
-  const lines = mergeMultilineHeaders(headerSection.split(/\n/))
+  const lines = mergeMultilineHeaders(headerSection.split("\n"))
 
   for (const line of lines) {
-    if (/^#\./.exec(line)) {
-      po.extractedComments.push(line.replace(/^#\.\s*/, ""))
-    } else if (/^#/.exec(line)) {
-      po.comments.push(line.replace(/^#\s*/, ""))
-    } else if (/^"/.exec(line)) {
+    if (line.startsWith("#.")) {
+      po.extractedComments.push(line.slice(2).trim())
+    } else if (line.startsWith("#")) {
+      po.comments.push(line.slice(1).trim())
+    } else if (line.startsWith('"')) {
       parseHeaderLine(line, po)
     }
   }
@@ -69,7 +94,7 @@ function mergeMultilineHeaders(lines: string[]): string[] {
       pendingMerge = false
     }
 
-    if (/^".*"$/.test(line) && !/^".*\\n"$/.test(line)) {
+    if (RE_HEADER_CONTINUATION.test(line) && !RE_HEADER_COMPLETE.test(line)) {
       pendingMerge = true
     }
 
@@ -125,11 +150,11 @@ export function parseItems(lines: string[], po: PoFile, nplurals: string | undef
  * Preprocesses a line, handling obsolete markers.
  */
 function preprocessLine(rawLine: string): { line: string; isObsolete: boolean } {
-  let line = trim(rawLine)
+  let line = rawLine.trim()
   let isObsolete = false
 
-  if (/^#~/.exec(line)) {
-    line = trim(line.substring(2))
+  if (RE_OBSOLETE.test(line)) {
+    line = line.substring(2).trim()
     isObsolete = true
   }
 
@@ -171,24 +196,24 @@ function parseCommentLine(
   po: PoFile,
   nplurals: string | undefined
 ): boolean {
-  if (/^#:/.exec(line)) {
+  if (RE_REFERENCE.test(line)) {
     finishItem(state, po, nplurals)
-    state.item.references.push(trim(line.replace(/^#:/, "")))
+    state.item.references.push(line.slice(2).trim())
     return true
   }
-  if (/^#,/.exec(line)) {
+  if (RE_FLAGS.test(line)) {
     finishItem(state, po, nplurals)
     parseFlags(line, state.item)
     return true
   }
-  if (/^#($|\s+)/.exec(line)) {
+  if (RE_COMMENT.test(line)) {
     finishItem(state, po, nplurals)
-    state.item.comments.push(trim(line.replace(/^#($|\s+)/, "")))
+    state.item.comments.push(line.slice(1).trim())
     return true
   }
-  if (/^#\./.exec(line)) {
+  if (RE_EXTRACTED.test(line)) {
     finishItem(state, po, nplurals)
-    state.item.extractedComments.push(trim(line.replace(/^#\./, "")))
+    state.item.extractedComments.push(line.slice(2).trim())
     return true
   }
   return false
@@ -204,28 +229,28 @@ function parseKeywordLine(
   po: PoFile,
   nplurals: string | undefined
 ): boolean {
-  if (/^msgid_plural/.exec(line)) {
+  if (RE_MSGID_PLURAL.test(line)) {
     state.item.msgid_plural = extractString(line)
     state.context = "msgid_plural"
     state.noCommentLineCount++
     return true
   }
-  if (/^msgid/.exec(line)) {
+  if (RE_MSGID.test(line)) {
     finishItem(state, po, nplurals)
     state.item.msgid = extractString(line)
     state.context = "msgid"
     state.noCommentLineCount++
     return true
   }
-  if (/^msgstr/.exec(line)) {
-    const match = /^msgstr\[(\d+)\]/.exec(line)
+  if (RE_MSGSTR.test(line)) {
+    const match = RE_MSGSTR_INDEX.exec(line)
     state.plural = match?.[1] ? parseInt(match[1], 10) : 0
     state.item.msgstr[state.plural] = extractString(line)
     state.context = "msgstr"
     state.noCommentLineCount++
     return true
   }
-  if (/^msgctxt/.exec(line)) {
+  if (RE_MSGCTXT.test(line)) {
     finishItem(state, po, nplurals)
     state.item.msgctxt = extractString(line)
     state.context = "msgctxt"
@@ -239,7 +264,7 @@ function parseKeywordLine(
  * Parses flag line and adds flags to item.
  */
 function parseFlags(line: string, item: PoItem): void {
-  const flags = trim(line.replace(/^#,/, "")).split(",")
+  const flags = line.slice(2).trim().split(",")
   for (const flag of flags) {
     item.flags[flag.trim()] = true
   }

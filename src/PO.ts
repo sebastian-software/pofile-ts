@@ -44,8 +44,10 @@ export function createPoFile(): PoFile {
  * Parses a PO file string into a PoFile structure.
  */
 export function parsePo(data: string): PoFile {
-  // Normalize line endings
-  data = data.replace(/\r\n/g, "\n")
+  // Normalize line endings (Windows CRLF to Unix LF)
+  if (data.includes("\r\n")) {
+    data = data.replaceAll("\r\n", "\n")
+  }
 
   const po = createPoFile()
   const { headerSection, bodyLines } = splitHeaderAndBody(data)
@@ -113,17 +115,19 @@ export function stringifyPo(po: PoFile, options?: SerializeOptions): string {
 /** Returns header keys in the correct order */
 function getOrderedHeaderKeys(po: PoFile): string[] {
   const result: string[] = []
+  const seen = new Set<string>()
 
   // First, add keys from headerOrder that still exist
   for (const key of po.headerOrder) {
     if (key in po.headers) {
       result.push(key)
+      seen.add(key)
     }
   }
 
   // Then add any new keys not in headerOrder
   for (const key of Object.keys(po.headers)) {
-    if (!result.includes(key)) {
+    if (!seen.has(key)) {
       result.push(key)
     }
   }
