@@ -15,6 +15,9 @@ export {
   normalizeFilePath
 } from "./references"
 
+// Catalog utilities
+export { catalogToItems, itemsToCatalog, mergeCatalogs } from "./catalog"
+
 // Serialization utilities
 export { DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
 
@@ -30,3 +33,4 @@ export type {
 
 export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"
+export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
