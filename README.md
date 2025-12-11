@@ -34,13 +34,13 @@ A modern, focused library for reading and writing GNU gettext PO files. Hand-opt
 
 ## Features
 
-- 📖 **Parse** PO files from strings
-- ✍️ **Serialize** PO files back to strings with configurable formatting
-- 🎯 **Full PO support** — headers, comments, flags, plurals, context
-- 🔄 **Crowdin-compatible** — avoids unnecessary diffs when syncing translations
-- 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
-- 🔷 **TypeScript-first** — full type definitions included
-- ⚡ **Blazing fast** — up to 36x faster than alternatives (see [benchmarks](#performance))
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/book-open.svg" width="16" height="16" alt=""> **Parse** PO files from strings
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/pen-line.svg" width="16" height="16" alt=""> **Serialize** PO files back to strings with configurable formatting
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/target.svg" width="16" height="16" alt=""> **Full PO support** — headers, comments, flags, plurals, context
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/refresh-cw.svg" width="16" height="16" alt=""> **Crowdin-compatible** — avoids unnecessary diffs when syncing translations
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/package.svg" width="16" height="16" alt=""> **Zero dependencies** — no Node.js APIs, browser-compatible
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/code.svg" width="16" height="16" alt=""> **TypeScript-first** — full type definitions included
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/zap.svg" width="16" height="16" alt=""> **Blazing fast** — up to 36x faster than alternatives (see [benchmarks](#performance))
 
 ## Why pofile-ts?
 
@@ -48,10 +48,10 @@ Other libraries like [gettext-parser](https://github.com/smhg/gettext-parser) tr
 
 **pofile-ts takes a different approach:**
 
-- 🎯 **Focused** — PO files only, no binary formats
-- 🌐 **Modern** — UTF-8 exclusively, like every tool since 2010
-- 🖥️ **Universal** — runs in Node.js and browsers without polyfills
-- ⚡ **Hand-optimized** — every hot path tuned for maximum throughput
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/target.svg" width="16" height="16" alt=""> **Focused** — PO files only, no binary formats
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/globe.svg" width="16" height="16" alt=""> **Modern** — UTF-8 exclusively, like every tool since 2010
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/monitor.svg" width="16" height="16" alt=""> **Universal** — runs in Node.js and browsers without polyfills
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/zap.svg" width="16" height="16" alt=""> **Hand-optimized** — every hot path tuned for maximum throughput
 
 The result? **36x faster parsing** while being simpler to use.
 
