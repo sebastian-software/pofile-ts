@@ -1,4 +1,4 @@
-import { ESCAPE_MAP, UNESCAPE_MAP, RE_ESCAPE, RE_UNESCAPE, RE_EXTRACT_STRING } from "./constants"
+import { ESCAPE_MAP, UNESCAPE_MAP, RE_ESCAPE, RE_UNESCAPE } from "./constants"
 
 /**
  * Escapes special characters in a string for PO file format.
@@ -17,6 +17,11 @@ export function escapeString(str: string): string {
  * Octal escapes can be 1-3 digits (e.g., \0, \77, \123).
  */
 export function unescapeString(str: string): string {
+  // Fast path: no backslash means no escape sequences
+  if (!str.includes("\\")) {
+    return str
+  }
+
   return str.replace(
     RE_UNESCAPE,
     (_, esc: string, oct: string | undefined, hex: string | undefined) => {
@@ -36,6 +41,17 @@ export function unescapeString(str: string): string {
  * Removes the keyword prefix and surrounding quotes, then unescapes.
  */
 export function extractString(line: string): string {
-  const str = line.trim().replace(RE_EXTRACT_STRING, "")
+  // Find first and last quote positions (faster than regex)
+  const firstQuote = line.indexOf('"')
+  if (firstQuote === -1) {
+    return ""
+  }
+
+  const lastQuote = line.lastIndexOf('"')
+  if (lastQuote <= firstQuote) {
+    return ""
+  }
+
+  const str = line.substring(firstQuote + 1, lastQuote)
   return unescapeString(str)
 }

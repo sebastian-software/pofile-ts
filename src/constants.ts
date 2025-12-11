@@ -46,9 +46,6 @@ export const RE_HEADER_CONTINUATION = /^".*"$/
 /** Matches header line with trailing \n */
 export const RE_HEADER_COMPLETE = /^".*\\n"$/
 
-/** Extracts string content from a line */
-export const RE_EXTRACT_STRING = /^[^"]*"|"$/g
-
 /** Matches escape sequences for unescaping */
 export const RE_UNESCAPE = /\\([abtnvfr'"\\?]|([0-7]{1,3})|x([0-9a-fA-F]{2}))/g
 
