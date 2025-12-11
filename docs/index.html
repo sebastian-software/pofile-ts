@@ -900,6 +900,13 @@
             <h4>Blazing Fast</h4>
             <p>Up to 36x faster than alternatives — optimized hot paths</p>
           </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <img src="icons/globe.svg" alt="" width="24" height="24" />
+            </div>
+            <h4>i18n Workflow Helpers</h4>
+            <p>Catalog conversion, message IDs, reference parsing — batteries included</p>
+          </div>
         </div>
       </section>
 
@@ -1120,6 +1127,75 @@ po.items.<span class="code-function">push</span>(item)
 console.<span class="code-function">log</span>(<span class="code-function">stringifyPo</span>(po))</pre>
       </section>
 
+      <!-- i18n Workflow Helpers Section -->
+      <section id="helpers">
+        <h2>i18n Workflow Helpers</h2>
+        <p>
+          Beyond parsing and serialization, pofile-ts includes utilities for common i18n workflows.
+          All helpers are tree-shakeable — only import what you need.
+        </p>
+
+        <h3>Default Headers</h3>
+        <p>Create properly formatted PO headers with sensible defaults:</p>
+
+        <pre><span class="code-keyword">import</span> { createDefaultHeaders } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> headers = <span class="code-function">createDefaultHeaders</span>({
+  <span class="code-type">language</span>: <span class="code-string">"de"</span>,
+  <span class="code-type">generator</span>: <span class="code-string">"my-tool"</span>,
+  <span class="code-type">pluralForms</span>: <span class="code-string">"nplurals=2; plural=(n != 1);"</span>
+})
+
+<span class="code-comment">// Includes: POT-Creation-Date, MIME-Version, Content-Type, etc.</span></pre>
+
+        <h3>Catalog Conversion</h3>
+        <p>Convert between simple key-value catalogs and PO items — with full plural support:</p>
+
+        <pre><span class="code-keyword">import</span> { catalogToItems, itemsToCatalog } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Simple catalog format</span>
+<span class="code-keyword">const</span> catalog = {
+  <span class="code-string">"Hello"</span>: { <span class="code-type">translation</span>: <span class="code-string">"Hallo"</span> },
+  <span class="code-string">"{count} item"</span>: {
+    <span class="code-type">translation</span>: [<span class="code-string">"{count} Element"</span>, <span class="code-string">"{count} Elemente"</span>],
+    <span class="code-type">pluralSource</span>: <span class="code-string">"{count} items"</span>
+  }
+}
+
+<span class="code-keyword">const</span> items = <span class="code-function">catalogToItems</span>(catalog)
+<span class="code-keyword">const</span> backToCatalog = <span class="code-function">itemsToCatalog</span>(items)</pre>
+
+        <h3>Message ID Generation</h3>
+        <p>
+          Generate stable, collision-resistant IDs from message content. Uses SHA-256 with Base64URL
+          encoding — 281 trillion possibilities, practically zero collisions even at 1M messages:
+        </p>
+
+        <pre><span class="code-keyword">import</span> { generateMessageId, generateMessageIdSync } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Async (works in browsers and Node.js)</span>
+<span class="code-keyword">const</span> id = <span class="code-keyword">await</span> <span class="code-function">generateMessageId</span>(<span class="code-string">"Hello {name}"</span>, <span class="code-string">"greeting"</span>)
+<span class="code-comment">// → "Kj9xMnPq" (8-char Base64URL)</span>
+
+<span class="code-comment">// Sync (Node.js only, faster)</span>
+<span class="code-keyword">const</span> syncId = <span class="code-function">generateMessageIdSync</span>(<span class="code-string">"Hello {name}"</span>)</pre>
+
+        <h3>Reference Utilities</h3>
+        <p>Parse and format source file references with proper path normalization:</p>
+
+        <pre><span class="code-keyword">import</span> { parseReference, formatReference, createReference } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-function">parseReference</span>(<span class="code-string">"src/App.tsx:42"</span>)
+<span class="code-comment">// → { file: "src/App.tsx", line: 42 }</span>
+
+<span class="code-function">formatReference</span>({ <span class="code-type">file</span>: <span class="code-string">"src/App.tsx"</span>, <span class="code-type">line</span>: <span class="code-number">42</span> })
+<span class="code-comment">// → "src/App.tsx:42"</span>
+
+<span class="code-comment">// Validates relative paths, normalizes Windows backslashes</span>
+<span class="code-function">createReference</span>(<span class="code-string">"src\\components\\Button.tsx"</span>, <span class="code-number">10</span>)
+<span class="code-comment">// → { file: "src/components/Button.tsx", line: 10 }</span></pre>
+      </section>
+
       <section id="api">
         <h2>API Reference</h2>
 
@@ -1158,6 +1234,34 @@ console.<span class="code-function">log</span>(<span class="code-function">strin
               <td><code>parsePluralForms(header)</code></td>
               <td>Parse the Plural-Forms header value</td>
             </tr>
+            <tr>
+              <td><code>createDefaultHeaders(options?)</code></td>
+              <td>Create default PO headers with sensible defaults</td>
+            </tr>
+            <tr>
+              <td><code>catalogToItems(catalog)</code></td>
+              <td>Convert a simple catalog to PO items</td>
+            </tr>
+            <tr>
+              <td><code>itemsToCatalog(items)</code></td>
+              <td>Convert PO items to a simple catalog</td>
+            </tr>
+            <tr>
+              <td><code>generateMessageId(msg, ctx?)</code></td>
+              <td>Generate stable 8-char Base64URL ID (async)</td>
+            </tr>
+            <tr>
+              <td><code>generateMessageIdSync(msg, ctx?)</code></td>
+              <td>Generate stable ID synchronously (Node.js)</td>
+            </tr>
+            <tr>
+              <td><code>parseReference(ref)</code></td>
+              <td>Parse "file:line" reference string</td>
+            </tr>
+            <tr>
+              <td><code>formatReference(ref)</code></td>
+              <td>Format reference object to string</td>
+            </tr>
           </tbody>
         </table>
 
@@ -1186,6 +1290,18 @@ console.<span class="code-function">log</span>(<span class="code-function">strin
             <tr>
               <td><code>SerializeOptions</code></td>
               <td>Options for controlling output format</td>
+            </tr>
+            <tr>
+              <td><code>Catalog</code></td>
+              <td>Simple key-value catalog format</td>
+            </tr>
+            <tr>
+              <td><code>CatalogEntry</code></td>
+              <td>Single catalog entry with translation and metadata</td>
+            </tr>
+            <tr>
+              <td><code>SourceReference</code></td>
+              <td>Parsed file:line reference</td>
             </tr>
           </tbody>
         </table>

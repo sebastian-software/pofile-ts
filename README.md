@@ -42,6 +42,7 @@ A modern, focused library for reading and writing GNU gettext PO files. Hand-opt
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/package.svg" width="16" height="16" alt=""> **Zero dependencies** — no Node.js APIs, browser-compatible
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/code.svg" width="16" height="16" alt=""> **TypeScript-first** — full type definitions included
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/zap.svg" width="16" height="16" alt=""> **Blazing fast** — up to 36x faster than alternatives (see [benchmarks](#performance))
+- <img src="https://sebastian-software.github.io/pofile-ts/icons/globe.svg" width="16" height="16" alt=""> **i18n workflow helpers** — catalog conversion, message IDs, reference parsing
 
 ## Why pofile-ts?
 
@@ -116,6 +117,63 @@ stringifyPo(po, {
 The compact multiline format is the default because translation platforms like Crowdin normalize multiline strings. Using the same format avoids unnecessary diffs. Both formats represent the exact same data — the difference is purely cosmetic.
 
 See the [documentation](https://sebastian-software.github.io/pofile-ts/#options) for details.
+
+## i18n Workflow Helpers
+
+Beyond parsing and serialization, pofile-ts includes utilities for common i18n workflows:
+
+### Default Headers
+
+```typescript
+import { createDefaultHeaders } from "pofile-ts"
+
+const headers = createDefaultHeaders({
+  language: "de",
+  generator: "my-tool",
+  pluralForms: "nplurals=2; plural=(n != 1);"
+})
+```
+
+### Catalog Conversion
+
+Convert between simple key-value catalogs and PO items:
+
+```typescript
+import { catalogToItems, itemsToCatalog } from "pofile-ts"
+
+// Simple catalog format
+const catalog = {
+  Hello: { translation: "Hallo" },
+  "{count} item": {
+    translation: ["{count} Element", "{count} Elemente"],
+    pluralSource: "{count} items"
+  }
+}
+
+const items = catalogToItems(catalog)
+```
+
+### Message ID Generation
+
+Generate stable, collision-resistant IDs from message content:
+
+```typescript
+import { generateMessageId } from "pofile-ts"
+
+const id = await generateMessageId("Hello {name}", "greeting")
+// → "Kj9xMnPq" (8-char Base64URL, 281 trillion possibilities)
+```
+
+### Reference Utilities
+
+Parse and format source file references:
+
+```typescript
+import { parseReference, formatReference } from "pofile-ts"
+
+parseReference("src/App.tsx:42")
+// → { file: "src/App.tsx", line: 42 }
+```
 
 ## Documentation
 
