@@ -38,6 +38,30 @@ A robust library for reading and writing GNU gettext PO files. Optimized for sea
 - 🔄 **Crowdin-compatible** — avoids unnecessary diffs when syncing translations
 - 📦 **Zero dependencies** — no Node.js APIs, browser-compatible
 - 🔷 **TypeScript-first** — full type definitions included
+- ⚡ **Blazing fast** — up to 36x faster than alternatives
+
+## Performance
+
+pofile-ts is highly optimized for speed. Benchmarked on a 1.5 MB PO file with 10,000 entries:
+
+| Library                                                  | Parsing       |                      | Serialization |                      |
+| -------------------------------------------------------- | ------------- | -------------------- | ------------- | -------------------- |
+| **pofile-ts**                                            | **157 ops/s** | 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 | **171 ops/s** | 🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩 |
+| [gettext-parser](https://github.com/smhg/gettext-parser) | 19 ops/s      | 🟩                   | 31 ops/s      | 🟩🟩                 |
+| [pofile](https://github.com/rubenv/pofile)               | 4 ops/s       | ░                    | 87 ops/s      | 🟩🟩🟩🟩🟩           |
+
+**Summary:**
+
+- **36x faster** parsing than [pofile](https://github.com/rubenv/pofile)
+- **8x faster** parsing than [gettext-parser](https://github.com/smhg/gettext-parser)
+- **2x faster** serialization than pofile
+- **5.5x faster** serialization than gettext-parser
+
+Run the benchmark yourself:
+
+```bash
+cd benchmark && pnpm install && pnpm bench
+```
 
 ## Installation
 
