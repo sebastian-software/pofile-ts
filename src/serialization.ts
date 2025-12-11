@@ -20,36 +20,40 @@ export function foldLine(text: string, maxLength: number): string[] {
   }
 
   const lines: string[] = []
-  let remaining = text
+  let start = 0
 
-  while (remaining.length > maxLength) {
-    const breakAt = findBreakPoint(remaining, maxLength)
-    lines.push(remaining.slice(0, breakAt))
-    remaining = remaining.slice(breakAt)
-  }
+  while (start < text.length) {
+    const remaining = text.length - start
+    if (remaining <= maxLength) {
+      lines.push(text.substring(start))
+      break
+    }
 
-  if (remaining.length > 0) {
-    lines.push(remaining)
+    const breakAt = findBreakPointAt(text, start, maxLength)
+    lines.push(text.substring(start, breakAt))
+    start = breakAt
   }
 
   return lines
 }
 
-/** Finds a good break point for line folding */
-function findBreakPoint(text: string, maxLength: number): number {
+/** Finds a good break point for line folding starting at offset */
+function findBreakPointAt(text: string, start: number, maxLength: number): number {
+  const end = start + maxLength
+
   // Look for a space to break at
-  for (let i = maxLength; i > 0; i--) {
+  for (let i = end; i > start; i--) {
     if (text[i] === " ") {
       return i + 1 // Include the space in the current line
     }
   }
 
   // No space found, break at maxLength but avoid breaking escape sequences
-  if (text[maxLength - 1] === "\\") {
-    return maxLength - 1
+  if (text[end - 1] === "\\") {
+    return end - 1
   }
 
-  return maxLength
+  return end
 }
 
 /** Escapes parts and adds \n back to represent line breaks */
@@ -142,10 +146,22 @@ export function formatKeyword(
     compactMultiline = DEFAULT_SERIALIZE_OPTIONS.compactMultiline
   } = options
 
-  const indexStr = typeof index !== "undefined" ? `[${index}]` : ""
-  const keywordPrefix = `${keyword}${indexStr} `
+  const indexStr = index !== undefined ? "[" + index + "]" : ""
+  const keywordPrefix = keyword + indexStr + " "
 
-  // Split on actual newlines in the text
+  // Fast path: simple single-line string without newlines
+  // This is the most common case and avoids split/map/fold overhead
+  if (!text.includes("\n")) {
+    const escaped = escapeString(text)
+    const fullLine = keywordPrefix + '"' + escaped + '"'
+
+    // If it fits in one line (or folding disabled), return directly
+    if (foldLength <= 0 || fullLine.length <= foldLength) {
+      return [fullLine]
+    }
+  }
+
+  // Full path for multiline or long strings
   const parts = text.split("\n")
   const hasMultipleLines = parts.length > 1
   const firstPartIsEmpty = parts[0] === ""
@@ -159,7 +175,7 @@ export function formatKeyword(
   // Determine format: single line, compact multiline, or traditional
   const isSingleLine = segments.length === 1 && !hasMultipleLines
   if (isSingleLine) {
-    return [`${keywordPrefix}"${segments[0] ?? ""}"`]
+    return [keywordPrefix + '"' + (segments[0] ?? "") + '"']
   }
 
   // Use compact format only if enabled AND first part has content

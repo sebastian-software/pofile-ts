@@ -34,10 +34,10 @@ export function stringifyItem(item: PoItem, options?: SerializeOptions): string 
 
   // Comments (order: translator, extracted, references, flags)
   for (const c of item.comments) {
-    lines.push("# " + c)
+    lines.push(c ? "# " + c : "#")
   }
   for (const c of item.extractedComments) {
-    lines.push("#. " + c)
+    lines.push(c ? "#. " + c : "#.")
   }
   for (const ref of item.references) {
     lines.push("#: " + ref)

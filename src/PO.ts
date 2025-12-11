@@ -85,10 +85,10 @@ export function stringifyPo(po: PoFile, options?: SerializeOptions): string {
 
   // File-level comments
   for (const comment of po.comments) {
-    lines.push(("# " + comment).trim())
+    lines.push(comment ? "# " + comment : "#")
   }
   for (const comment of po.extractedComments) {
-    lines.push(("#. " + comment).trim())
+    lines.push(comment ? "#. " + comment : "#.")
   }
 
   // Empty msgid/msgstr for headers
