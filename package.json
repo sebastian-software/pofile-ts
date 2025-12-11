@@ -60,7 +60,9 @@
     "prepublishOnly": "npm run build",
     "prepare": "husky",
     "release": "release-it",
-    "release:auto": "release-it --ci"
+    "release:auto": "release-it --ci",
+    "bench": "pnpm --filter pofile-ts-benchmark bench",
+    "bench:generate": "pnpm --filter pofile-ts-benchmark generate-fixture"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

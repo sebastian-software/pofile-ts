@@ -1,0 +1,17 @@
+{
+  "name": "pofile-ts-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "tsx run.ts",
+    "generate-fixture": "tsx generate-fixture.ts"
+  },
+  "dependencies": {
+    "gettext-parser": "^8.0.0",
+    "pofile": "^1.1.4",
+    "pofile-ts": "workspace:*",
+    "tinybench": "^3.0.0",
+    "tsx": "^4.19.0"
+  }
+}
