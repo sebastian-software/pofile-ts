@@ -1,11 +1,15 @@
 import { describe, it, expect } from "vitest"
 import { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
 
+/** Base64URL pattern: A-Z, a-z, 0-9, -, _ */
+const BASE64URL_PATTERN = /^[A-Za-z0-9_-]{8}$/
+
 describe("generateMessageId", () => {
-  it("generates a 6-character hex ID", async () => {
+  it("generates an 8-character Base64URL ID", async () => {
     const id = await generateMessageId("Hello")
 
-    expect(id).toMatch(/^[0-9a-f]{6}$/)
+    expect(id).toMatch(BASE64URL_PATTERN)
+    expect(id).toHaveLength(8)
   })
 
   it("generates consistent IDs for same input", async () => {
@@ -35,27 +39,28 @@ describe("generateMessageId", () => {
   it("handles empty string", async () => {
     const id = await generateMessageId("")
 
-    expect(id).toMatch(/^[0-9a-f]{6}$/)
+    expect(id).toMatch(BASE64URL_PATTERN)
   })
 
   it("handles unicode characters", async () => {
     const id = await generateMessageId("Привет мир 🌍")
 
-    expect(id).toMatch(/^[0-9a-f]{6}$/)
+    expect(id).toMatch(BASE64URL_PATTERN)
   })
 
   it("handles special characters", async () => {
     const id = await generateMessageId("Hello {name}, you have {count} messages!")
 
-    expect(id).toMatch(/^[0-9a-f]{6}$/)
+    expect(id).toMatch(BASE64URL_PATTERN)
   })
 })
 
 describe("generateMessageIdSync", () => {
-  it("generates a 6-character hex ID", () => {
+  it("generates an 8-character Base64URL ID", () => {
     const id = generateMessageIdSync("Hello")
 
-    expect(id).toMatch(/^[0-9a-f]{6}$/)
+    expect(id).toMatch(BASE64URL_PATTERN)
+    expect(id).toHaveLength(8)
   })
 
   it("generates consistent IDs for same input", () => {
@@ -85,8 +90,8 @@ describe("generateMessageIds", () => {
     const ids = await generateMessageIds(["Hello", "World"])
 
     expect(ids.size).toBe(2)
-    expect(ids.get("Hello")).toMatch(/^[0-9a-f]{6}$/)
-    expect(ids.get("World")).toMatch(/^[0-9a-f]{6}$/)
+    expect(ids.get("Hello")).toMatch(BASE64URL_PATTERN)
+    expect(ids.get("World")).toMatch(BASE64URL_PATTERN)
   })
 
   it("handles mixed string and object inputs", async () => {

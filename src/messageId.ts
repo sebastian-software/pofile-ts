@@ -2,32 +2,34 @@
  * Message ID generation utilities.
  *
  * Provides functions to generate stable, content-based message IDs
- * from source strings. Compatible with Lingui's ID generation.
+ * from source strings. Uses SHA-256 hashing with Base64URL encoding
+ * for compact, URL-safe identifiers.
  */
+
+/** Length of generated message IDs (8 Base64URL chars = 281 trillion possibilities) */
+const ID_LENGTH = 8
 
 /**
  * Generates a message ID from content using SHA-256.
  *
  * This is an async function that works in both Node.js and browser environments.
- * The generated ID is a 6-character hex string derived from the SHA-256 hash.
+ * The generated ID is an 8-character Base64URL string derived from the SHA-256 hash.
  *
  * @param message - The source message text
  * @param context - Optional message context for disambiguation
- * @returns A 6-character hexadecimal ID
+ * @returns An 8-character Base64URL ID
  *
  * @example
  * const id = await generateMessageId("Hello {name}")
- * // → "a1b2c3"
+ * // → "Kj9xMnPq"
  *
  * const idWithContext = await generateMessageId("Open", "menu.file")
- * // → "d4e5f6"
+ * // → "Xp2wLmNr"
  */
 export async function generateMessageId(message: string, context?: string): Promise<string> {
-  // Combine message and context (matching Lingui's approach)
   const input = context ? `${context}${message}` : message
-
-  const hash = await sha256(input)
-  return hash.slice(0, 6)
+  const hashBytes = await sha256Bytes(input)
+  return bytesToBase64Url(hashBytes).slice(0, ID_LENGTH)
 }
 
 /**
@@ -38,37 +40,55 @@ export async function generateMessageId(message: string, context?: string): Prom
  *
  * @param message - The source message text
  * @param context - Optional message context for disambiguation
- * @returns A 6-character hexadecimal ID
+ * @returns An 8-character Base64URL ID
  *
  * @example
  * const id = generateMessageIdSync("Hello {name}")
- * // → "a1b2c3"
+ * // → "Kj9xMnPq"
  */
 export function generateMessageIdSync(message: string, context?: string): string {
   const input = context ? `${context}${message}` : message
-  return nodeCryptoHash(input).slice(0, 6)
-}
-
-/**
- * Computes SHA-256 hash using Node.js crypto module.
- */
-function nodeCryptoHash(input: string): string {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const crypto = require("node:crypto") as typeof import("node:crypto")
-  return crypto.createHash("sha256").update(input).digest("hex")
+  return crypto.createHash("sha256").update(input).digest("base64url").slice(0, ID_LENGTH)
 }
 
 /**
- * Computes SHA-256 hash of a string.
- *
- * Uses the Web Crypto API which is available in browsers and Node.js 15+.
+ * Computes SHA-256 hash bytes using Web Crypto API.
  */
-async function sha256(input: string): Promise<string> {
+async function sha256Bytes(input: string): Promise<Uint8Array> {
   const encoder = new TextEncoder()
   const data = encoder.encode(input)
   const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", data)
-  const hashArray = [...new Uint8Array(hashBuffer)]
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+  return new Uint8Array(hashBuffer)
+}
+
+/** Base64URL alphabet */
+const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+/**
+ * Converts bytes to Base64URL string.
+ * Optimized for short output (only processes bytes needed for ID_LENGTH chars).
+ */
+function bytesToBase64Url(bytes: Uint8Array): string {
+  // We need ceil(ID_LENGTH * 6 / 8) = 6 bytes for 8 Base64 chars
+  let result = ""
+  let bits = 0
+  let value = 0
+
+  for (let i = 0; i < bytes.length && result.length < ID_LENGTH; i++) {
+    const byte = bytes[i] ?? 0
+    value = (value << 8) | byte
+    bits += 8
+
+    while (bits >= 6 && result.length < ID_LENGTH) {
+      bits -= 6
+      const index = (value >> bits) & 0x3f
+      result += BASE64URL.charAt(index)
+    }
+  }
+
+  return result
 }
 
 /**
