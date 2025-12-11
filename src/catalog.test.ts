@@ -12,10 +12,13 @@ describe("catalogToItems", () => {
     const items = catalogToItems(catalog)
 
     expect(items).toHaveLength(2)
-    expect(items[0].msgid).toBe("Hello")
-    expect(items[0].msgstr).toEqual(["Hallo"])
-    expect(items[1].msgid).toBe("World")
-    expect(items[1].msgstr).toEqual(["Welt"])
+    const [first, second] = items
+    expect(first).toBeDefined()
+    expect(second).toBeDefined()
+    expect(first?.msgid).toBe("Hello")
+    expect(first?.msgstr).toEqual(["Hallo"])
+    expect(second?.msgid).toBe("World")
+    expect(second?.msgstr).toEqual(["Welt"])
   })
 
   it("uses explicit message when provided", () => {
@@ -26,9 +29,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].msgid).toBe("Hello {name}")
+    expect(item?.msgid).toBe("Hello {name}")
   })
 
   it("handles plural translations", () => {
@@ -39,11 +42,11 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].msgid).toBe("{count} item")
-    expect(items[0].msgid_plural).toBe("{count} items")
-    expect(items[0].msgstr).toEqual(["{count} Element", "{count} Elemente"])
+    expect(item?.msgid).toBe("{count} item")
+    expect(item?.msgid_plural).toBe("{count} items")
+    expect(item?.msgstr).toEqual(["{count} Element", "{count} Elemente"])
   })
 
   it("handles context", () => {
@@ -54,9 +57,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].msgctxt).toBe("menu.file")
+    expect(item?.msgctxt).toBe("menu.file")
   })
 
   it("handles comments", () => {
@@ -68,10 +71,10 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].comments).toEqual(["Translator note"])
-    expect(items[0].extractedComments).toEqual(["From source code"])
+    expect(item?.comments).toEqual(["Translator note"])
+    expect(item?.extractedComments).toEqual(["From source code"])
   })
 
   it("handles origins", () => {
@@ -85,9 +88,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].references).toEqual(["src/App.tsx:42", "src/utils.ts:10"])
+    expect(item?.references).toEqual(["src/App.tsx:42", "src/utils.ts:10"])
   })
 
   it("excludes origins when includeOrigins is false", () => {
@@ -98,9 +101,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog, { includeOrigins: false })
+    const [item] = catalogToItems(catalog, { includeOrigins: false })
 
-    expect(items[0].references).toEqual([])
+    expect(item?.references).toEqual([])
   })
 
   it("excludes line numbers when includeLineNumbers is false", () => {
@@ -111,9 +114,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog, { includeLineNumbers: false })
+    const [item] = catalogToItems(catalog, { includeLineNumbers: false })
 
-    expect(items[0].references).toEqual(["src/App.tsx"])
+    expect(item?.references).toEqual(["src/App.tsx"])
   })
 
   it("handles obsolete entries", () => {
@@ -124,9 +127,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].obsolete).toBe(true)
+    expect(item?.obsolete).toBe(true)
   })
 
   it("handles flags", () => {
@@ -137,9 +140,9 @@ describe("catalogToItems", () => {
       }
     }
 
-    const items = catalogToItems(catalog)
+    const [item] = catalogToItems(catalog)
 
-    expect(items[0].flags).toEqual({ fuzzy: true })
+    expect(item?.flags).toEqual({ fuzzy: true })
   })
 
   it("respects nplurals option", () => {
@@ -147,9 +150,9 @@ describe("catalogToItems", () => {
       Hello: { translation: "Hallo" }
     }
 
-    const items = catalogToItems(catalog, { nplurals: 3 })
+    const [item] = catalogToItems(catalog, { nplurals: 3 })
 
-    expect(items[0].nplurals).toBe(3)
+    expect(item?.nplurals).toBe(3)
   })
 })
 
@@ -203,7 +206,7 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item])
 
-    expect(catalog.Open.context).toBe("menu.file")
+    expect(catalog.Open?.context).toBe("menu.file")
   })
 
   it("handles comments", () => {
@@ -217,8 +220,8 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item])
 
-    expect(catalog.Hello.comments).toEqual(["Translator note"])
-    expect(catalog.Hello.extractedComments).toEqual(["From source"])
+    expect(catalog.Hello?.comments).toEqual(["Translator note"])
+    expect(catalog.Hello?.extractedComments).toEqual(["From source"])
   })
 
   it("handles references as origins", () => {
@@ -231,7 +234,7 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item])
 
-    expect(catalog.Hello.origins).toEqual([
+    expect(catalog.Hello?.origins).toEqual([
       { file: "src/App.tsx", line: 42 },
       { file: "src/utils.ts", line: 10 }
     ])
@@ -247,7 +250,7 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item], { includeOrigins: false })
 
-    expect(catalog.Hello.origins).toBeUndefined()
+    expect(catalog.Hello?.origins).toBeUndefined()
   })
 
   it("handles obsolete items", () => {
@@ -260,7 +263,7 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item])
 
-    expect(catalog.OldMessage.obsolete).toBe(true)
+    expect(catalog.OldMessage?.obsolete).toBe(true)
   })
 
   it("handles flags", () => {
@@ -273,7 +276,7 @@ describe("itemsToCatalog", () => {
 
     const catalog = itemsToCatalog([item])
 
-    expect(catalog.Hello.flags).toEqual({ fuzzy: true })
+    expect(catalog.Hello?.flags).toEqual({ fuzzy: true })
   })
 
   it("uses custom key generator", () => {
@@ -283,13 +286,15 @@ describe("itemsToCatalog", () => {
       msgstr: ["Hallo Welt"]
     }
 
+    const generatedKey = "key_Hello_World"
     const catalog = itemsToCatalog([item], {
       useMsgidAsKey: false,
-      keyGenerator: (item) => `key_${item.msgid.replace(/\s+/g, "_")}`
+      keyGenerator: (poItem) => `key_${poItem.msgid.replace(/\s+/g, "_")}`
     })
 
-    expect(catalog["key_Hello_World"]).toBeDefined()
-    expect(catalog["key_Hello_World"].message).toBe("Hello World")
+    const entry = catalog[generatedKey]
+    expect(entry).toBeDefined()
+    expect(entry?.message).toBe("Hello World")
   })
 })
 
@@ -307,9 +312,9 @@ describe("mergeCatalogs", () => {
 
     const merged = mergeCatalogs(base, updates)
 
-    expect(merged.Hello.translation).toBe("Hallo")
-    expect(merged.World.translation).toBe("Welt!")
-    expect(merged.New.translation).toBe("Neu")
+    expect(merged.Hello?.translation).toBe("Hallo")
+    expect(merged.World?.translation).toBe("Welt!")
+    expect(merged.New?.translation).toBe("Neu")
   })
 
   it("merges flags from both catalogs", () => {
@@ -323,7 +328,7 @@ describe("mergeCatalogs", () => {
 
     const merged = mergeCatalogs(base, updates)
 
-    expect(merged.Hello.flags).toEqual({ fuzzy: true, reviewed: true })
+    expect(merged.Hello?.flags).toEqual({ fuzzy: true, reviewed: true })
   })
 
   it("preserves comments from base when not in update", () => {
@@ -337,8 +342,8 @@ describe("mergeCatalogs", () => {
 
     const merged = mergeCatalogs(base, updates)
 
-    expect(merged.Hello.comments).toEqual(["Original comment"])
-    expect(merged.Hello.translation).toBe("Hallo!")
+    expect(merged.Hello?.comments).toEqual(["Original comment"])
+    expect(merged.Hello?.translation).toBe("Hallo!")
   })
 
   it("replaces comments when provided in update", () => {
@@ -352,7 +357,7 @@ describe("mergeCatalogs", () => {
 
     const merged = mergeCatalogs(base, updates)
 
-    expect(merged.Hello.comments).toEqual(["New comment"])
+    expect(merged.Hello?.comments).toEqual(["New comment"])
   })
 
   it("does not mutate original catalogs", () => {
@@ -366,7 +371,7 @@ describe("mergeCatalogs", () => {
 
     mergeCatalogs(base, updates)
 
-    expect(base.Hello.translation).toBe("Hallo")
-    expect(updates.Hello.translation).toBe("Hallo!")
+    expect(base.Hello?.translation).toBe("Hallo")
+    expect(updates.Hello?.translation).toBe("Hallo!")
   })
 })

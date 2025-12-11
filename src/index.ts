@@ -18,6 +18,9 @@ export {
 // Catalog utilities
 export { catalogToItems, itemsToCatalog, mergeCatalogs } from "./catalog"
 
+// Message ID generation
+export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
+
 // Serialization utilities
 export { DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
 
@@ -34,3 +37,4 @@ export type {
 export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
+export type { GenerateIdsOptions } from "./messageId"

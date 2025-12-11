@@ -78,6 +78,23 @@ export function formatPoDate(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}${sign}${offsetHours}${offsetMins}`
 }
 
+/** Builds the base headers object */
+function buildBaseHeaders(options: CreateHeadersOptions, now: string): Partial<Headers> {
+  return {
+    "Project-Id-Version": options.projectIdVersion ?? "",
+    "Report-Msgid-Bugs-To": options.reportBugsTo ?? "",
+    "POT-Creation-Date": now,
+    "PO-Revision-Date": now,
+    "Last-Translator": options.lastTranslator ?? "",
+    Language: options.language ?? "",
+    "Language-Team": options.languageTeam ?? "",
+    "MIME-Version": "1.0",
+    "Content-Type": "text/plain; charset=utf-8",
+    "Content-Transfer-Encoding": "8bit",
+    "X-Generator": options.generator ?? "pofile-ts"
+  }
+}
+
 /**
  * Creates default PO file headers with sensible defaults.
  *
@@ -88,41 +105,13 @@ export function formatPoDate(date: Date): string {
  * })
  */
 export function createDefaultHeaders(options: CreateHeadersOptions = {}): Partial<Headers> {
-  const {
-    language = "",
-    generator = "pofile-ts",
-    projectIdVersion = "",
-    reportBugsTo = "",
-    lastTranslator = "",
-    languageTeam = "",
-    pluralForms,
-    custom = {}
-  } = options
-
   const now = formatPoDate(new Date())
+  const headers = buildBaseHeaders(options, now)
 
-  const headers: Partial<Headers> = {
-    "Project-Id-Version": projectIdVersion,
-    "Report-Msgid-Bugs-To": reportBugsTo,
-    "POT-Creation-Date": now,
-    "PO-Revision-Date": now,
-    "Last-Translator": lastTranslator,
-    Language: language,
-    "Language-Team": languageTeam,
-    "MIME-Version": "1.0",
-    "Content-Type": "text/plain; charset=utf-8",
-    "Content-Transfer-Encoding": "8bit",
-    "X-Generator": generator
-  }
-
-  if (pluralForms) {
-    headers["Plural-Forms"] = pluralForms
+  if (options.pluralForms) {
+    headers["Plural-Forms"] = options.pluralForms
   }
 
   // Apply custom headers (can override defaults)
-  for (const [key, value] of Object.entries(custom)) {
-    headers[key] = value
-  }
-
-  return headers
+  return { ...headers, ...options.custom }
 }

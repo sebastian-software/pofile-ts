@@ -112,6 +112,46 @@ export interface ItemsToCatalogOptions {
   includeOrigins?: boolean
 }
 
+/** Applies translation to an item */
+function applyTranslation(item: PoItem, entry: CatalogEntry): void {
+  if (Array.isArray(entry.translation)) {
+    item.msgstr = entry.translation
+    if (entry.pluralSource) {
+      item.msgid_plural = entry.pluralSource
+    }
+  } else {
+    item.msgstr = [entry.translation]
+  }
+}
+
+/** Applies optional fields from entry to item */
+function applyOptionalFields(
+  item: PoItem,
+  entry: CatalogEntry,
+  options: { includeOrigins: boolean; includeLineNumbers: boolean }
+): void {
+  if (entry.context) {
+    item.msgctxt = entry.context
+  }
+  if (entry.comments) {
+    item.comments = entry.comments
+  }
+  if (entry.extractedComments) {
+    item.extractedComments = entry.extractedComments
+  }
+  if (options.includeOrigins && entry.origins) {
+    item.references = entry.origins.map((ref) =>
+      formatReference(ref, { includeLineNumbers: options.includeLineNumbers })
+    )
+  }
+  if (entry.obsolete) {
+    item.obsolete = true
+  }
+  if (entry.flags) {
+    item.flags = { ...entry.flags }
+  }
+}
+
 /**
  * Converts a catalog to PO items.
  *
@@ -132,57 +172,65 @@ export interface ItemsToCatalogOptions {
 export function catalogToItems(catalog: Catalog, options: CatalogToItemsOptions = {}): PoItem[] {
   const { includeOrigins = true, includeLineNumbers = true, nplurals = 2 } = options
 
-  const items: PoItem[] = []
-
-  for (const [key, entry] of Object.entries(catalog)) {
+  return Object.entries(catalog).map(([key, entry]) => {
     const item = createItem({ nplurals })
-
-    // msgid is either the explicit message or the key itself
     item.msgid = entry.message ?? key
+    applyTranslation(item, entry)
+    applyOptionalFields(item, entry, { includeOrigins, includeLineNumbers })
+    return item
+  })
+}
 
-    // Context
-    if (entry.context) {
-      item.msgctxt = entry.context
-    }
-
-    // Translation(s)
-    if (Array.isArray(entry.translation)) {
-      item.msgstr = entry.translation
-      // Plural source is required for plural translations
-      if (entry.pluralSource) {
-        item.msgid_plural = entry.pluralSource
-      }
-    } else {
-      item.msgstr = [entry.translation]
-    }
-
-    // Comments
-    if (entry.comments) {
-      item.comments = entry.comments
-    }
-    if (entry.extractedComments) {
-      item.extractedComments = entry.extractedComments
-    }
-
-    // References/Origins
-    if (includeOrigins && entry.origins) {
-      item.references = entry.origins.map((ref) => formatReference(ref, { includeLineNumbers }))
-    }
-
-    // Obsolete
-    if (entry.obsolete) {
-      item.obsolete = true
-    }
-
-    // Flags
-    if (entry.flags) {
-      item.flags = { ...entry.flags }
-    }
-
-    items.push(item)
+/** Gets the catalog key for an item */
+function getCatalogKey(
+  item: PoItem,
+  useMsgidAsKey: boolean,
+  keyGenerator?: (item: PoItem) => string
+): string {
+  if (useMsgidAsKey) {
+    return item.msgid
   }
+  if (keyGenerator) {
+    return keyGenerator(item)
+  }
+  return item.msgid
+}
 
-  return items
+/** Adds message field if key differs from msgid */
+function addMessageField(
+  entry: CatalogEntry,
+  item: PoItem,
+  key: string,
+  useMsgidAsKey: boolean
+): void {
+  if (!useMsgidAsKey && item.msgid !== key) {
+    entry.message = item.msgid
+  }
+  if (item.msgid_plural) {
+    entry.pluralSource = item.msgid_plural
+  }
+  if (item.msgctxt) {
+    entry.context = item.msgctxt
+  }
+}
+
+/** Adds metadata fields to an entry */
+function addMetadataFields(entry: CatalogEntry, item: PoItem, includeOrigins: boolean): void {
+  if (item.comments.length > 0) {
+    entry.comments = item.comments
+  }
+  if (item.extractedComments.length > 0) {
+    entry.extractedComments = item.extractedComments
+  }
+  if (includeOrigins && item.references.length > 0) {
+    entry.origins = item.references.map((ref) => parseReference(ref))
+  }
+  if (item.obsolete) {
+    entry.obsolete = true
+  }
+  if (Object.keys(item.flags).length > 0) {
+    entry.flags = { ...item.flags }
+  }
 }
 
 /**
@@ -194,68 +242,20 @@ export function catalogToItems(catalog: Catalog, options: CatalogToItemsOptions 
  */
 export function itemsToCatalog(items: PoItem[], options: ItemsToCatalogOptions = {}): Catalog {
   const { useMsgidAsKey = true, keyGenerator, includeOrigins = true } = options
-
   const catalog: Catalog = {}
 
   for (const item of items) {
-    // Skip header item (empty msgid)
     if (!item.msgid) {
       continue
     }
 
-    // Determine the catalog key
-    let key: string
-    if (useMsgidAsKey) {
-      key = item.msgid
-    } else if (keyGenerator) {
-      key = keyGenerator(item)
-    } else {
-      key = item.msgid
-    }
-
-    // Build the entry
+    const key = getCatalogKey(item, useMsgidAsKey, keyGenerator)
     const entry: CatalogEntry = {
       translation: item.msgid_plural ? item.msgstr : (item.msgstr[0] ?? "")
     }
 
-    // Only include message if it differs from the key
-    if (!useMsgidAsKey && item.msgid !== key) {
-      entry.message = item.msgid
-    }
-
-    // Plural source
-    if (item.msgid_plural) {
-      entry.pluralSource = item.msgid_plural
-    }
-
-    // Context
-    if (item.msgctxt) {
-      entry.context = item.msgctxt
-    }
-
-    // Comments
-    if (item.comments.length > 0) {
-      entry.comments = item.comments
-    }
-    if (item.extractedComments.length > 0) {
-      entry.extractedComments = item.extractedComments
-    }
-
-    // Origins
-    if (includeOrigins && item.references.length > 0) {
-      entry.origins = item.references.map((ref) => parseReference(ref))
-    }
-
-    // Obsolete
-    if (item.obsolete) {
-      entry.obsolete = true
-    }
-
-    // Flags
-    if (Object.keys(item.flags).length > 0) {
-      entry.flags = { ...item.flags }
-    }
-
+    addMessageField(entry, item, key, useMsgidAsKey)
+    addMetadataFields(entry, item, includeOrigins)
     catalog[key] = entry
   }
 
