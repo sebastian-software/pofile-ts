@@ -54,14 +54,14 @@ function findBreakPoint(text: string, maxLength: number): number {
 
 /** Escapes parts and adds \n back to represent line breaks */
 function escapeAndJoinParts(parts: string[]): string[] {
-  const escaped = parts.map((part) => escapeString(part))
+  const len = parts.length
+  const escaped: string[] = new Array(len)
 
-  // Add \n back to all parts except the last
-  for (let i = 0; i < escaped.length - 1; i++) {
-    const current = escaped[i]
-    if (current !== undefined) {
-      escaped[i] = current + "\\n"
-    }
+  // Escape and add \n in a single pass
+  for (let i = 0; i < len; i++) {
+    const part = escapeString(parts[i] ?? "")
+    // Add \n to all parts except the last
+    escaped[i] = i < len - 1 ? part + "\\n" : part
   }
 
   return escaped
@@ -86,7 +86,10 @@ function applyFolding(
     const part = escapedParts[i] ?? ""
     const maxLen = i === 0 && !hasMultipleLines ? firstLineMax : otherLineMax
     const folded = foldLine(part, maxLen)
-    allSegments.push(...folded)
+    // Avoid spread operator for better performance
+    for (const segment of folded) {
+      allSegments.push(segment)
+    }
   }
 
   return allSegments

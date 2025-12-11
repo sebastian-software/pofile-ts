@@ -6,6 +6,13 @@ import { ESCAPE_MAP, UNESCAPE_MAP, RE_ESCAPE, RE_UNESCAPE } from "./constants"
  * double quotes, and backslashes.
  */
 export function escapeString(str: string): string {
+  // Fast path: check if any escapable characters exist
+  // Common case: most strings don't need escaping
+  // eslint-disable-next-line no-control-regex
+  if (!/[\x07\b\t\v\f\r"\\]/.test(str)) {
+    return str
+  }
+
   return str.replace(RE_ESCAPE, (match) => {
     return ESCAPE_MAP[match] ?? "\\" + match
   })

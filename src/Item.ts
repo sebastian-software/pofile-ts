@@ -33,13 +33,25 @@ export function stringifyItem(item: PoItem, options?: SerializeOptions): string 
   const obsoletePrefix = item.obsolete ? "#~ " : ""
 
   // Comments (order: translator, extracted, references, flags)
-  item.comments.forEach((c) => lines.push("# " + c))
-  item.extractedComments.forEach((c) => lines.push("#. " + c))
-  item.references.forEach((ref) => lines.push("#: " + ref))
+  for (const c of item.comments) {
+    lines.push("# " + c)
+  }
+  for (const c of item.extractedComments) {
+    lines.push("#. " + c)
+  }
+  for (const ref of item.references) {
+    lines.push("#: " + ref)
+  }
 
-  const activeFlags = Object.keys(item.flags).filter((f) => Boolean(item.flags[f]))
-  if (activeFlags.length > 0) {
-    lines.push("#, " + activeFlags.join(","))
+  // Collect active flags without creating intermediate arrays
+  let flagStr = ""
+  for (const flag in item.flags) {
+    if (item.flags[flag]) {
+      flagStr += (flagStr ? "," : "") + flag
+    }
+  }
+  if (flagStr) {
+    lines.push("#, " + flagStr)
   }
 
   // Message fields
@@ -77,16 +89,15 @@ function appendMsgstr(
   prefix: string,
   options?: SerializeOptions
 ): void {
-  const hasTranslation = item.msgstr.some((t) => t)
   const hasPlural = item.msgid_plural != null
 
   if (item.msgstr.length > 1) {
     // Multiple msgstr entries (plurals with translations)
-    item.msgstr.forEach((text, i) => {
-      const formatted = formatKeyword("msgstr", text, i, options)
+    for (let i = 0; i < item.msgstr.length; i++) {
+      const formatted = formatKeyword("msgstr", item.msgstr[i] ?? "", i, options)
       lines.push(prefix + formatted.join("\n" + prefix))
-    })
-  } else if (hasPlural && !hasTranslation) {
+    }
+  } else if (hasPlural && !item.msgstr.some((t) => t)) {
     // Plural form but no translations yet - output empty msgstr[n] for each plural
     for (let i = 0; i < item.nplurals; i++) {
       const formatted = formatKeyword("msgstr", "", i, options)
