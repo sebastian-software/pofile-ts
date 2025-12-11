@@ -44,7 +44,7 @@ A modern, focused library for reading and writing GNU gettext PO files. Hand-opt
 
 ## Why pofile-ts?
 
-We built pofile-ts with a clear philosophy: do one thing exceptionally well.
+pofile-ts is a modernized fork of [pofile](https://github.com/rubenv/pofile) with a clear philosophy: do one thing exceptionally well.
 
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/target.svg" width="16" height="16" alt=""> **Focused** — PO files only, optimized for the 99% use case
 - <img src="https://sebastian-software.github.io/pofile-ts/icons/globe.svg" width="16" height="16" alt=""> **Modern** — UTF-8 all the way, as you'd expect in 2024
