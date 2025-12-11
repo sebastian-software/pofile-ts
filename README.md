@@ -59,13 +59,13 @@ The result? **36x faster parsing** while being simpler to use.
 
 pofile-ts is highly optimized for speed. Benchmarked on a 1.5 MB PO file with 10,000 entries:
 
-| Library                                                  |       Parsing |            | Serialization |            |
-| -------------------------------------------------------- | ------------: | ---------- | ------------: | ---------- |
-| **pofile-ts**                                            | **157 ops/s** | ██████████ | **171 ops/s** | ██████████ |
-| [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s | █░░░░░░░░░ |      31 ops/s | ██░░░░░░░░ |
-| [pofile](https://github.com/rubenv/pofile)               |       4 ops/s | ░░░░░░░░░░ |      87 ops/s | █████░░░░░ |
+| Library                                                  |       Parsing | Serialization |
+| -------------------------------------------------------- | ------------: | ------------: |
+| **pofile-ts**                                            | **157 ops/s** | **171 ops/s** |
+| [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s |      31 ops/s |
+| [pofile](https://github.com/rubenv/pofile)               |       4 ops/s |      87 ops/s |
 
-**Summary:**
+**Speedup:**
 
 - **36x faster** parsing than [pofile](https://github.com/rubenv/pofile)
 - **8x faster** parsing than [gettext-parser](https://github.com/smhg/gettext-parser)
