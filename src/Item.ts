@@ -28,6 +28,7 @@ export function createItem(options?: CreateItemOptions): PoItem {
  * @param item - The translation item to serialize
  * @param options - Serialization options for controlling output format
  */
+// eslint-disable-next-line complexity -- optimized for performance
 export function stringifyItem(item: PoItem, options?: SerializeOptions): string {
   const lines: string[] = []
   const obsoletePrefix = item.obsolete ? "#~ " : ""

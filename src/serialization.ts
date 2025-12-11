@@ -59,7 +59,7 @@ function findBreakPointAt(text: string, start: number, maxLength: number): numbe
 /** Escapes parts and adds \n back to represent line breaks */
 function escapeAndJoinParts(parts: string[]): string[] {
   const len = parts.length
-  const escaped: string[] = new Array(len)
+  const escaped: string[] = new Array<string>(len)
 
   // Escape and add \n in a single pass
   for (let i = 0; i < len; i++) {
@@ -135,6 +135,7 @@ function buildOutputLines(
  * @param index - Optional plural index
  * @param options - Serialization options
  */
+// eslint-disable-next-line complexity -- optimized for performance
 export function formatKeyword(
   keyword: string,
   text: string,
@@ -146,7 +147,7 @@ export function formatKeyword(
     compactMultiline = DEFAULT_SERIALIZE_OPTIONS.compactMultiline
   } = options
 
-  const indexStr = index !== undefined ? "[" + index + "]" : ""
+  const indexStr = index !== undefined ? "[" + String(index) + "]" : ""
   const keywordPrefix = keyword + indexStr + " "
 
   // Fast path: simple single-line string without newlines
