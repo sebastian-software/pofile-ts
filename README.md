@@ -138,6 +138,8 @@ Visit the **[Documentation](https://sebastian-software.github.io/pofile-ts/)**.
 
 This is a modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch, originally based on [node-po](https://github.com/mikejholly/node-po) by Michael Holly. Inspired by [@lingui/pofile](https://github.com/timofei-iatsenko/pofile) by Timofei Iatsenko.
 
+Icons by [Lucide](https://lucide.dev/) ([ISC License](https://github.com/lucide-icons/lucide/blob/main/LICENSE)).
+
 Maintained by [Sebastian Software](https://sebastian-software.de/).
 
 ## License
