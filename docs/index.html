@@ -379,31 +379,13 @@
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 24px;
-        transition: all 0.3s;
-        position: relative;
-      }
-
-      .feature::before {
-        content: "";
-        position: absolute;
-        inset: -1px;
-        border-radius: 17px;
-        background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
-        opacity: 0;
-        z-index: -1;
-        transition: opacity 0.3s;
+        transition: all 0.2s;
       }
 
       .feature:hover {
-        border-color: transparent;
+        border-color: var(--accent);
         transform: translateY(-4px);
-        box-shadow:
-          0 10px 40px rgba(0, 0, 0, 0.15),
-          0 0 30px var(--accent-glow);
-      }
-
-      .feature:hover::before {
-        opacity: 1;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
       }
 
       .feature-icon {
@@ -588,7 +570,8 @@
 
       .why-card:hover {
         border-color: var(--accent);
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
       }
 
       .why-icon {
@@ -622,6 +605,10 @@
       }
 
       /* Performance Section */
+      .perf-table td:first-child {
+        white-space: nowrap;
+      }
+
       .perf-table a {
         color: var(--text-muted);
         text-decoration: none;
@@ -629,6 +616,10 @@
 
       .perf-table a:hover {
         color: var(--accent);
+      }
+
+      .perf-table code {
+        white-space: nowrap;
       }
 
       .perf-bar {
