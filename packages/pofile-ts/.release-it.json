@@ -36,6 +36,6 @@
   },
   "hooks": {
     "before:init": ["pnpm run lint", "pnpm run test", "pnpm run build"],
-    "after:release": "npm publish --otp $(op item get 'npm' --otp)"
+    "after:release": "npm publish --otp $(op item get 'Npmjs' --otp)"
   }
 }
