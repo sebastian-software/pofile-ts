@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.1](///compare/v3.3.0...v3.3.1) (2025-12-12)
+
+### Bug Fixes
+
+- add non-null assertions in icu tests 93bb0f3
+- avoid non-null assertions in icu tests c829be9
+
 ## [3.3.0](///compare/v3.2.0...v3.3.0) (2025-12-12)
 
 ### Features
