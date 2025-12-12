@@ -7,7 +7,8 @@ import type { PoFile } from "./types"
 const FIXTURES_DIR = path.join(__dirname, "fixtures")
 
 function readFixture(name: string): string {
-  return fs.readFileSync(path.join(FIXTURES_DIR, name), "utf8")
+  // Normalize line endings to LF (Windows uses CRLF)
+  return fs.readFileSync(path.join(FIXTURES_DIR, name), "utf8").replace(/\r\n/g, "\n")
 }
 
 describe("parsePo", () => {
