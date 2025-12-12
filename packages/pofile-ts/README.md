@@ -60,9 +60,9 @@ Benchmarked with 10,000 entries (~10% plurals):
 
 | Library        |       Parsing | Serialization |
 | -------------- | ------------: | ------------: |
-| **pofile-ts**  | **185 ops/s** | **217 ops/s** |
-| gettext-parser |      27 ops/s |      53 ops/s |
-| pofile         |       8 ops/s |     100 ops/s |
+| **pofile-ts**  | **211 ops/s** | **255 ops/s** |
+| gettext-parser |      27 ops/s |      55 ops/s |
+| pofile         |       7 ops/s |     103 ops/s |
 
 ## Credits
 

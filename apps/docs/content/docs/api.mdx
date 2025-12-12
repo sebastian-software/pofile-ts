@@ -116,7 +116,12 @@ Uses SHA-256 with Base64URL encoding — 281 trillion possibilities, practically
 Get CLDR plural categories and Gettext Plural-Forms headers for any locale.
 
 ```typescript
-import { getPluralCategories, getPluralCount, getPluralFormsHeader } from "pofile-ts"
+import {
+  getPluralCategories,
+  getPluralCount,
+  getPluralFormsHeader,
+  getPluralFunction
+} from "pofile-ts"
 
 getPluralCategories("de") // → ["one", "other"]
 getPluralCategories("pl") // → ["one", "few", "many", "other"]
@@ -125,6 +130,11 @@ getPluralCount("ar") // → 6
 
 getPluralFormsHeader("de")
 // → "nplurals=2; plural=(n != 1);"
+
+// Plural selector function (CSP-safe, no eval)
+const fn = getPluralFunction("de")
+fn(1) // → 0 (one)
+fn(5) // → 1 (other)
 ```
 
 ## ICU Conversion
@@ -132,7 +142,7 @@ getPluralFormsHeader("de")
 Convert Gettext plurals to ICU MessageFormat.
 
 ```typescript
-import { gettextToIcu, normalizeToIcu } from "pofile-ts"
+import { gettextToIcu, normalizeToIcu, icuToGettextSource } from "pofile-ts"
 
 // Single item
 gettextToIcu(item, { locale: "de" })
@@ -140,8 +150,16 @@ gettextToIcu(item, { locale: "de" })
 
 // Entire PO file
 const normalized = normalizeToIcu(po, { locale: "de" })
+
+// Extract from ICU back to Gettext source
+icuToGettextSource("{count, plural, one {# item} other {# items}}")
+// → { msgid: "{count} item", msgid_plural: "{count} items", pluralVariable: "count" }
 ```
 
 ### GettextToIcuOptions
 
 <auto-type-table path="../../../../packages/pofile-ts/src/icu.ts" name="GettextToIcuOptions" />
+
+### IcuToGettextOptions
+
+<auto-type-table path="../../../../packages/pofile-ts/src/icu.ts" name="IcuToGettextOptions" />

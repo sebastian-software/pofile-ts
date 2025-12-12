@@ -79,7 +79,12 @@ createReference("src\\components\\Button.tsx", 10)
 Get CLDR plural categories for any locale — useful for building ICU messages or validating translations:
 
 ```typescript
-import { getPluralCategories, getPluralCount, getPluralFormsHeader } from "pofile-ts"
+import {
+  getPluralCategories,
+  getPluralCount,
+  getPluralFormsHeader,
+  getPluralFunction
+} from "pofile-ts"
 
 getPluralCategories("de") // → ["one", "other"]
 getPluralCategories("pl") // → ["one", "few", "many", "other"]
@@ -91,6 +96,13 @@ getPluralCount("ar") // → 6
 // Generate Gettext Plural-Forms header
 getPluralFormsHeader("de")
 // → "nplurals=2; plural=(n != 1);"
+
+// Get plural selector function (CSP-safe, no eval)
+const selectPlural = getPluralFunction("pl")
+selectPlural(1) // → 0 (one)
+selectPlural(2) // → 1 (few)
+selectPlural(5) // → 2 (many)
+selectPlural(22) // → 1 (few)
 ```
 
 ## ICU Conversion
@@ -98,7 +110,7 @@ getPluralFormsHeader("de")
 Convert Gettext plurals to ICU MessageFormat — perfect for modern i18n libraries like Lingui or FormatJS:
 
 ```typescript
-import { gettextToIcu, normalizeToIcu, parsePo } from "pofile-ts"
+import { gettextToIcu, normalizeToIcu, icuToGettextSource, parsePo } from "pofile-ts"
 
 // Convert a single plural item
 const item = {
@@ -118,6 +130,33 @@ const normalized = normalizeToIcu(po, { locale: "de" })
 normalized.items[0].msgstr[0]
 // → "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
 ```
+
+### Octothorpe Expansion
+
+By default, `#` is replaced with `{varname}` for better readability in TMS tools:
+
+```typescript
+// With # in source (e.g. from Lingui)
+const item = { msgstr: ["# Artikel", "# Artikel"], ... }
+
+gettextToIcu(item, { locale: "de" })
+// → "{count, plural, one {{count} Artikel} other {{count} Artikel}}"
+
+// To preserve #, set expandOctothorpe: false
+gettextToIcu(item, { locale: "de", expandOctothorpe: false })
+// → "{count, plural, one {# Artikel} other {# Artikel}}"
+```
+
+### Extract from ICU
+
+Extract msgid/msgid_plural from an ICU plural string:
+
+```typescript
+icuToGettextSource("{count, plural, one {# item} other {# items}}")
+// → { msgid: "{count} item", msgid_plural: "{count} items", pluralVariable: "count" }
+```
+
+### Complex Locales
 
 Works with all CLDR locales, including complex cases:
 
