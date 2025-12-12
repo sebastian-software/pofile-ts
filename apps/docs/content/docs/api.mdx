@@ -18,35 +18,17 @@ All exports are named functions — no classes, no default export.
 
 ## Types
 
-### PoFile
-
-| Property            | Type               | Description                                    |
-| ------------------- | ------------------ | ---------------------------------------------- |
-| `headers`           | `Partial<Headers>` | PO file headers (Content-Type, Language, etc.) |
-| `comments`          | `string[]`         | Translator comments at file header             |
-| `extractedComments` | `string[]`         | Extracted comments at file header              |
-| `items`             | `PoItem[]`         | Translation entries                            |
-
 ### PoItem
 
-| Property            | Type                      | Description                        |
-| ------------------- | ------------------------- | ---------------------------------- |
-| `msgid`             | `string`                  | Source string                      |
-| `msgid_plural`      | `string \| null`          | Plural form of source string       |
-| `msgstr`            | `string[]`                | Translated string(s)               |
-| `msgctxt`           | `string \| null`          | Message context for disambiguation |
-| `references`        | `string[]`                | Source file references             |
-| `comments`          | `string[]`                | Translator comments                |
-| `extractedComments` | `string[]`                | Extracted comments from source     |
-| `flags`             | `Record<string, boolean>` | Flags like `fuzzy`                 |
-| `obsolete`          | `boolean`                 | Whether entry is obsolete          |
+<auto-type-table path="../../../../packages/pofile-ts/src/types.ts" name="PoItem" />
+
+### PoFile
+
+<auto-type-table path="../../../../packages/pofile-ts/src/types.ts" name="PoFile" />
 
 ### SerializeOptions
 
-| Option             | Default | Description                                                   |
-| ------------------ | ------- | ------------------------------------------------------------- |
-| `foldLength`       | `80`    | Max line width before folding. Set to `0` to disable.         |
-| `compactMultiline` | `true`  | Use compact format for multiline strings (Crowdin-compatible) |
+<auto-type-table path="../../../../packages/pofile-ts/src/types.ts" name="SerializeOptions" />
 
 ## i18n Helpers
 
@@ -64,17 +46,9 @@ const headers = createDefaultHeaders({
 })
 ```
 
-**Options:**
+### CreateHeadersOptions
 
-| Option           | Type     | Description                             |
-| ---------------- | -------- | --------------------------------------- |
-| `language`       | `string` | Target language code (e.g., "de", "fr") |
-| `pluralForms`    | `string` | Plural-Forms header value               |
-| `generator`      | `string` | Tool name for X-Generator header        |
-| `creationDate`   | `Date`   | POT-Creation-Date (defaults to now)     |
-| `revisionDate`   | `Date`   | PO-Revision-Date (defaults to now)      |
-| `team`           | `string` | Language-Team header value              |
-| `lastTranslator` | `string` | Last-Translator header value            |
+<auto-type-table path="../../../../packages/pofile-ts/src/headers.ts" name="CreateHeadersOptions" />
 
 ### Catalog Conversion
 
@@ -95,16 +69,9 @@ const items = catalogToItems(catalog)
 const backToCatalog = itemsToCatalog(items)
 ```
 
-**CatalogEntry:**
+### CatalogEntry
 
-| Property       | Type                   | Description                 |
-| -------------- | ---------------------- | --------------------------- |
-| `translation`  | `string \| string[]`   | Translated string(s)        |
-| `pluralSource` | `string`               | Original plural form source |
-| `context`      | `string`               | Message context             |
-| `comments`     | `string[]`             | Translator comments         |
-| `references`   | `SourceReference[]`    | Source file references      |
-| `flags`        | `Record<string, bool>` | Flags like `fuzzy`          |
+<auto-type-table path="../../../../packages/pofile-ts/src/catalog.ts" name="CatalogEntry" />
 
 ## Reference Utilities
 
@@ -123,12 +90,9 @@ createReference("src/Button.tsx", 10)
 // → { file: "src/Button.tsx", line: 10 }
 ```
 
-**SourceReference:**
+### SourceReference
 
-| Property | Type     | Description |
-| -------- | -------- | ----------- |
-| `file`   | `string` | File path   |
-| `line`   | `number` | Line number |
+<auto-type-table path="../../../../packages/pofile-ts/src/references.ts" name="SourceReference" />
 
 ## Message ID Generation
 

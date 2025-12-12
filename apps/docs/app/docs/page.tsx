@@ -3,6 +3,7 @@ import { DocsLayout } from "fumadocs-ui/layouts/docs"
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page"
 import { source } from "@/lib/source"
 import defaultMdxComponents from "fumadocs-ui/mdx"
+import { TypeTable } from "fumadocs-ui/components/type-table"
 import browserCollections from "fumadocs-mdx:collections/browser"
 import { baseOptions } from "@/lib/layout.shared"
 import { useFumadocsLoader } from "fumadocs-core/source/client"
@@ -27,7 +28,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
         <DocsTitle>{frontmatter.title}</DocsTitle>
         <DocsDescription>{frontmatter.description}</DocsDescription>
         <DocsBody>
-          <Mdx components={{ ...defaultMdxComponents }} />
+          <Mdx components={{ ...defaultMdxComponents, TypeTable }} />
         </DocsBody>
       </DocsPage>
     )
