@@ -28,34 +28,12 @@ function generateRealisticPo(entryCount: number, pluralRatio: number): string {
   lines.push(`"Language: de\\n"`)
   lines.push(``)
 
-  const pluralTypes = [
-    { singular: "item", plural: "items", singularDe: "Element", pluralDe: "Elemente" },
-    { singular: "file", plural: "files", singularDe: "Datei", pluralDe: "Dateien" },
-    { singular: "user", plural: "users", singularDe: "Benutzer", pluralDe: "Benutzer" },
-    { singular: "message", plural: "messages", singularDe: "Nachricht", pluralDe: "Nachrichten" },
-    { singular: "day", plural: "days", singularDe: "Tag", pluralDe: "Tage" }
-  ]
-
-  const singularPhrases = [
-    { en: "Save", de: "Speichern" },
-    { en: "Cancel", de: "Abbrechen" },
-    { en: "Delete", de: "Löschen" },
-    { en: "Edit", de: "Bearbeiten" },
-    { en: "Create", de: "Erstellen" },
-    { en: "Update", de: "Aktualisieren" },
-    { en: "Search", de: "Suchen" },
-    { en: "Filter", de: "Filtern" },
-    { en: "Settings", de: "Einstellungen" },
-    { en: "Profile", de: "Profil" }
-  ]
-
   let pluralCount = 0
 
   for (let i = 0; i < entryCount; i++) {
     const isPlural = Math.random() < pluralRatio
     const hasComment = i % 4 === 0
     const hasReference = i % 3 === 0
-    const hasContext = i % 10 === 0
     const isMultiLine = i % 50 === 0
 
     if (hasComment) {
@@ -66,29 +44,23 @@ function generateRealisticPo(entryCount: number, pluralRatio: number): string {
       lines.push(`#: src/components/Component${i % 100}.tsx:${10 + (i % 50)}`)
     }
 
-    if (hasContext) {
-      lines.push(`msgctxt "ctx_${Math.floor(i / 100)}"`)
-    }
-
+    // Every msgid is unique (entry index ensures no duplicates)
     if (isPlural) {
       pluralCount++
-      const type = pluralTypes[i % pluralTypes.length]
-      lines.push(`msgid "One ${type.singular}"`)
-      lines.push(`msgid_plural "{count} ${type.plural}"`)
-      lines.push(`msgstr[0] "Ein ${type.singularDe}"`)
-      lines.push(`msgstr[1] "{count} ${type.pluralDe}"`)
+      lines.push(`msgid "msg_${i}_one item"`)
+      lines.push(`msgid_plural "msg_${i}_{count} items"`)
+      lines.push(`msgstr[0] "msg_${i}_ein Element"`)
+      lines.push(`msgstr[1] "msg_${i}_{count} Elemente"`)
     } else if (isMultiLine) {
       lines.push(`msgid ""`)
-      lines.push(`"This is a longer message that spans "`)
-      lines.push(`"multiple lines for entry number ${i}."`)
+      lines.push(`"msg_${i}_This is a longer message that spans "`)
+      lines.push(`"multiple lines."`)
       lines.push(`msgstr ""`)
-      lines.push(`"Dies ist eine längere Nachricht, die sich über "`)
-      lines.push(`"mehrere Zeilen für Eintrag ${i} erstreckt."`)
+      lines.push(`"msg_${i}_Dies ist eine längere Nachricht, die sich über "`)
+      lines.push(`"mehrere Zeilen erstreckt."`)
     } else {
-      const phrase = singularPhrases[i % singularPhrases.length]
-      const variant = Math.floor(i / singularPhrases.length)
-      lines.push(`msgid "${phrase.en} ${variant}"`)
-      lines.push(`msgstr "${phrase.de} ${variant}"`)
+      lines.push(`msgid "msg_${i}_Click to save"`)
+      lines.push(`msgstr "msg_${i}_Klicken zum Speichern"`)
     }
 
     lines.push(``)

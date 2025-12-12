@@ -61,9 +61,9 @@ Benchmarked with 10,000 entries (~10% plurals, reflecting real-world usage):
 
 | Library                                                  |       Parsing | Serialization |
 | -------------------------------------------------------- | ------------: | ------------: |
-| **pofile-ts**                                            | **175 ops/s** | **211 ops/s** |
-| [gettext-parser](https://github.com/smhg/gettext-parser) |      33 ops/s |      79 ops/s |
-| [pofile](https://github.com/rubenv/pofile)               |       8 ops/s |      98 ops/s |
+| **pofile-ts**                                            | **185 ops/s** | **217 ops/s** |
+| [gettext-parser](https://github.com/smhg/gettext-parser) |      27 ops/s |      53 ops/s |
+| [pofile](https://github.com/rubenv/pofile)               |       8 ops/s |     100 ops/s |
 
 Both [gettext-parser](https://github.com/smhg/gettext-parser) and [pofile](https://github.com/rubenv/pofile) are great libraries that inspired this project. They support features we intentionally skipped (like `.mo` files). We just happen to be faster for the PO-only use case. 🏎️
 
