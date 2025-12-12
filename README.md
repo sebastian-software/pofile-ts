@@ -57,18 +57,13 @@ The result? **36x faster parsing** — and yes, we benchmarked it.
 
 ## Performance
 
-Benchmarked with 10,000 entries each (~1.5 MB):
+Benchmarked with 10,000 entries (~10% plurals, reflecting real-world usage):
 
-| Format | Library                                                  |       Parsing | Serialization |
-| ------ | -------------------------------------------------------- | ------------: | ------------: |
-| Simple | **pofile-ts**                                            | **174 ops/s** | **190 ops/s** |
-| Simple | [gettext-parser](https://github.com/smhg/gettext-parser) |      18 ops/s |      30 ops/s |
-| Simple | [pofile](https://github.com/rubenv/pofile)               |       5 ops/s |      96 ops/s |
-| Plural | **pofile-ts**                                            | **116 ops/s** | **131 ops/s** |
-| Plural | [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s |     191 ops/s |
-| Plural | [pofile](https://github.com/rubenv/pofile)               |       2 ops/s |      56 ops/s |
-
-**Simple** = singular translations (typical UI strings). **Plural** = native [Gettext plurals](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) with `msgid_plural` / `msgstr[n]`.
+| Library                                                  |       Parsing | Serialization |
+| -------------------------------------------------------- | ------------: | ------------: |
+| **pofile-ts**                                            | **175 ops/s** | **211 ops/s** |
+| [gettext-parser](https://github.com/smhg/gettext-parser) |      33 ops/s |      79 ops/s |
+| [pofile](https://github.com/rubenv/pofile)               |       8 ops/s |      98 ops/s |
 
 Both [gettext-parser](https://github.com/smhg/gettext-parser) and [pofile](https://github.com/rubenv/pofile) are great libraries that inspired this project. They support features we intentionally skipped (like `.mo` files). We just happen to be faster for the PO-only use case. 🏎️
 

@@ -2,82 +2,22 @@ import { writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
 
 const ENTRY_COUNT = 10000
+const PLURAL_RATIO = 0.1 // 10% plurals - realistic for typical apps
 
 /**
- * Generates a simple PO file with mostly singular translations.
- * This represents typical UI strings without plural forms.
+ * Generates a realistic PO file with mixed singular and plural translations.
+ * Approximately 10% of entries are plurals, reflecting real-world usage.
  */
-function generateSimplePo(entryCount: number): string {
+function generateRealisticPo(entryCount: number, pluralRatio: number): string {
   const lines: string[] = []
 
   // Header
-  lines.push(`# Simple PO file for benchmarking (singular translations)`)
-  lines.push(`# Generated with ${entryCount} entries`)
+  lines.push(`# Realistic PO file for benchmarking`)
+  lines.push(`# Generated with ${entryCount} entries (~${Math.round(pluralRatio * 100)}% plurals)`)
   lines.push(`#`)
   lines.push(`msgid ""`)
   lines.push(`msgstr ""`)
-  lines.push(`"Project-Id-Version: Benchmark-Simple\\n"`)
-  lines.push(`"POT-Creation-Date: 2024-01-01 00:00+0000\\n"`)
-  lines.push(`"PO-Revision-Date: 2024-01-01 00:00+0000\\n"`)
-  lines.push(`"Language-Team: German\\n"`)
-  lines.push(`"MIME-Version: 1.0\\n"`)
-  lines.push(`"Content-Type: text/plain; charset=UTF-8\\n"`)
-  lines.push(`"Content-Transfer-Encoding: 8bit\\n"`)
-  lines.push(`"Language: de\\n"`)
-  lines.push(``)
-
-  for (let i = 0; i < entryCount; i++) {
-    const hasContext = i % 5 === 0
-    const hasComment = i % 3 === 0
-    const hasReference = i % 2 === 0
-    const isMultiLine = i % 11 === 0
-
-    if (hasComment) {
-      lines.push(`#. Translator comment for entry ${i}`)
-    }
-
-    if (hasReference) {
-      lines.push(`#: src/components/Component${i}.tsx:${10 + (i % 100)}`)
-    }
-
-    if (hasContext) {
-      lines.push(`msgctxt "context_${Math.floor(i / 10)}"`)
-    }
-
-    if (isMultiLine) {
-      lines.push(`msgid ""`)
-      lines.push(`"This is a longer message that spans "`)
-      lines.push(`"multiple lines for entry number ${i}. "`)
-      lines.push(`"It contains more text to make parsing interesting."`)
-      lines.push(`msgstr ""`)
-      lines.push(`"Dies ist eine längere Nachricht, die sich über "`)
-      lines.push(`"mehrere Zeilen für Eintrag Nummer ${i} erstreckt. "`)
-      lines.push(`"Sie enthält mehr Text, um das Parsen interessant zu machen."`)
-    } else {
-      lines.push(`msgid "Message number ${i} with some text content"`)
-      lines.push(`msgstr "Nachricht Nummer ${i} mit etwas Textinhalt"`)
-    }
-
-    lines.push(``)
-  }
-
-  return lines.join("\n")
-}
-
-/**
- * Generates a PO file with native Gettext plurals.
- * This represents content-heavy apps with counts, dates, etc.
- */
-function generatePluralPo(entryCount: number): string {
-  const lines: string[] = []
-
-  // Header with German plural rules (nplurals=2)
-  lines.push(`# Plural PO file for benchmarking (native Gettext plurals)`)
-  lines.push(`# Generated with ${entryCount} entries`)
-  lines.push(`#`)
-  lines.push(`msgid ""`)
-  lines.push(`msgstr ""`)
-  lines.push(`"Project-Id-Version: Benchmark-Plural\\n"`)
+  lines.push(`"Project-Id-Version: Benchmark\\n"`)
   lines.push(`"POT-Creation-Date: 2024-01-01 00:00+0000\\n"`)
   lines.push(`"PO-Revision-Date: 2024-01-01 00:00+0000\\n"`)
   lines.push(`"Language-Team: German\\n"`)
@@ -93,65 +33,84 @@ function generatePluralPo(entryCount: number): string {
     { singular: "file", plural: "files", singularDe: "Datei", pluralDe: "Dateien" },
     { singular: "user", plural: "users", singularDe: "Benutzer", pluralDe: "Benutzer" },
     { singular: "message", plural: "messages", singularDe: "Nachricht", pluralDe: "Nachrichten" },
-    { singular: "comment", plural: "comments", singularDe: "Kommentar", pluralDe: "Kommentare" },
-    { singular: "error", plural: "errors", singularDe: "Fehler", pluralDe: "Fehler" },
-    { singular: "warning", plural: "warnings", singularDe: "Warnung", pluralDe: "Warnungen" },
-    { singular: "day", plural: "days", singularDe: "Tag", pluralDe: "Tage" },
-    { singular: "hour", plural: "hours", singularDe: "Stunde", pluralDe: "Stunden" },
-    { singular: "minute", plural: "minutes", singularDe: "Minute", pluralDe: "Minuten" }
+    { singular: "day", plural: "days", singularDe: "Tag", pluralDe: "Tage" }
   ]
 
+  const singularPhrases = [
+    { en: "Save", de: "Speichern" },
+    { en: "Cancel", de: "Abbrechen" },
+    { en: "Delete", de: "Löschen" },
+    { en: "Edit", de: "Bearbeiten" },
+    { en: "Create", de: "Erstellen" },
+    { en: "Update", de: "Aktualisieren" },
+    { en: "Search", de: "Suchen" },
+    { en: "Filter", de: "Filtern" },
+    { en: "Settings", de: "Einstellungen" },
+    { en: "Profile", de: "Profil" }
+  ]
+
+  let pluralCount = 0
+
   for (let i = 0; i < entryCount; i++) {
-    const hasContext = i % 5 === 0
-    const hasComment = i % 3 === 0
-    const hasReference = i % 2 === 0
-    const type = pluralTypes[i % pluralTypes.length]
+    const isPlural = Math.random() < pluralRatio
+    const hasComment = i % 4 === 0
+    const hasReference = i % 3 === 0
+    const hasContext = i % 10 === 0
+    const isMultiLine = i % 50 === 0
 
     if (hasComment) {
-      lines.push(`#. Plural entry ${i} for ${type.plural}`)
+      lines.push(`#. Auto-generated comment for entry ${i}`)
     }
 
     if (hasReference) {
-      lines.push(`#: src/components/Counter${i}.tsx:${10 + (i % 100)}`)
+      lines.push(`#: src/components/Component${i % 100}.tsx:${10 + (i % 50)}`)
     }
 
     if (hasContext) {
-      lines.push(`msgctxt "count_${Math.floor(i / 10)}"`)
+      lines.push(`msgctxt "ctx_${Math.floor(i / 100)}"`)
     }
 
-    // Native Gettext plural format
-    lines.push(`msgid "One ${type.singular}"`)
-    lines.push(`msgid_plural "{count} ${type.plural}"`)
-    lines.push(`msgstr[0] "Ein ${type.singularDe}"`)
-    lines.push(`msgstr[1] "{count} ${type.pluralDe}"`)
+    if (isPlural) {
+      pluralCount++
+      const type = pluralTypes[i % pluralTypes.length]
+      lines.push(`msgid "One ${type.singular}"`)
+      lines.push(`msgid_plural "{count} ${type.plural}"`)
+      lines.push(`msgstr[0] "Ein ${type.singularDe}"`)
+      lines.push(`msgstr[1] "{count} ${type.pluralDe}"`)
+    } else if (isMultiLine) {
+      lines.push(`msgid ""`)
+      lines.push(`"This is a longer message that spans "`)
+      lines.push(`"multiple lines for entry number ${i}."`)
+      lines.push(`msgstr ""`)
+      lines.push(`"Dies ist eine längere Nachricht, die sich über "`)
+      lines.push(`"mehrere Zeilen für Eintrag ${i} erstreckt."`)
+    } else {
+      const phrase = singularPhrases[i % singularPhrases.length]
+      const variant = Math.floor(i / singularPhrases.length)
+      lines.push(`msgid "${phrase.en} ${variant}"`)
+      lines.push(`msgstr "${phrase.de} ${variant}"`)
+    }
+
     lines.push(``)
   }
 
+  console.log(`  - Actual plural ratio: ${((pluralCount / entryCount) * 100).toFixed(1)}%`)
   return lines.join("\n")
 }
 
 // Create fixtures directory
 mkdirSync(join(import.meta.dirname, "fixtures"), { recursive: true })
 
-// Generate simple fixture
-const simpleContent = generateSimplePo(ENTRY_COUNT)
-const simplePath = join(import.meta.dirname, "fixtures", "simple.po")
-writeFileSync(simplePath, simpleContent, "utf-8")
-const simpleSizeKb = Math.round(Buffer.byteLength(simpleContent, "utf-8") / 1024)
-console.log(`Generated ${simplePath}`)
-console.log(`  - ${ENTRY_COUNT} entries (singular translations)`)
-console.log(`  - ${simpleSizeKb} KB`)
+// Generate realistic fixture (main benchmark)
+const realisticContent = generateRealisticPo(ENTRY_COUNT, PLURAL_RATIO)
+const realisticPath = join(import.meta.dirname, "fixtures", "realistic.po")
+writeFileSync(realisticPath, realisticContent, "utf-8")
+const realisticSizeKb = Math.round(Buffer.byteLength(realisticContent, "utf-8") / 1024)
+console.log(`Generated ${realisticPath}`)
+console.log(`  - ${ENTRY_COUNT} entries (~${Math.round(PLURAL_RATIO * 100)}% plurals)`)
+console.log(`  - ${realisticSizeKb} KB`)
 
-// Generate plural fixture
-const pluralContent = generatePluralPo(ENTRY_COUNT)
-const pluralPath = join(import.meta.dirname, "fixtures", "plural.po")
-writeFileSync(pluralPath, pluralContent, "utf-8")
-const pluralSizeKb = Math.round(Buffer.byteLength(pluralContent, "utf-8") / 1024)
-console.log(`\nGenerated ${pluralPath}`)
-console.log(`  - ${ENTRY_COUNT} entries (native Gettext plurals)`)
-console.log(`  - ${pluralSizeKb} KB`)
-
-// Also keep the legacy large.po for backwards compatibility
-const legacyPath = join(import.meta.dirname, "fixtures", "large.po")
-writeFileSync(legacyPath, simpleContent, "utf-8")
-console.log(`\nGenerated ${legacyPath} (legacy, same as simple.po)`)
+// Keep large.po as alias for backwards compatibility
+const largePath = join(import.meta.dirname, "fixtures", "large.po")
+writeFileSync(largePath, realisticContent, "utf-8")
+console.log(`\nGenerated ${largePath} (alias for realistic.po)`)
