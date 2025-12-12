@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="24" fill="#0ea5e9"/>
+  <text x="60" y="72" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle">PO</text>
+  <text x="60" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="500" fill="white" fill-opacity="0.8" text-anchor="middle">ts</text>
+</svg>

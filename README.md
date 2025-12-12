@@ -1,6 +1,14 @@
-# pofile-ts
+<p align="center">
+  <a href="https://sebastian-software.github.io/pofile-ts/">
+    <img src="https://sebastian-software.github.io/pofile-ts/logo.svg" alt="pofile-ts" width="120" height="120">
+  </a>
+</p>
 
-**Parse and serialize GNU gettext PO files**
+<h1 align="center">pofile-ts</h1>
+
+<p align="center">
+  <strong>Parse and serialize GNU gettext PO files</strong>
+</p>
 
 [![CI](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/sebastian-software/pofile-ts/graph/badge.svg)](https://codecov.io/gh/sebastian-software/pofile-ts)
@@ -44,7 +52,7 @@ console.log(stringifyPo(po))
 
 For full documentation including API reference, i18n helpers, and migration guide:
 
-**[📖 Documentation](https://sebastian-software.github.io/pofile-ts/docs)**
+**[📖 Documentation](https://sebastian-software.github.io/pofile-ts/)**
 
 ## Performance
 
