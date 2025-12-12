@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "react-router build",
+    "build": "react-router build && cp -r build/client/assets build/client/pofile-ts/ && cp build/client/favicon.ico build/client/logo.svg build/client/pofile-ts/",
     "dev": "react-router dev",
     "start": "serve ./build/client",
     "types:check": "react-router typegen && fumadocs-mdx && tsc --noEmit",

@@ -6,6 +6,7 @@ const getUrl = createGetUrl("/docs")
 
 export default {
   ssr: false,
+  basename: "/pofile-ts/",
   async prerender({ getStaticPaths }) {
     const paths: string[] = []
     const excluded: string[] = []
