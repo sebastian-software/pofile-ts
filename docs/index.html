@@ -1253,6 +1253,21 @@
           translation workflow.
         </p>
 
+        <p>
+          <strong>Important:</strong> There is no normalization between formats. Native Gettext
+          plurals and ICU-embedded plurals result in different data structures:
+        </p>
+
+        <pre><span class="code-comment">// Native Gettext: msgid_plural set, msgstr has multiple entries</span>
+{ <span class="code-type">msgid_plural</span>: <span class="code-string">"{count} items"</span>, <span class="code-type">msgstr</span>: [<span class="code-string">"Ein Element"</span>, <span class="code-string">"{count} Elemente"</span>] }
+
+<span class="code-comment">// ICU embedded: msgid_plural null, msgstr has one entry with ICU syntax</span>
+{ <span class="code-type">msgid_plural</span>: <span class="code-keyword">null</span>, <span class="code-type">msgstr</span>: [<span class="code-string">"{count, plural, one {...} other {...}}"</span>] }</pre>
+
+        <p class="compat-note">
+          If you need to convert between these formats, you'll need additional tooling.
+        </p>
+
         <h3>Native Gettext Plurals</h3>
         <p>
           For languages with complex plural rules (like Arabic with 6 forms), use native

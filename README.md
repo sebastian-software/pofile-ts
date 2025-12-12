@@ -105,6 +105,18 @@ pofile-ts parses the **PO structure** — it doesn't interpret what's inside `ms
 
 This makes pofile-ts a **universal PO parser** that works with any translation workflow.
 
+**Important:** There is no normalization between formats. Native Gettext plurals and ICU-embedded plurals result in different data structures:
+
+```typescript
+// Native Gettext: msgid_plural set, msgstr has multiple entries
+{ msgid_plural: "{count} items", msgstr: ["Ein Element", "{count} Elemente"] }
+
+// ICU embedded: msgid_plural null, msgstr has one entry with ICU syntax
+{ msgid_plural: null, msgstr: ["{count, plural, one {...} other {...}}"] }
+```
+
+If you need to convert between these formats, you'll need additional tooling.
+
 ### Native Gettext Plurals
 
 For languages with complex plural rules (like Arabic with 6 forms), use native Gettext plurals:
