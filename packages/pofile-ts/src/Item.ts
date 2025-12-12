@@ -111,8 +111,9 @@ function appendMultipleMsgstr(
   options?: SerializeOptions
 ): void {
   const foldLength = options?.foldLength ?? DEFAULT_SERIALIZE_OPTIONS.foldLength
-  // msgstr[0] " = 10 chars + content + closing quote
-  const maxLen = foldLength > 0 ? foldLength - 12 : Infinity
+  // 'msgstr[N] "' = 10 chars + closing '"' = 11, plus safety margin = 12
+  const MSGSTR_PREFIX_LENGTH = 12
+  const maxLen = foldLength > 0 ? foldLength - MSGSTR_PREFIX_LENGTH : Infinity
   const len = msgstr.length
 
   // Try fast path: build all lines in one pass, bail to slow path if needed

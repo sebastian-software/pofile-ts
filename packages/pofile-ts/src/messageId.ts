@@ -63,8 +63,11 @@ async function sha256Bytes(input: string): Promise<Uint8Array> {
   return new Uint8Array(hashBuffer)
 }
 
-/** Base64URL alphabet */
+/** Base64URL alphabet (64 characters) */
 const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+/** 6-bit mask for extracting Base64 character index (0-63) */
+const SIX_BIT_MASK = 0x3f
 
 /**
  * Converts bytes to Base64URL string.
@@ -83,7 +86,7 @@ function bytesToBase64Url(bytes: Uint8Array): string {
 
     while (bits >= 6 && chars.length < ID_LENGTH) {
       bits -= 6
-      chars.push(BASE64URL.charAt((value >> bits) & 0x3f))
+      chars.push(BASE64URL.charAt((value >> bits) & SIX_BIT_MASK))
     }
   }
 

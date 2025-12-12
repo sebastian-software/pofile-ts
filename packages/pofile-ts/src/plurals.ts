@@ -80,23 +80,50 @@ export const PLURAL_SAMPLES: Record<string, number> = {
   other: 100
 }
 
-/** Cached locale → categories map for O(1) lookup */
-let cache: Map<string, readonly string[]> | null = null
+/**
+ * Unified cache for locale lookups.
+ * Maps locale → variant key for both categories and functions.
+ */
+let localeCache: Map<string, VariantKey> | null = null
 
 /**
  * Initializes the locale cache from compact format.
  */
-function initCache(): Map<string, readonly string[]> {
-  const map = new Map<string, readonly string[]>()
+function initLocaleCache(): Map<string, VariantKey> {
+  const map = new Map<string, VariantKey>()
 
   for (const [variant, locales] of Object.entries(LOCALES)) {
-    const categories = VARIANTS[variant as VariantKey]
     for (const locale of locales.split(",")) {
-      map.set(locale, categories)
+      map.set(locale, variant as VariantKey)
     }
   }
 
   return map
+}
+
+/**
+ * Returns the variant key for a locale, with fallback to base language.
+ */
+function getVariantForLocale(locale: string): VariantKey {
+  localeCache ??= initLocaleCache()
+
+  // Try exact match first
+  const exact = localeCache.get(locale)
+  if (exact) {
+    return exact
+  }
+
+  // Try base language (de-DE → de, pt_BR → pt)
+  const parts = locale.split(/[-_]/)
+  if (parts.length > 1 && parts[0]) {
+    const baseMatch = localeCache.get(parts[0])
+    if (baseMatch) {
+      return baseMatch
+    }
+  }
+
+  // Default to most common (2 forms)
+  return "B"
 }
 
 /**
@@ -109,25 +136,7 @@ function initCache(): Map<string, readonly string[]> {
  * getPluralCategories("zh")  // → ["other"]
  */
 export function getPluralCategories(locale: string): readonly string[] {
-  cache ??= initCache()
-
-  // Try exact match first
-  const exact = cache.get(locale)
-  if (exact) {
-    return exact
-  }
-
-  // Try base language (de-DE → de, pt_BR → pt)
-  const parts = locale.split(/[-_]/)
-  if (parts.length > 1 && parts[0]) {
-    const baseMatch = cache.get(parts[0])
-    if (baseMatch) {
-      return baseMatch
-    }
-  }
-
-  // Default to most common (2 forms)
-  return VARIANTS.B
+  return VARIANTS[getVariantForLocale(locale)]
 }
 
 /**
@@ -209,38 +218,6 @@ const PLURAL_EXPRESSIONS: Record<VariantKey, string> = {
   H: "(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5)"
 }
 
-/** Cached locale → variant key map */
-let variantCache: Map<string, VariantKey> | null = null
-
-function initVariantCache(): Map<string, VariantKey> {
-  const map = new Map<string, VariantKey>()
-  for (const [variant, locales] of Object.entries(LOCALES)) {
-    for (const locale of locales.split(",")) {
-      map.set(locale, variant as VariantKey)
-    }
-  }
-  return map
-}
-
-function getVariantKey(locale: string): VariantKey {
-  variantCache ??= initVariantCache()
-
-  const exact = variantCache.get(locale)
-  if (exact) {
-    return exact
-  }
-
-  const parts = locale.split(/[-_]/)
-  if (parts.length > 1 && parts[0]) {
-    const base = variantCache.get(parts[0])
-    if (base) {
-      return base
-    }
-  }
-
-  return "B" // Default to most common
-}
-
 /**
  * Returns the plural selector function for a locale.
  * Use this to determine which msgstr index to use for a given count.
@@ -257,8 +234,7 @@ function getVariantKey(locale: string): VariantKey {
  * selectPl(22)  // → 1 (few)
  */
 export function getPluralFunction(locale: string): (n: number) => number {
-  const variant = getVariantKey(locale)
-  return PLURAL_FUNCTIONS[variant]
+  return PLURAL_FUNCTIONS[getVariantForLocale(locale)]
 }
 
 /**
@@ -272,7 +248,7 @@ export function getPluralFunction(locale: string): (n: number) => number {
  * // → "nplurals=4; plural=(n==1 ? 0 : ...);"
  */
 export function getPluralFormsHeader(locale: string): string {
-  const variant = getVariantKey(locale)
+  const variant = getVariantForLocale(locale)
   const nplurals = VARIANTS[variant].length
   const plural = PLURAL_EXPRESSIONS[variant]
 
