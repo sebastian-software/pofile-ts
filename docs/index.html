@@ -954,25 +954,35 @@
       <section id="performance">
         <h2>Performance</h2>
         <p>
-          pofile-ts is highly optimized for speed. Benchmarked on a 1.5 MB PO file with 10,000
-          entries:
+          Benchmarked with 10,000 entries each (~1.5 MB). <strong>Simple</strong> = singular
+          translations. <strong>Plural</strong> = native
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >Gettext plurals</a
+          >
+          with <code>msgid_plural</code> / <code>msgstr[n]</code>.
         </p>
 
         <div class="perf-table-wrapper">
           <table class="api-table perf-table">
             <thead>
               <tr>
+                <th>Format</th>
                 <th>Library</th>
                 <th>Parsing</th>
-                <th style="width: 40%"></th>
+                <th style="width: 25%"></th>
                 <th>Serialization</th>
-                <th style="width: 40%"></th>
+                <th style="width: 25%"></th>
               </tr>
             </thead>
             <tbody>
               <tr>
+                <td rowspan="3"><strong>Simple</strong></td>
                 <td><strong>pofile-ts</strong></td>
-                <td><code>157 ops/s</code></td>
+                <td><code>174 ops/s</code></td>
                 <td>
                   <div
                     class="perf-bar"
@@ -982,7 +992,7 @@
                     "
                   ></div>
                 </td>
-                <td><code>171 ops/s</code></td>
+                <td><code>190 ops/s</code></td>
                 <td>
                   <div
                     class="perf-bar"
@@ -999,14 +1009,10 @@
                     >gettext-parser</a
                   >
                 </td>
-                <td><code>19 ops/s</code></td>
-                <td>
-                  <div class="perf-bar" style="width: 12%"></div>
-                </td>
-                <td><code>31 ops/s</code></td>
-                <td>
-                  <div class="perf-bar" style="width: 18%"></div>
-                </td>
+                <td><code>18 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 10%"></div></td>
+                <td><code>30 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 16%"></div></td>
               </tr>
               <tr>
                 <td>
@@ -1014,14 +1020,56 @@
                     >pofile</a
                   >
                 </td>
-                <td><code>4 ops/s</code></td>
+                <td><code>5 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 3%"></div></td>
+                <td><code>96 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 51%"></div></td>
+              </tr>
+              <tr>
+                <td rowspan="3"><strong>Plural</strong></td>
+                <td><strong>pofile-ts</strong></td>
+                <td><code>116 ops/s</code></td>
                 <td>
-                  <div class="perf-bar" style="width: 3%"></div>
+                  <div
+                    class="perf-bar"
+                    style="
+                      width: 100%;
+                      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+                    "
+                  ></div>
                 </td>
-                <td><code>87 ops/s</code></td>
+                <td><code>131 ops/s</code></td>
                 <td>
-                  <div class="perf-bar" style="width: 51%"></div>
+                  <div
+                    class="perf-bar"
+                    style="
+                      width: 69%;
+                      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+                    "
+                  ></div>
                 </td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="https://github.com/smhg/gettext-parser" target="_blank" rel="noopener"
+                    >gettext-parser</a
+                  >
+                </td>
+                <td><code>19 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 16%"></div></td>
+                <td><code>191 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 100%"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="https://github.com/rubenv/pofile" target="_blank" rel="noopener"
+                    >pofile</a
+                  >
+                </td>
+                <td><code>2 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 2%"></div></td>
+                <td><code>56 ops/s</code></td>
+                <td><div class="perf-bar" style="width: 29%"></div></td>
               </tr>
             </tbody>
           </table>
@@ -1029,11 +1077,11 @@
 
         <div class="perf-summary">
           <div class="perf-stat">
-            <span class="perf-number">36×</span>
+            <span class="perf-number">35×</span>
             <span class="perf-label">faster parsing vs pofile</span>
           </div>
           <div class="perf-stat">
-            <span class="perf-number">8×</span>
+            <span class="perf-number">10×</span>
             <span class="perf-label">faster parsing vs gettext-parser</span>
           </div>
           <div class="perf-stat">
@@ -1041,8 +1089,8 @@
             <span class="perf-label">faster serialization vs pofile</span>
           </div>
           <div class="perf-stat">
-            <span class="perf-number">5.5×</span>
-            <span class="perf-label">faster serialization vs gettext-parser</span>
+            <span class="perf-number">6×</span>
+            <span class="perf-label">faster serialization vs gettext-parser (simple)</span>
           </div>
         </div>
 
@@ -1058,8 +1106,15 @@
       <section id="compatible">
         <h2>Compatible With</h2>
         <p>
-          pofile-ts implements the GNU gettext PO file format and is optimized for seamless
-          integration with translation management platforms.
+          pofile-ts implements the
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >GNU gettext PO file format</a
+          >
+          and is optimized for seamless integration with translation management platforms.
         </p>
         <div class="compat-logos">
           <a
@@ -1094,6 +1149,146 @@
             >lingui#2235</a
           >
           for background.
+        </p>
+      </section>
+
+      <!-- PO File Format Section -->
+      <section id="format">
+        <h2>PO File Format</h2>
+        <p>
+          The
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >PO (Portable Object) format</a
+          >
+          is the standard for software translation since the 1990s. pofile-ts fully supports this
+          format.
+        </p>
+
+        <h3>What We Support</h3>
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Supported</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Singular translations</td>
+              <td>✅</td>
+              <td><code>msgid</code> / <code>msgstr</code></td>
+            </tr>
+            <tr>
+              <td>
+                <a
+                  href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
+                  style="color: var(--accent)"
+                  target="_blank"
+                  rel="noopener"
+                  >Plural forms</a
+                >
+              </td>
+              <td>✅</td>
+              <td>
+                <code>msgid_plural</code> / <code>msgstr[0]</code>, <code>msgstr[1]</code>, ...
+              </td>
+            </tr>
+            <tr>
+              <td>Message context</td>
+              <td>✅</td>
+              <td><code>msgctxt</code></td>
+            </tr>
+            <tr>
+              <td>Comments</td>
+              <td>✅</td>
+              <td><code>#</code>, <code>#.</code>, <code>#:</code>, <code>#,</code></td>
+            </tr>
+            <tr>
+              <td>Flags</td>
+              <td>✅</td>
+              <td><code>fuzzy</code>, <code>no-wrap</code>, etc.</td>
+            </tr>
+            <tr>
+              <td>Obsolete entries</td>
+              <td>✅</td>
+              <td><code>#~</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Content Agnostic</h3>
+        <p>
+          pofile-ts parses the <strong>PO structure</strong> — it doesn't interpret what's inside
+          <code>msgid</code> or <code>msgstr</code>. Your strings can contain:
+        </p>
+        <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 16px">
+          <li>Plain text: <code>"Hello, World!"</code></li>
+          <li>
+            <a
+              href="https://unicode-org.github.io/icu/userguide/format_parse/messages/"
+              style="color: var(--accent)"
+              target="_blank"
+              rel="noopener"
+              >ICU MessageFormat</a
+            >: <code>"{count, plural, one {# item} other {# items}}"</code>
+          </li>
+          <li>
+            <a
+              href="https://github.com/unicode-org/message-format-wg"
+              style="color: var(--accent)"
+              target="_blank"
+              rel="noopener"
+              >MessageFormat 2</a
+            >: <code>.match {$count} one {{...}} * {{...}}</code>
+          </li>
+          <li>Any other format your i18n library uses</li>
+        </ul>
+        <p>
+          This makes pofile-ts a <strong>universal PO parser</strong> that works with any
+          translation workflow.
+        </p>
+
+        <h3>Native Gettext Plurals</h3>
+        <p>
+          For languages with complex plural rules (like Arabic with 6 forms), use native
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >Gettext plurals</a
+          >:
+        </p>
+
+        <pre><span class="code-comment"># German (2 forms: singular, plural)</span>
+msgid <span class="code-string">"One item"</span>
+msgid_plural <span class="code-string">"{count} items"</span>
+msgstr[<span class="code-number">0</span>] <span class="code-string">"Ein Element"</span>
+msgstr[<span class="code-number">1</span>] <span class="code-string">"{count} Elemente"</span>
+
+<span class="code-comment"># Arabic (6 forms: zero, one, two, few, many, other)</span>
+msgstr[<span class="code-number">0</span>] <span class="code-string">"..."</span>  <span class="code-comment"># zero</span>
+msgstr[<span class="code-number">1</span>] <span class="code-string">"..."</span>  <span class="code-comment"># one</span>
+msgstr[<span class="code-number">2</span>] <span class="code-string">"..."</span>  <span class="code-comment"># two</span>
+msgstr[<span class="code-number">3</span>] <span class="code-string">"..."</span>  <span class="code-comment"># few</span>
+msgstr[<span class="code-number">4</span>] <span class="code-string">"..."</span>  <span class="code-comment"># many</span>
+msgstr[<span class="code-number">5</span>] <span class="code-string">"..."</span>  <span class="code-comment"># other</span></pre>
+
+        <p class="compat-note">
+          The number of forms is defined by the <code>Plural-Forms</code> header. See the
+          <a
+            href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
+            style="color: var(--accent)"
+            target="_blank"
+            rel="noopener"
+            >GNU gettext documentation</a
+          >
+          for details on plural rules for different languages.
         </p>
       </section>
 

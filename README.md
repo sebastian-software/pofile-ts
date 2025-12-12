@@ -29,7 +29,7 @@
 
 ---
 
-A modern, focused library for reading and writing GNU gettext PO files. Hand-optimized for speed and seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
+A modern, focused library for reading and writing [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Hand-optimized for speed and seamless integration with translation platforms like [Crowdin](https://crowdin.com/).
 
 > **Why pofile-ts?** We focus on what modern i18n workflows actually need: fast PO file processing with UTF-8 support. Clean, optimized code that runs everywhere.
 
@@ -57,13 +57,18 @@ The result? **36x faster parsing** — and yes, we benchmarked it.
 
 ## Performance
 
-We're pretty proud of this one. Benchmarked on a 1.5 MB PO file with 10,000 entries:
+Benchmarked with 10,000 entries each (~1.5 MB):
 
-| Library                                                  |       Parsing | Serialization |
-| -------------------------------------------------------- | ------------: | ------------: |
-| **pofile-ts**                                            | **157 ops/s** | **171 ops/s** |
-| [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s |      31 ops/s |
-| [pofile](https://github.com/rubenv/pofile)               |       4 ops/s |      87 ops/s |
+| Format | Library                                                  |       Parsing | Serialization |
+| ------ | -------------------------------------------------------- | ------------: | ------------: |
+| Simple | **pofile-ts**                                            | **174 ops/s** | **190 ops/s** |
+| Simple | [gettext-parser](https://github.com/smhg/gettext-parser) |      18 ops/s |      30 ops/s |
+| Simple | [pofile](https://github.com/rubenv/pofile)               |       5 ops/s |      96 ops/s |
+| Plural | **pofile-ts**                                            | **116 ops/s** | **131 ops/s** |
+| Plural | [gettext-parser](https://github.com/smhg/gettext-parser) |      19 ops/s |     191 ops/s |
+| Plural | [pofile](https://github.com/rubenv/pofile)               |       2 ops/s |      56 ops/s |
+
+**Simple** = singular translations (typical UI strings). **Plural** = native [Gettext plurals](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) with `msgid_plural` / `msgstr[n]`.
 
 Both [gettext-parser](https://github.com/smhg/gettext-parser) and [pofile](https://github.com/rubenv/pofile) are great libraries that inspired this project. They support features we intentionally skipped (like `.mo` files). We just happen to be faster for the PO-only use case. 🏎️
 
@@ -72,6 +77,55 @@ Run the benchmark yourself:
 ```bash
 cd benchmark && pnpm install && pnpm bench
 ```
+
+## PO File Format
+
+pofile-ts implements the [GNU gettext PO file format](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html) — the standard for software translation since the 1990s.
+
+### What We Support
+
+| Feature                                                                                 | Supported | Example                                        |
+| --------------------------------------------------------------------------------------- | :-------: | ---------------------------------------------- |
+| Singular translations                                                                   |    ✅     | `msgid` / `msgstr`                             |
+| [Plural forms](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) |    ✅     | `msgid_plural` / `msgstr[0]`, `msgstr[1]`, ... |
+| Message context                                                                         |    ✅     | `msgctxt`                                      |
+| Comments                                                                                |    ✅     | `#`, `#.`, `#:`, `#,`                          |
+| Flags                                                                                   |    ✅     | `fuzzy`, `no-wrap`, etc.                       |
+| Obsolete entries                                                                        |    ✅     | `#~`                                           |
+| All UTF-8 content                                                                       |    ✅     | —                                              |
+
+### Content Agnostic
+
+pofile-ts parses the **PO structure** — it doesn't interpret what's inside `msgid` or `msgstr`. Your strings can contain:
+
+- Plain text: `"Hello, World!"`
+- [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/): `"{count, plural, one {# item} other {# items}}"`
+- [MessageFormat 2](https://github.com/unicode-org/message-format-wg): `.match {$count} one {{# item}} * {{# items}}`
+- Any other format your i18n library uses
+
+This makes pofile-ts a **universal PO parser** that works with any translation workflow.
+
+### Native Gettext Plurals
+
+For languages with complex plural rules (like Arabic with 6 forms), use native Gettext plurals:
+
+```po
+# German (2 forms)
+msgid "One item"
+msgid_plural "{count} items"
+msgstr[0] "Ein Element"
+msgstr[1] "{count} Elemente"
+
+# Arabic (6 forms)
+msgstr[0] "..."  # zero
+msgstr[1] "..."  # one
+msgstr[2] "..."  # two
+msgstr[3] "..."  # few
+msgstr[4] "..."  # many
+msgstr[5] "..."  # other
+```
+
+The number of forms is defined by the `Plural-Forms` header. See the [GNU gettext plural forms documentation](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) for details.
 
 ## Installation
 
