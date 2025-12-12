@@ -67,6 +67,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: sebastian-software/pofile-ts
           files: ./packages/pofile-ts/coverage/coverage-final.json
           fail_ci_if_error: false
           verbose: true
