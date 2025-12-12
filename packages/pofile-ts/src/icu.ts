@@ -5,7 +5,7 @@
  */
 
 import type { PoItem, PoFile } from "./types"
-import { getPluralCategories, PLURAL_SAMPLES } from "./plurals"
+import { getPluralCategories, getPluralFunction, PLURAL_SAMPLES } from "./plurals"
 
 /**
  * Options for Gettext to ICU conversion.
@@ -36,64 +36,39 @@ export interface NormalizeToIcuOptions extends GettextToIcuOptions {
 }
 
 /**
- * Evaluates a Gettext plural expression for a given n.
- * Returns the msgstr index.
- */
-function evaluatePluralExpression(expression: string, n: number): number {
-  // Extract the expression part after "plural="
-  const pluralRegex = /plural\s*=\s*(.+?);?\s*$/
-  const match = pluralRegex.exec(expression)
-  if (!match?.[1]) {
-    return n === 1 ? 0 : 1
-  }
-
-  try {
-    // Dynamic evaluation is necessary here to support arbitrary Gettext plural expressions
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    const fn = new Function("n", `return (${match[1]});`) as (n: number) => boolean | number
-    const result = fn(n)
-    // Handle boolean results (some expressions return true/false)
-    if (typeof result === "boolean") {
-      return result ? 1 : 0
-    }
-    return result
-  } catch {
-    return n === 1 ? 0 : 1
-  }
-}
-
-/**
  * Maps msgstr indices to CLDR plural categories for a given locale.
- * Uses the Plural-Forms header to determine the mapping.
+ * Uses the locale's plural function to determine the mapping.
  */
-function getMsgstrToCategory(locale: string, pluralFormsHeader?: string): string[] {
+function getMsgstrToCategory(locale: string): string[] {
   const categories = getPluralCategories(locale)
+  const pluralFn = getPluralFunction(locale)
 
-  if (!pluralFormsHeader) {
-    // Without header, assume standard order
-    return [...categories]
-  }
-
-  // Evaluate the plural expression for each category's sample number
+  // Map each category to its msgstr index using sample values
+  // Process in order and don't overwrite existing mappings
   const mapping: string[] = []
+  const usedIndices = new Set<number>()
 
   for (const category of categories) {
     const sample = PLURAL_SAMPLES[category] ?? 100
-    const index = evaluatePluralExpression(pluralFormsHeader, sample)
-    mapping[index] = category
+    const index = pluralFn(sample)
+
+    // Only use this index if not already taken
+    if (!usedIndices.has(index)) {
+      mapping[index] = category
+      usedIndices.add(index)
+    }
   }
 
-  // Fill any gaps with remaining categories
-  let catIndex = 0
-  for (let i = 0; i < categories.length; i++) {
-    if (!mapping[i]) {
-      let cat = categories[catIndex]
-      while (cat && mapping.includes(cat)) {
-        catIndex++
-        cat = categories[catIndex]
+  // Assign remaining categories to remaining slots
+  let nextSlot = 0
+  for (const category of categories) {
+    if (!mapping.includes(category)) {
+      // Find next available slot
+      while (usedIndices.has(nextSlot)) {
+        nextSlot++
       }
-      mapping[i] = cat ?? "other"
-      catIndex++
+      mapping[nextSlot] = category
+      usedIndices.add(nextSlot)
     }
   }
 
@@ -124,11 +99,7 @@ function getMsgstrToCategory(locale: string, pluralFormsHeader?: string): string
  * gettextToIcu(plItem, { locale: "pl" })
  * // → "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
  */
-export function gettextToIcu(
-  item: PoItem,
-  options: GettextToIcuOptions,
-  pluralFormsHeader?: string
-): string | null {
+export function gettextToIcu(item: PoItem, options: GettextToIcuOptions): string | null {
   const { locale, pluralVariable = "count" } = options
 
   // Not a plural item
@@ -137,7 +108,7 @@ export function gettextToIcu(
   }
 
   // Get the category mapping for this locale
-  const categories = getMsgstrToCategory(locale, pluralFormsHeader)
+  const categories = getMsgstrToCategory(locale)
 
   // Build ICU plural clauses
   const clauses = item.msgstr
@@ -163,12 +134,8 @@ export function isPluralItem(item: PoItem): boolean {
  *
  * @returns true if the item was converted, false otherwise
  */
-export function normalizeItemToIcu(
-  item: PoItem,
-  options: GettextToIcuOptions,
-  pluralFormsHeader?: string
-): boolean {
-  const icu = gettextToIcu(item, options, pluralFormsHeader)
+export function normalizeItemToIcu(item: PoItem, options: GettextToIcuOptions): boolean {
+  const icu = gettextToIcu(item, options)
 
   if (icu) {
     item.msgstr = [icu]
@@ -192,7 +159,6 @@ export function normalizeItemToIcu(
  */
 export function normalizeToIcu(po: PoFile, options: NormalizeToIcuOptions): PoFile {
   const { inPlace = false, ...gettextOptions } = options
-  const pluralFormsHeader = po.headers["Plural-Forms"]
 
   const result = inPlace
     ? po
@@ -207,7 +173,7 @@ export function normalizeToIcu(po: PoFile, options: NormalizeToIcuOptions): PoFi
       }
 
   for (const item of result.items) {
-    normalizeItemToIcu(item, gettextOptions, pluralFormsHeader)
+    normalizeItemToIcu(item, gettextOptions)
   }
 
   return result

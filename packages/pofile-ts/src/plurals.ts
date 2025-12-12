@@ -142,6 +142,125 @@ export function getPluralCount(locale: string): number {
   return getPluralCategories(locale).length
 }
 
+// Helper predicates for complex plural rules
+const isFewSlavic = (n: number) => n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+const isManySlavic = (n: number) =>
+  (n % 10 >= 0 && n % 10 <= 1) || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 12 && n % 100 <= 14)
+
+/**
+ * Plural selector functions for each variant.
+ * Returns the msgstr index for a given n.
+ * No eval() needed - pure functions for CSP compatibility.
+ */
+const PLURAL_FUNCTIONS: Record<VariantKey, (n: number) => number> = {
+  // 1 form: always 0
+  A: () => 0,
+
+  // 2 forms: one (n=1), other
+  B: (n) => (n !== 1 ? 1 : 0),
+
+  // 3 forms (Slavic): one, few, other
+  C: (n) => (n % 10 === 1 && n % 100 !== 11 ? 0 : isFewSlavic(n) ? 1 : 2),
+
+  // 3 forms (with two): one, two, other
+  D: (n) => (n === 1 ? 0 : n === 2 ? 1 : 2),
+
+  // 4 forms (Polish): one, few, many, other
+  E: (n) => (n === 1 ? 0 : isFewSlavic(n) ? 1 : isManySlavic(n) ? 2 : 3),
+
+  // 4 forms (Celtic): one, two, few, other
+  F: (n) => (n === 1 ? 0 : n === 2 ? 1 : n >= 3 && n <= 10 ? 2 : 3),
+
+  // 5 forms (Breton/Irish): one, two, few, many, other
+  G: (n) => (n === 1 ? 0 : n === 2 ? 1 : n >= 3 && n <= 10 ? 2 : n >= 11 && n <= 99 ? 3 : 4),
+
+  // 6 forms (Arabic): zero, one, two, few, many, other
+  H: (n) => {
+    if (n === 0) {
+      return 0
+    }
+    if (n === 1) {
+      return 1
+    }
+    if (n === 2) {
+      return 2
+    }
+    if (n % 100 >= 3 && n % 100 <= 10) {
+      return 3
+    }
+    if (n % 100 >= 11) {
+      return 4
+    }
+    return 5
+  }
+}
+
+/**
+ * Plural expression strings for Gettext headers.
+ */
+const PLURAL_EXPRESSIONS: Record<VariantKey, string> = {
+  A: "0",
+  B: "(n != 1)",
+  C: "(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
+  D: "(n==1 ? 0 : n==2 ? 1 : 2)",
+  E: "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n!=1 && n%10>=0 && n%10<=1 || n%10>=5 && n%10<=9 || n%100>=12 && n%100<=14 ? 2 : 3)",
+  F: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=6 ? 2 : n>=7 && n<=10 ? 2 : 3)",
+  G: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=10 ? 2 : n>=11 && n<=99 ? 3 : 4)",
+  H: "(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5)"
+}
+
+/** Cached locale → variant key map */
+let variantCache: Map<string, VariantKey> | null = null
+
+function initVariantCache(): Map<string, VariantKey> {
+  const map = new Map<string, VariantKey>()
+  for (const [variant, locales] of Object.entries(LOCALES)) {
+    for (const locale of locales.split(",")) {
+      map.set(locale, variant as VariantKey)
+    }
+  }
+  return map
+}
+
+function getVariantKey(locale: string): VariantKey {
+  variantCache ??= initVariantCache()
+
+  const exact = variantCache.get(locale)
+  if (exact) {
+    return exact
+  }
+
+  const parts = locale.split(/[-_]/)
+  if (parts.length > 1 && parts[0]) {
+    const base = variantCache.get(parts[0])
+    if (base) {
+      return base
+    }
+  }
+
+  return "B" // Default to most common
+}
+
+/**
+ * Returns the plural selector function for a locale.
+ * Use this to determine which msgstr index to use for a given count.
+ *
+ * @example
+ * const selectPlural = getPluralFunction("de")
+ * selectPlural(1)  // → 0 (one)
+ * selectPlural(5)  // → 1 (other)
+ *
+ * const selectPl = getPluralFunction("pl")
+ * selectPl(1)   // → 0 (one)
+ * selectPl(2)   // → 1 (few)
+ * selectPl(5)   // → 2 (many)
+ * selectPl(22)  // → 1 (few)
+ */
+export function getPluralFunction(locale: string): (n: number) => number {
+  const variant = getVariantKey(locale)
+  return PLURAL_FUNCTIONS[variant]
+}
+
 /**
  * Returns a Gettext Plural-Forms header value for a locale.
  *
@@ -150,44 +269,12 @@ export function getPluralCount(locale: string): number {
  * // → "nplurals=2; plural=(n != 1);"
  *
  * getPluralFormsHeader("pl")
- * // → "nplurals=4; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n!=1 && n%10>=0 && n%10<=1 || n%10>=5 && n%10<=9 || n%100>=12 && n%100<=14 ? 2 : 3);"
+ * // → "nplurals=4; plural=(n==1 ? 0 : ...);"
  */
 export function getPluralFormsHeader(locale: string): string {
-  const categories = getPluralCategories(locale)
-  const nplurals = categories.length
-
-  // Common plural expressions by category pattern
-  const expressions: Record<string, string> = {
-    // 1 form
-    other: "0",
-
-    // 2 forms
-    "one,other": "(n != 1)",
-
-    // 3 forms (Slavic)
-    "one,few,other":
-      "(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
-
-    // 3 forms (with two)
-    "one,two,other": "(n==1 ? 0 : n==2 ? 1 : 2)",
-
-    // 4 forms (Polish)
-    "one,few,many,other":
-      "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n!=1 && n%10>=0 && n%10<=1 || n%10>=5 && n%10<=9 || n%100>=12 && n%100<=14 ? 2 : 3)",
-
-    // 4 forms (Celtic)
-    "one,two,few,other": "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=6 ? 2 : n>=7 && n<=10 ? 2 : 3)",
-
-    // 5 forms
-    "one,two,few,many,other": "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=10 ? 2 : n>=11 && n<=99 ? 3 : 4)",
-
-    // 6 forms (Arabic)
-    "zero,one,two,few,many,other":
-      "(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5)"
-  }
-
-  const key = categories.join(",")
-  const plural = expressions[key] ?? "(n != 1)"
+  const variant = getVariantKey(locale)
+  const nplurals = VARIANTS[variant].length
+  const plural = PLURAL_EXPRESSIONS[variant]
 
   return `nplurals=${nplurals}; plural=${plural};`
 }

@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest"
-import { getPluralCategories, getPluralCount, getPluralFormsHeader } from "./plurals"
+import {
+  getPluralCategories,
+  getPluralCount,
+  getPluralFormsHeader,
+  getPluralFunction
+} from "./plurals"
 
 describe("getPluralCategories", () => {
   it("returns 2 forms for German", () => {
@@ -71,5 +76,60 @@ describe("getPluralFormsHeader", () => {
 
   it("generates correct header for Chinese", () => {
     expect(getPluralFormsHeader("zh")).toBe("nplurals=1; plural=0;")
+  })
+})
+
+describe("getPluralFunction", () => {
+  it("returns correct indices for German (2 forms)", () => {
+    const fn = getPluralFunction("de")
+    expect(fn(0)).toBe(1) // other
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // other
+    expect(fn(5)).toBe(1) // other
+    expect(fn(21)).toBe(1) // other
+  })
+
+  it("returns correct indices for Polish (4 forms)", () => {
+    const fn = getPluralFunction("pl")
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // few
+    expect(fn(3)).toBe(1) // few
+    expect(fn(4)).toBe(1) // few
+    expect(fn(5)).toBe(2) // many
+    expect(fn(11)).toBe(2) // many
+    expect(fn(12)).toBe(2) // many
+    expect(fn(22)).toBe(1) // few
+    expect(fn(25)).toBe(2) // many
+    expect(fn(100)).toBe(2) // many (100 ends in 0, which is in 0-1 range)
+    expect(fn(1000000)).toBe(2) // many
+  })
+
+  it("returns correct indices for Arabic (6 forms)", () => {
+    const fn = getPluralFunction("ar")
+    expect(fn(0)).toBe(0) // zero
+    expect(fn(1)).toBe(1) // one
+    expect(fn(2)).toBe(2) // two
+    expect(fn(3)).toBe(3) // few (3-10)
+    expect(fn(10)).toBe(3) // few
+    expect(fn(11)).toBe(4) // many (11-99)
+    expect(fn(99)).toBe(4) // many
+    expect(fn(100)).toBe(5) // other
+  })
+
+  it("returns correct indices for Chinese (1 form)", () => {
+    const fn = getPluralFunction("zh")
+    expect(fn(0)).toBe(0) // other
+    expect(fn(1)).toBe(0) // other
+    expect(fn(100)).toBe(0) // other
+  })
+
+  it("returns correct indices for Russian (3 forms)", () => {
+    const fn = getPluralFunction("ru")
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // few
+    expect(fn(5)).toBe(2) // other
+    expect(fn(21)).toBe(0) // one
+    expect(fn(22)).toBe(1) // few
+    expect(fn(25)).toBe(2) // other
   })
 })

@@ -22,7 +22,12 @@ export { catalogToItems, itemsToCatalog, mergeCatalogs } from "./catalog"
 export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
 
 // Plural utilities
-export { getPluralCategories, getPluralCount, getPluralFormsHeader } from "./plurals"
+export {
+  getPluralCategories,
+  getPluralCount,
+  getPluralFormsHeader,
+  getPluralFunction
+} from "./plurals"
 
 // ICU conversion
 export {
