@@ -8,1709 +8,418 @@
       name="description"
       content="A robust TypeScript library for reading and writing GNU gettext PO files. Zero dependencies, full type safety."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg-deep: #0a0f1a;
-        --bg-card: #111827;
-        --bg-code: #1e293b;
-        --accent: #22d3ee;
-        --accent-secondary: #8b5cf6;
-        --accent-glow: rgba(34, 211, 238, 0.15);
-        --text: #e2e8f0;
-        --text-muted: #94a3b8;
-        --border: #1e293b;
-      }
-
-      [data-theme="light"] {
-        --bg-deep: #f8fafc;
-        --bg-card: #ffffff;
-        --bg-code: #f1f5f9;
-        --accent: #0891b2;
-        --accent-secondary: #7c3aed;
-        --accent-glow: rgba(8, 145, 178, 0.12);
-        --text: #0f172a;
-        --text-muted: #64748b;
-        --border: #e2e8f0;
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      body {
-        font-family: "Outfit", system-ui, sans-serif;
-        background: var(--bg-deep);
-        color: var(--text);
-        line-height: 1.7;
-        min-height: 100vh;
-        transition:
-          background 0.3s,
-          color 0.3s;
-      }
-
-      /* Background pattern */
-      body::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background:
-          radial-gradient(ellipse at 20% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
-          linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
-        background-size:
-          100% 100%,
-          100% 100%,
-          40px 40px,
-          40px 40px;
-        pointer-events: none;
-        z-index: -1;
-        transition: opacity 0.3s;
-      }
-
-      [data-theme="light"] body::before {
-        background:
-          radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.06) 0%, transparent 50%),
-          linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
-        background-size:
-          100% 100%,
-          100% 100%,
-          40px 40px,
-          40px 40px;
-      }
-
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      /* Theme Toggle */
-      .theme-toggle {
-        position: fixed;
-        top: 24px;
-        right: 24px;
-        z-index: 100;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 10px;
-        cursor: pointer;
-        color: var(--text-muted);
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .theme-toggle:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .theme-toggle svg {
-        width: 20px;
-        height: 20px;
-      }
-
-      .theme-toggle .sun {
-        display: none;
-      }
-      .theme-toggle .moon {
-        display: block;
-      }
-      [data-theme="light"] .theme-toggle .sun {
-        display: block;
-      }
-      [data-theme="light"] .theme-toggle .moon {
-        display: none;
-      }
-
-      /* Header */
-      header {
-        padding: 80px 0 60px;
-        text-align: center;
-      }
-
-      .logo {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 120px;
-        height: 120px;
-        margin-bottom: 32px;
-        box-shadow:
-          0 0 80px var(--accent-glow),
-          0 25px 50px rgba(0, 0, 0, 0.25);
-        animation: float 6s ease-in-out infinite;
-        border-radius: 28px;
-      }
-
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0) rotate(0deg);
-        }
-        50% {
-          transform: translateY(-12px) rotate(2deg);
-        }
-      }
-
-      .logo img {
-        width: 100%;
-        height: 100%;
-        border-radius: 28px;
-      }
-
-      h1 {
-        font-size: clamp(2.5rem, 6vw, 3.5rem);
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        margin-bottom: 16px;
-        background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .tagline {
-        font-size: 1.25rem;
-        color: var(--text-muted);
-        max-width: 500px;
-        margin: 0 auto 32px;
-      }
-
-      .badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: center;
-        margin-bottom: 40px;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: var(--text-muted);
-        text-decoration: none;
-        transition: all 0.2s;
-      }
-
-      .badge:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .badge svg {
-        width: 16px;
-        height: 16px;
-      }
-
-      .badge--ts {
-        background: linear-gradient(135deg, #3178c6 0%, #235a97 100%);
-        border-color: transparent;
-        color: white;
-      }
-
-      .badge--ts:hover {
-        color: white;
-        box-shadow: 0 0 20px rgba(49, 120, 198, 0.4);
-      }
-
-      .badge--browser {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        border-color: transparent;
-        color: white;
-      }
-
-      .badge--browser:hover {
-        color: white;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-      }
-
-      .cta-buttons {
-        display: flex;
-        gap: 16px;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.2s;
-      }
-
-      .btn--primary {
-        background: linear-gradient(135deg, var(--accent), #06b6d4);
-        color: white;
-        box-shadow: 0 4px 20px var(--accent-glow);
-      }
-
-      [data-theme="light"] .btn--primary {
-        color: white;
-      }
-
-      .btn--primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px var(--accent-glow);
-      }
-
-      .btn--secondary {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        color: var(--text);
-      }
-
-      .btn--secondary:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      /* Install command */
-      .install {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        background: var(--bg-code);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px 24px;
-        margin: 40px auto;
-        max-width: 400px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.95rem;
-      }
-
-      .install code {
-        color: var(--accent);
-      }
-
-      .install button {
-        background: none;
-        border: none;
-        color: var(--text-muted);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 6px;
-        transition: all 0.2s;
-      }
-
-      .install button:hover {
-        color: var(--accent);
-        background: var(--accent-glow);
-      }
-
-      /* Sections */
-      section {
-        padding: 60px 0;
-      }
-
-      h2 {
-        font-size: 1.75rem;
-        font-weight: 600;
-        margin-bottom: 32px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      h2::before {
-        content: "";
-        width: 4px;
-        height: 28px;
-        background: linear-gradient(180deg, var(--accent), var(--accent-secondary));
-        border-radius: 2px;
-      }
-
-      h3 {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin: 32px 0 16px;
-        color: var(--text);
-      }
-
-      p {
-        color: var(--text-muted);
-        margin-bottom: 16px;
-      }
-
-      /* Features grid */
-      .features {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-top: 32px;
-      }
-
-      .feature {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 24px;
-        transition: all 0.2s;
-      }
-
-      .feature:hover {
-        border-color: var(--accent);
-        transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      }
-
-      .feature-icon {
-        font-size: 1.5rem;
-        margin-bottom: 12px;
-      }
-
-      .feature h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 8px;
-      }
-
-      .feature p {
-        font-size: 0.9rem;
-        margin: 0;
-      }
-
-      /* Code blocks */
-      pre {
-        background: var(--bg-code);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px 24px;
-        overflow-x: auto;
-        margin: 16px 0 24px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.875rem;
-        line-height: 1.6;
-      }
-
-      code {
-        font-family: "JetBrains Mono", monospace;
-      }
-
-      .code-keyword {
-        color: #c792ea;
-      }
-      .code-string {
-        color: #c3e88d;
-      }
-      .code-comment {
-        color: #546e7a;
-        font-style: italic;
-      }
-      .code-function {
-        color: #82aaff;
-      }
-      .code-number {
-        color: #f78c6c;
-      }
-      .code-type {
-        color: #ffcb6b;
-      }
-
-      [data-theme="light"] .code-keyword {
-        color: #7c3aed;
-      }
-      [data-theme="light"] .code-string {
-        color: #059669;
-      }
-      [data-theme="light"] .code-comment {
-        color: #94a3b8;
-      }
-      [data-theme="light"] .code-function {
-        color: #2563eb;
-      }
-      [data-theme="light"] .code-number {
-        color: #ea580c;
-      }
-      [data-theme="light"] .code-type {
-        color: #ca8a04;
-      }
-
-      /* API Reference */
-      .api-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 16px 0 32px;
-        font-size: 0.9rem;
-      }
-
-      .api-table th,
-      .api-table td {
-        text-align: left;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .api-table th {
-        background: var(--bg-card);
-        color: var(--text);
-        font-weight: 600;
-      }
-
-      .api-table td {
-        color: var(--text-muted);
-      }
-
-      .api-table code {
-        background: var(--bg-code);
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        color: var(--accent);
-      }
-
-      /* Compatible With Section */
-      .compat-logos {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 32px;
-        justify-content: center;
-        margin: 32px 0;
-      }
-
-      .compat-logo {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        padding: 24px 32px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        text-decoration: none;
-        color: var(--text-muted);
-        transition: all 0.2s;
-        min-width: 160px;
-      }
-
-      .compat-logo:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-        transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      }
-
-      .compat-logo-img {
-        width: 64px;
-        height: 64px;
-        object-fit: contain;
-        opacity: 0.6;
-        transition: opacity 0.2s;
-      }
-
-      .compat-logo:hover .compat-logo-img {
-        opacity: 1;
-      }
-
-      .compat-logo span {
-        font-weight: 600;
-        font-size: 1rem;
-      }
-
-      .compat-logo--gnu:hover {
-        border-color: #a42e2b;
-        color: #a42e2b;
-      }
-
-      .compat-logo--crowdin:hover {
-        border-color: #2e8857;
-        color: #2e8857;
-      }
-
-      /* Why Section */
-      .why-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin: 24px 0;
-      }
-
-      .why-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        transition: all 0.2s;
-      }
-
-      .why-card:hover {
-        border-color: var(--accent);
-        transform: translateY(-4px);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-      }
-
-      .why-icon {
-        font-size: 1.5rem;
-        margin-bottom: 8px;
-      }
-
-      .why-card h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 6px;
-      }
-
-      .why-card p {
-        font-size: 0.85rem;
-        margin: 0;
-        color: var(--text-muted);
-      }
-
-      .why-result {
-        text-align: center;
-        font-size: 1.1rem;
-        margin-top: 24px;
-        padding: 16px;
-        background: var(--accent-glow);
-        border-radius: 12px;
-      }
-
-      .why-result strong {
-        color: var(--accent);
-      }
-
-      /* Performance Section */
-      .perf-table td:first-child {
-        white-space: nowrap;
-      }
-
-      .perf-table a {
-        color: var(--text-muted);
-        text-decoration: none;
-      }
-
-      .perf-table a:hover {
-        color: var(--accent);
-      }
-
-      .perf-table code {
-        white-space: nowrap;
-      }
-
-      .perf-bar {
-        height: 8px;
-        background: var(--text-muted);
-        border-radius: 4px;
-        min-width: 4px;
-      }
-
-      .perf-summary {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 20px;
-        margin: 32px 0;
-      }
-
-      .perf-stat {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 24px;
-        text-align: center;
-        transition: all 0.2s;
-      }
-
-      .perf-stat:hover {
-        border-color: var(--accent);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px var(--accent-glow);
-      }
-
-      .perf-number {
-        display: block;
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        line-height: 1.2;
-      }
-
-      .perf-label {
-        display: block;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        margin-top: 8px;
-      }
-
-      .compat-note {
-        text-align: center;
-        font-size: 0.9rem;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 16px 24px;
-        margin-top: 24px;
-      }
-
-      /* Footer */
-      footer {
-        padding: 60px 0 40px;
-        text-align: center;
-        border-top: 1px solid var(--border);
-        margin-top: 40px;
-      }
-
-      footer p {
-        font-size: 0.9rem;
-      }
-
-      footer a {
-        color: var(--accent);
-        text-decoration: none;
-      }
-
-      footer a:hover {
-        text-decoration: underline;
-      }
-
-      .credits {
-        margin-top: 20px;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-
-      /* Responsive */
-      @media (max-width: 640px) {
-        header {
-          padding: 60px 0 40px;
-        }
-
-        .logo {
-          width: 100px;
-          height: 100px;
-        }
-
-        .logo img {
-          border-radius: 24px;
-        }
-
-        section {
-          padding: 40px 0;
-        }
-
-        .api-table {
-          display: block;
-          overflow-x: auto;
-        }
-
-        .theme-toggle {
-          top: 16px;
-          right: 16px;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-      <svg
-        class="sun"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="5" />
-        <line x1="12" y1="1" x2="12" y2="3" />
-        <line x1="12" y1="21" x2="12" y2="23" />
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-        <line x1="1" y1="12" x2="3" y2="12" />
-        <line x1="21" y1="12" x2="23" y2="12" />
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-      </svg>
-      <svg
-        class="moon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-      </svg>
-    </button>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-logo">
+          <img src="logo.svg" alt="pofile-ts" />
+          <span>pofile-ts</span>
+        </a>
 
-    <div class="container">
-      <header>
-        <div class="logo">
-          <img src="logo.svg" alt="pofile-ts logo" />
-        </div>
+        <nav class="sidebar-nav">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Getting Started</div>
+            <a href="index.html" class="sidebar-link active">Overview</a>
+            <a href="guide.html" class="sidebar-link">Quick Start</a>
+            <a href="guide.html#helpers" class="sidebar-link">i18n Helpers</a>
+          </div>
 
-        <h1>pofile-ts</h1>
-        <p class="tagline">
-          A modern, focused library for GNU gettext PO files. Hand-optimized for speed, runs
-          everywhere — Node.js and browsers alike.
-        </p>
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Reference</div>
+            <a href="format.html" class="sidebar-link">PO File Format</a>
+            <a href="api.html" class="sidebar-link">API Reference</a>
+            <a href="api.html#options" class="sidebar-link">Options</a>
+          </div>
 
-        <div class="badges">
-          <a href="https://www.typescriptlang.org/" class="badge badge--ts">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"
-              />
-            </svg>
-            TypeScript 5.x
-          </a>
-          <span class="badge badge--browser">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2Z"
-              />
-            </svg>
-            Browser Ready
-          </span>
-          <a href="https://github.com/sebastian-software/pofile-ts" class="badge">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-              />
-            </svg>
-            GitHub
-          </a>
-          <a href="https://www.npmjs.com/package/pofile-ts" class="badge">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836h-3.464l.01-10.382h-3.456L12.04 19.17H5.113z"
-              />
-            </svg>
-            npm
-          </a>
-          <span class="badge">📦 Zero Dependencies</span>
-          <span class="badge">⚡ ESM + CJS</span>
-        </div>
-
-        <div class="cta-buttons">
-          <a href="#quick-start" class="btn btn--primary">Get Started</a>
-          <a href="https://github.com/sebastian-software/pofile-ts" class="btn btn--secondary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path
-                d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-              />
-            </svg>
-            View on GitHub
-          </a>
-        </div>
-
-        <div class="install">
-          <code>npm install pofile-ts</code>
-          <button
-            onclick="navigator.clipboard.writeText('npm install pofile-ts')"
-            title="Copy to clipboard"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">More</div>
+            <a href="migration.html" class="sidebar-link">Migration Guide</a>
+            <a
+              href="https://github.com/sebastian-software/pofile-ts"
+              class="sidebar-link"
+              target="_blank"
+              rel="noopener"
+              >GitHub ↗</a
             >
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-            </svg>
-          </button>
-        </div>
-      </header>
+            <a
+              href="https://www.npmjs.com/package/pofile-ts"
+              class="sidebar-link"
+              target="_blank"
+              rel="noopener"
+              >npm ↗</a
+            >
+          </div>
+        </nav>
+      </aside>
 
-      <section>
-        <h2>Features</h2>
-        <div class="features">
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/book-open.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Parse PO Files</h4>
-            <p>Read PO files from strings with full escape sequence support</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/pen-line.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Serialize PO Files</h4>
-            <p>Convert PO data back to properly formatted strings</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/target.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Full PO Support</h4>
-            <p>Headers, comments, flags, plurals, and message context</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/package.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Zero Dependencies</h4>
-            <p>No Node.js APIs required — works in browsers too</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/code.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>TypeScript First</h4>
-            <p>Full type definitions for excellent IDE support</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/zap.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Blazing Fast</h4>
-            <p>Up to 36x faster than alternatives — optimized hot paths</p>
-          </div>
-          <div class="feature">
-            <div class="feature-icon">
-              <img src="icons/globe.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>i18n Workflow Helpers</h4>
-            <p>Catalog conversion, message IDs, reference parsing — batteries included</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Why Section -->
-      <section id="why">
-        <h2>Why pofile-ts?</h2>
-        <p>
-          pofile-ts is a modernized fork of
-          <a href="https://github.com/rubenv/pofile" style="color: var(--accent)">pofile</a>
-          with a clear philosophy: do one thing exceptionally well.
-        </p>
-        <p><strong>Our approach:</strong></p>
-
-        <div class="why-grid">
-          <div class="why-card">
-            <div class="why-icon"><img src="icons/target.svg" alt="" width="24" height="24" /></div>
-            <h4>Focused</h4>
-            <p>PO files only — optimized for the 99% use case</p>
-          </div>
-          <div class="why-card">
-            <div class="why-icon"><img src="icons/globe.svg" alt="" width="24" height="24" /></div>
-            <h4>Modern</h4>
-            <p>UTF-8 exclusively, like every tool since 2010</p>
-          </div>
-          <div class="why-card">
-            <div class="why-icon">
-              <img src="icons/monitor.svg" alt="" width="24" height="24" />
-            </div>
-            <h4>Universal</h4>
-            <p>Runs in Node.js and browsers without polyfills</p>
-          </div>
-          <div class="why-card">
-            <div class="why-icon"><img src="icons/zap.svg" alt="" width="24" height="24" /></div>
-            <h4>Hand-optimized</h4>
-            <p>We spent way too much time making this fast 😅</p>
-          </div>
-        </div>
-
-        <p class="why-result">The result? <strong>23× faster parsing</strong>.</p>
-      </section>
-
-      <!-- Performance Section -->
-      <section id="performance">
-        <h2>Performance</h2>
-        <p>Benchmarked with 10,000 entries (~10% plurals, reflecting real-world usage):</p>
-
-        <div class="perf-table-wrapper">
-          <table class="api-table perf-table">
-            <thead>
-              <tr>
-                <th>Library</th>
-                <th>Parsing</th>
-                <th style="width: 30%"></th>
-                <th>Serialization</th>
-                <th style="width: 30%"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>pofile-ts</strong></td>
-                <td><code>185 ops/s</code></td>
-                <td>
-                  <div
-                    class="perf-bar"
-                    style="
-                      width: 100%;
-                      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
-                    "
-                  ></div>
-                </td>
-                <td><code>217 ops/s</code></td>
-                <td>
-                  <div
-                    class="perf-bar"
-                    style="
-                      width: 100%;
-                      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
-                    "
-                  ></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <a href="https://github.com/smhg/gettext-parser" target="_blank" rel="noopener"
-                    >gettext-parser</a
-                  >
-                </td>
-                <td><code>27 ops/s</code></td>
-                <td><div class="perf-bar" style="width: 15%"></div></td>
-                <td><code>53 ops/s</code></td>
-                <td><div class="perf-bar" style="width: 24%"></div></td>
-              </tr>
-              <tr>
-                <td>
-                  <a href="https://github.com/rubenv/pofile" target="_blank" rel="noopener"
-                    >pofile</a
-                  >
-                </td>
-                <td><code>8 ops/s</code></td>
-                <td><div class="perf-bar" style="width: 4%"></div></td>
-                <td><code>100 ops/s</code></td>
-                <td><div class="perf-bar" style="width: 46%"></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="perf-summary">
-          <div class="perf-stat">
-            <span class="perf-number">23×</span>
-            <span class="perf-label">faster parsing vs pofile</span>
-          </div>
-          <div class="perf-stat">
-            <span class="perf-number">7×</span>
-            <span class="perf-label">faster parsing vs gettext-parser</span>
-          </div>
-          <div class="perf-stat">
-            <span class="perf-number">2×</span>
-            <span class="perf-label">faster serialization vs pofile</span>
-          </div>
-          <div class="perf-stat">
-            <span class="perf-number">4×</span>
-            <span class="perf-label">faster serialization vs gettext-parser</span>
-          </div>
-        </div>
-
-        <p class="compat-note">
-          Run the benchmark yourself:
-          <code style="background: var(--bg-code); padding: 4px 8px; border-radius: 4px"
-            >cd benchmark && pnpm install && pnpm bench</code
+      <!-- Main Content -->
+      <main class="main">
+        <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-        </p>
-      </section>
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
-      <!-- Compatible With Section -->
-      <section id="compatible">
-        <h2>Compatible With</h2>
-        <p>
-          pofile-ts implements the
-          <a
-            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >GNU gettext PO file format</a
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg
+            class="sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-          and is optimized for seamless integration with translation management platforms.
-        </p>
-        <div class="compat-logos">
-          <a
-            href="https://www.gnu.org/software/gettext/"
-            class="compat-logo compat-logo--gnu"
-            title="GNU gettext"
-            target="_blank"
-            rel="noopener"
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
-            <img src="gnu.svg" alt="GNU" class="compat-logo-img" />
-            <span>GNU gettext</span>
-          </a>
-          <a
-            href="https://crowdin.com/"
-            class="compat-logo compat-logo--crowdin"
-            title="Crowdin"
-            target="_blank"
-            rel="noopener"
-          >
-            <img src="crowdin.svg" alt="Crowdin" class="compat-logo-img" />
-            <span>Crowdin</span>
-          </a>
-        </div>
-        <p class="compat-note">
-          <strong>Crowdin-optimized output:</strong> By default, pofile-ts uses a compact multiline
-          format that avoids unnecessary diffs when syncing with Crowdin. See
-          <a
-            href="https://github.com/lingui/js-lingui/issues/2235"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >lingui#2235</a
-          >
-          for background.
-        </p>
-      </section>
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
 
-      <!-- PO File Format Section -->
-      <section id="format">
-        <h2>PO File Format</h2>
-        <p>
-          The
-          <a
-            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >PO (Portable Object) format</a
-          >
-          is the standard for software translation since the 1990s. pofile-ts fully supports this
-          format.
-        </p>
+        <div class="container">
+          <header>
+            <div class="logo">
+              <img src="logo.svg" alt="pofile-ts logo" />
+            </div>
 
-        <h3>What We Support</h3>
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Supported</th>
-              <th>Example</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Singular translations</td>
-              <td>✅</td>
-              <td><code>msgid</code> / <code>msgstr</code></td>
-            </tr>
-            <tr>
-              <td>
-                <a
-                  href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
-                  style="color: var(--accent)"
-                  target="_blank"
-                  rel="noopener"
-                  >Plural forms</a
+            <h1>pofile-ts</h1>
+            <p class="tagline">
+              A modern, focused library for GNU gettext PO files. Hand-optimized for speed, runs
+              everywhere — Node.js and browsers alike.
+            </p>
+
+            <div class="badges">
+              <a href="https://www.typescriptlang.org/" class="badge badge--ts">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"
+                  />
+                </svg>
+                TypeScript 5.x
+              </a>
+              <span class="badge badge--browser">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2Z"
+                  />
+                </svg>
+                Browser Ready
+              </span>
+              <span class="badge">📦 Zero Dependencies</span>
+              <span class="badge">⚡ ESM + CJS</span>
+            </div>
+
+            <div class="cta-buttons">
+              <a href="guide.html" class="btn btn--primary">Get Started</a>
+              <a
+                href="https://github.com/sebastian-software/pofile-ts"
+                class="btn btn--secondary"
+                target="_blank"
+                rel="noopener"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path
+                    d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+                  />
+                </svg>
+                View on GitHub
+              </a>
+            </div>
+
+            <div class="install">
+              <code>npm install pofile-ts</code>
+              <button
+                onclick="navigator.clipboard.writeText('npm install pofile-ts')"
+                title="Copy to clipboard"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-              </td>
-              <td>✅</td>
-              <td>
-                <code>msgid_plural</code> / <code>msgstr[0]</code>, <code>msgstr[1]</code>, ...
-              </td>
-            </tr>
-            <tr>
-              <td>Message context</td>
-              <td>✅</td>
-              <td><code>msgctxt</code></td>
-            </tr>
-            <tr>
-              <td>Comments</td>
-              <td>✅</td>
-              <td><code>#</code>, <code>#.</code>, <code>#:</code>, <code>#,</code></td>
-            </tr>
-            <tr>
-              <td>Flags</td>
-              <td>✅</td>
-              <td><code>fuzzy</code>, <code>no-wrap</code>, etc.</td>
-            </tr>
-            <tr>
-              <td>Obsolete entries</td>
-              <td>✅</td>
-              <td><code>#~</code></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Content Agnostic</h3>
-        <p>
-          pofile-ts parses the <strong>PO structure</strong> — it doesn't interpret what's inside
-          <code>msgid</code> or <code>msgstr</code>. Your strings can contain:
-        </p>
-        <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 16px">
-          <li>Plain text: <code>"Hello, World!"</code></li>
-          <li>
-            <a
-              href="https://unicode-org.github.io/icu/userguide/format_parse/messages/"
-              style="color: var(--accent)"
-              target="_blank"
-              rel="noopener"
-              >Unicode ICU MessageFormat</a
-            >
-            (v1): <code>"{count, plural, one {# item} other {# items}}"</code>
-          </li>
-          <li>
-            <a
-              href="https://unicode-org.github.io/icu/userguide/format_parse/messages/mf2.html"
-              style="color: var(--accent)"
-              target="_blank"
-              rel="noopener"
-              >Unicode MessageFormat 2.0</a
-            >: <code>.match {$count} one {{...}} * {{...}}</code>
-          </li>
-          <li>Any other format your i18n library uses</li>
-        </ul>
-        <p>
-          This makes pofile-ts a <strong>universal PO parser</strong> that works with any
-          translation workflow.
-        </p>
-
-        <p>
-          <strong>Important:</strong> There is no normalization between formats. Native Gettext
-          plurals and ICU-embedded plurals result in different data structures:
-        </p>
-
-        <pre><span class="code-comment">// Native Gettext: msgid_plural set, msgstr has multiple entries</span>
-{ <span class="code-type">msgid_plural</span>: <span class="code-string">"{count} items"</span>, <span class="code-type">msgstr</span>: [<span class="code-string">"Ein Element"</span>, <span class="code-string">"{count} Elemente"</span>] }
-
-<span class="code-comment">// ICU embedded: msgid_plural null, msgstr has one entry with ICU syntax</span>
-{ <span class="code-type">msgid_plural</span>: <span class="code-keyword">null</span>, <span class="code-type">msgstr</span>: [<span class="code-string">"{count, plural, one {...} other {...}}"</span>] }</pre>
-
-        <p class="compat-note">
-          If you need to convert between these formats, you'll need additional tooling.
-        </p>
-
-        <h3>Native Gettext Plurals</h3>
-        <p>
-          For languages with complex plural rules (like Arabic with 6 forms), use native
-          <a
-            href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >Gettext plurals</a
-          >:
-        </p>
-
-        <pre><span class="code-comment"># German (2 forms: singular, plural)</span>
-msgid <span class="code-string">"One item"</span>
-msgid_plural <span class="code-string">"{count} items"</span>
-msgstr[<span class="code-number">0</span>] <span class="code-string">"Ein Element"</span>
-msgstr[<span class="code-number">1</span>] <span class="code-string">"{count} Elemente"</span>
-
-<span class="code-comment"># Arabic (6 forms: zero, one, two, few, many, other)</span>
-msgstr[<span class="code-number">0</span>] <span class="code-string">"..."</span>  <span class="code-comment"># zero</span>
-msgstr[<span class="code-number">1</span>] <span class="code-string">"..."</span>  <span class="code-comment"># one</span>
-msgstr[<span class="code-number">2</span>] <span class="code-string">"..."</span>  <span class="code-comment"># two</span>
-msgstr[<span class="code-number">3</span>] <span class="code-string">"..."</span>  <span class="code-comment"># few</span>
-msgstr[<span class="code-number">4</span>] <span class="code-string">"..."</span>  <span class="code-comment"># many</span>
-msgstr[<span class="code-number">5</span>] <span class="code-string">"..."</span>  <span class="code-comment"># other</span></pre>
-
-        <p class="compat-note">
-          The number of forms is defined by the <code>Plural-Forms</code> header. See the
-          <a
-            href="https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >GNU gettext documentation</a
-          >
-          for details on plural rules for different languages.
-        </p>
-      </section>
-
-      <section id="quick-start">
-        <h2>Quick Start</h2>
-        <p>Get up and running in seconds with pofile-ts:</p>
-
-        <pre><span class="code-keyword">import</span> { parsePo, stringifyPo, createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Parse a PO file</span>
-<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(<span class="code-string">`
-msgid "Hello"
-msgstr "Hallo"
-`</span>)
-
-console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgid)   <span class="code-comment">// "Hello"</span>
-console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgstr)  <span class="code-comment">// ["Hallo"]</span></pre>
-
-        <h3>Create a new PO file</h3>
-
-        <pre><span class="code-keyword">import</span> { createPoFile, createItem, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-keyword">const</span> po = <span class="code-function">createPoFile</span>()
-po.headers[<span class="code-string">"Content-Type"</span>] = <span class="code-string">"text/plain; charset=UTF-8"</span>
-
-<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
-item.msgid = <span class="code-string">"Welcome"</span>
-item.msgstr = [<span class="code-string">"Willkommen"</span>]
-po.items.<span class="code-function">push</span>(item)
-
-console.<span class="code-function">log</span>(<span class="code-function">stringifyPo</span>(po))</pre>
-      </section>
-
-      <!-- i18n Workflow Helpers Section -->
-      <section id="helpers">
-        <h2>i18n Workflow Helpers</h2>
-        <p>
-          Beyond parsing and serialization, pofile-ts includes utilities for common i18n workflows.
-          All helpers are tree-shakeable — only import what you need.
-        </p>
-
-        <h3>Default Headers</h3>
-        <p>Create properly formatted PO headers with sensible defaults:</p>
-
-        <pre><span class="code-keyword">import</span> { createDefaultHeaders } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-keyword">const</span> headers = <span class="code-function">createDefaultHeaders</span>({
-  <span class="code-type">language</span>: <span class="code-string">"de"</span>,
-  <span class="code-type">generator</span>: <span class="code-string">"my-tool"</span>,
-  <span class="code-type">pluralForms</span>: <span class="code-string">"nplurals=2; plural=(n != 1);"</span>
-})
-
-<span class="code-comment">// Includes: POT-Creation-Date, MIME-Version, Content-Type, etc.</span></pre>
-
-        <h3>Catalog Conversion</h3>
-        <p>Convert between simple key-value catalogs and PO items — with full plural support:</p>
-
-        <pre><span class="code-keyword">import</span> { catalogToItems, itemsToCatalog } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Simple catalog format</span>
-<span class="code-keyword">const</span> catalog = {
-  <span class="code-string">"Hello"</span>: { <span class="code-type">translation</span>: <span class="code-string">"Hallo"</span> },
-  <span class="code-string">"{count} item"</span>: {
-    <span class="code-type">translation</span>: [<span class="code-string">"{count} Element"</span>, <span class="code-string">"{count} Elemente"</span>],
-    <span class="code-type">pluralSource</span>: <span class="code-string">"{count} items"</span>
-  }
-}
-
-<span class="code-keyword">const</span> items = <span class="code-function">catalogToItems</span>(catalog)
-<span class="code-keyword">const</span> backToCatalog = <span class="code-function">itemsToCatalog</span>(items)</pre>
-
-        <h3>Message ID Generation</h3>
-        <p>
-          Generate stable, collision-resistant IDs from message content. Uses SHA-256 with Base64URL
-          encoding — 281 trillion possibilities, practically zero collisions even at 1M messages:
-        </p>
-
-        <pre><span class="code-keyword">import</span> { generateMessageId, generateMessageIdSync } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Async (works in browsers and Node.js)</span>
-<span class="code-keyword">const</span> id = <span class="code-keyword">await</span> <span class="code-function">generateMessageId</span>(<span class="code-string">"Hello {name}"</span>, <span class="code-string">"greeting"</span>)
-<span class="code-comment">// → "Kj9xMnPq" (8-char Base64URL)</span>
-
-<span class="code-comment">// Sync (Node.js only, faster)</span>
-<span class="code-keyword">const</span> syncId = <span class="code-function">generateMessageIdSync</span>(<span class="code-string">"Hello {name}"</span>)</pre>
-
-        <h3>Reference Utilities</h3>
-        <p>Parse and format source file references with proper path normalization:</p>
-
-        <pre><span class="code-keyword">import</span> { parseReference, formatReference, createReference } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-function">parseReference</span>(<span class="code-string">"src/App.tsx:42"</span>)
-<span class="code-comment">// → { file: "src/App.tsx", line: 42 }</span>
-
-<span class="code-function">formatReference</span>({ <span class="code-type">file</span>: <span class="code-string">"src/App.tsx"</span>, <span class="code-type">line</span>: <span class="code-number">42</span> })
-<span class="code-comment">// → "src/App.tsx:42"</span>
-
-<span class="code-comment">// Validates relative paths, normalizes Windows backslashes</span>
-<span class="code-function">createReference</span>(<span class="code-string">"src\\components\\Button.tsx"</span>, <span class="code-number">10</span>)
-<span class="code-comment">// → { file: "src/components/Button.tsx", line: 10 }</span></pre>
-      </section>
-
-      <section id="api">
-        <h2>API Reference</h2>
-
-        <h3>Functions</h3>
-        <p>All exports are named functions — no classes, no default export.</p>
-
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Function</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>parsePo(content)</code></td>
-              <td>Parse a PO file string into a <code>PoFile</code> object</td>
-            </tr>
-            <tr>
-              <td><code>stringifyPo(po, options?)</code></td>
-              <td>Serialize a <code>PoFile</code> to string</td>
-            </tr>
-            <tr>
-              <td><code>createPoFile()</code></td>
-              <td>Create a new empty <code>PoFile</code></td>
-            </tr>
-            <tr>
-              <td><code>createItem(options?)</code></td>
-              <td>Create a new translation item</td>
-            </tr>
-            <tr>
-              <td><code>stringifyItem(item, options?)</code></td>
-              <td>Serialize a single item to string</td>
-            </tr>
-            <tr>
-              <td><code>parsePluralForms(header)</code></td>
-              <td>Parse the Plural-Forms header value</td>
-            </tr>
-            <tr>
-              <td><code>createDefaultHeaders(options?)</code></td>
-              <td>Create default PO headers with sensible defaults</td>
-            </tr>
-            <tr>
-              <td><code>catalogToItems(catalog)</code></td>
-              <td>Convert a simple catalog to PO items</td>
-            </tr>
-            <tr>
-              <td><code>itemsToCatalog(items)</code></td>
-              <td>Convert PO items to a simple catalog</td>
-            </tr>
-            <tr>
-              <td><code>generateMessageId(msg, ctx?)</code></td>
-              <td>Generate stable 8-char Base64URL ID (async)</td>
-            </tr>
-            <tr>
-              <td><code>generateMessageIdSync(msg, ctx?)</code></td>
-              <td>Generate stable ID synchronously (Node.js)</td>
-            </tr>
-            <tr>
-              <td><code>parseReference(ref)</code></td>
-              <td>Parse "file:line" reference string</td>
-            </tr>
-            <tr>
-              <td><code>formatReference(ref)</code></td>
-              <td>Format reference object to string</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Types</h3>
-
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>PoFile</code></td>
-              <td>Complete PO file with headers and items</td>
-            </tr>
-            <tr>
-              <td><code>PoItem</code></td>
-              <td>Single translation entry</td>
-            </tr>
-            <tr>
-              <td><code>Headers</code></td>
-              <td>Standard PO file headers interface</td>
-            </tr>
-            <tr>
-              <td><code>SerializeOptions</code></td>
-              <td>Options for controlling output format</td>
-            </tr>
-            <tr>
-              <td><code>Catalog</code></td>
-              <td>Simple key-value catalog format</td>
-            </tr>
-            <tr>
-              <td><code>CatalogEntry</code></td>
-              <td>Single catalog entry with translation and metadata</td>
-            </tr>
-            <tr>
-              <td><code>SourceReference</code></td>
-              <td>Parsed file:line reference</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>PoFile Properties</h3>
-
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>headers</code></td>
-              <td><code>Partial&lt;Headers&gt;</code></td>
-              <td>PO file headers (Content-Type, Language, etc.)</td>
-            </tr>
-            <tr>
-              <td><code>comments</code></td>
-              <td><code>string[]</code></td>
-              <td>Translator comments at file header</td>
-            </tr>
-            <tr>
-              <td><code>extractedComments</code></td>
-              <td><code>string[]</code></td>
-              <td>Extracted comments at file header</td>
-            </tr>
-            <tr>
-              <td><code>items</code></td>
-              <td><code>PoItem[]</code></td>
-              <td>Translation entries</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>File I/O (Node.js)</h3>
-        <p>Use native <code>fs</code> module for file operations:</p>
-
-        <pre><span class="code-keyword">import</span> { readFile, writeFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
-<span class="code-keyword">import</span> { parsePo, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Load from file</span>
-<span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
-<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)
-
-<span class="code-comment">// Save to file</span>
-<span class="code-keyword">await</span> <span class="code-function">writeFile</span>(<span class="code-string">"output.po"</span>, <span class="code-function">stringifyPo</span>(po))</pre>
-
-        <h3>PoItem Properties</h3>
-
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>msgid</code></td>
-              <td><code>string</code></td>
-              <td>Source string</td>
-            </tr>
-            <tr>
-              <td><code>msgid_plural</code></td>
-              <td><code>string | null</code></td>
-              <td>Plural form of source string</td>
-            </tr>
-            <tr>
-              <td><code>msgstr</code></td>
-              <td><code>string[]</code></td>
-              <td>Translated string(s)</td>
-            </tr>
-            <tr>
-              <td><code>msgctxt</code></td>
-              <td><code>string | null</code></td>
-              <td>Message context for disambiguation</td>
-            </tr>
-            <tr>
-              <td><code>references</code></td>
-              <td><code>string[]</code></td>
-              <td>Source file references</td>
-            </tr>
-            <tr>
-              <td><code>comments</code></td>
-              <td><code>string[]</code></td>
-              <td>Translator comments</td>
-            </tr>
-            <tr>
-              <td><code>flags</code></td>
-              <td><code>Record&lt;string, boolean&gt;</code></td>
-              <td>Flags like <code>fuzzy</code></td>
-            </tr>
-            <tr>
-              <td><code>obsolete</code></td>
-              <td><code>boolean</code></td>
-              <td>Whether entry is obsolete</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <section id="options">
-        <h2>Serialization Options</h2>
-        <p>
-          Control the output format when serializing PO files. The defaults are optimized for
-          compatibility with translation platforms like Crowdin.
-        </p>
-
-        <pre><span class="code-keyword">import</span> { stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-comment">// Default: compact format, 80 char line width</span>
-<span class="code-function">stringifyPo</span>(po)
-
-<span class="code-comment">// Traditional GNU gettext format (empty first line for multiline)</span>
-<span class="code-function">stringifyPo</span>(po, { <span class="code-type">compactMultiline</span>: <span class="code-keyword">false</span> })
-
-<span class="code-comment">// Disable line folding</span>
-<span class="code-function">stringifyPo</span>(po, { <span class="code-type">foldLength</span>: <span class="code-number">0</span> })</pre>
-
-        <table class="api-table">
-          <thead>
-            <tr>
-              <th>Option</th>
-              <th>Default</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>foldLength</code></td>
-              <td><code>80</code></td>
-              <td>Max line width before folding. Set to <code>0</code> to disable.</td>
-            </tr>
-            <tr>
-              <td><code>compactMultiline</code></td>
-              <td><code>true</code></td>
-              <td>Use compact format for multiline strings (Crowdin-compatible)</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3>Multiline Format Comparison</h3>
-        <p>
-          Strings containing newlines (<code>\n</code>) can be formatted in two ways. Both are valid
-          PO syntax and represent the <strong>exact same msgid value</strong>. This format is
-          defined in the
-          <a
-            href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
-            style="color: var(--accent)"
-            target="_blank"
-            rel="noopener"
-            >GNU gettext manual</a
-          >
-          and uses C-style string literal concatenation (adjacent quoted strings are joined).
-        </p>
-
-        <pre><span class="code-comment">// Compact (default) — Crowdin-compatible</span>
-msgid <span class="code-string">"First line\n"</span>
-<span class="code-string">"Second line"</span>
-
-<span class="code-comment">// Traditional GNU gettext — with empty first line</span>
-msgid <span class="code-string">""</span>
-<span class="code-string">"First line\n"</span>
-<span class="code-string">"Second line"</span>
-
-<span class="code-comment">// Both parse to the same value:</span>
-<span class="code-comment">// msgid = "First line\nSecond line"</span></pre>
-
-        <p class="compat-note">
-          <strong>Why does this matter?</strong> The difference is purely cosmetic — no translation
-          data changes. But without consistent formatting, you'll see constant diffs in Git when
-          syncing with Crowdin. The compact format avoids this by matching Crowdin's normalization.
-        </p>
-      </section>
-
-      <section id="plurals">
-        <h2>Working with Plurals</h2>
-        <p>PO files support plural forms. The number of plural forms depends on the language.</p>
-
-        <pre><span class="code-keyword">import</span> { createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-
-<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
-item.msgid = <span class="code-string">"One item"</span>
-item.msgid_plural = <span class="code-string">"{count} items"</span>
-item.msgstr = [
-  <span class="code-string">"Ein Element"</span>,      <span class="code-comment">// singular</span>
-  <span class="code-string">"{count} Elemente"</span>  <span class="code-comment">// plural</span>
-]
-
-po.items.<span class="code-function">push</span>(item)</pre>
-      </section>
-
-      <section id="migration">
-        <h2>Migrating from pofile</h2>
-        <p>
-          This package is a modernized fork of the original
-          <a href="https://github.com/rubenv/pofile" style="color: var(--accent)">pofile</a>
-          package with a functional API.
-        </p>
-
-        <h3>Requirements</h3>
-        <ul style="color: var(--text-muted); margin-left: 24px; margin-bottom: 24px">
-          <li><strong>Node.js 20+</strong> or modern browsers</li>
-          <li><strong>ESM-first</strong> with full TypeScript support</li>
-          <li><strong>Named exports only</strong> — no default export</li>
-        </ul>
-
-        <h3>API Changes</h3>
-        <p>The class-based API has been replaced with pure functions:</p>
-
-        <pre><span class="code-comment">// ❌ Old API (pofile 1.x)</span>
-<span class="code-keyword">import</span> PO <span class="code-keyword">from</span> <span class="code-string">"pofile"</span>
-<span class="code-keyword">const</span> po = PO.<span class="code-function">parse</span>(content)
-<span class="code-keyword">const</span> item = <span class="code-keyword">new</span> PO.<span class="code-type">Item</span>()
-po.<span class="code-function">toString</span>()
-
-<span class="code-comment">// ✅ New API (pofile-ts)</span>
-<span class="code-keyword">import</span> { parsePo, stringifyPo, createPoFile, createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
-<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)
-<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
-<span class="code-function">stringifyPo</span>(po)</pre>
-
-        <p>
-          The <code>load()</code> and <code>save()</code> methods have been removed. Use native file
-          system APIs instead:
-        </p>
-
-        <pre><span class="code-comment">// ❌ Old API (pofile 1.x)</span>
-PO.<span class="code-function">load</span>(<span class="code-string">"messages.po"</span>, (err, po) => {
-  <span class="code-keyword">if</span> (err) <span class="code-keyword">throw</span> err
-  <span class="code-comment">// use po</span>
-})
-
-<span class="code-comment">// ✅ New API (pofile-ts)</span>
-<span class="code-keyword">import</span> { readFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
-<span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
-<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)</pre>
-      </section>
-
-      <footer>
-        <p>
-          Released under the
-          <a href="https://github.com/sebastian-software/pofile-ts/blob/main/LICENSE"
-            >MIT License</a
-          >
-        </p>
-        <p class="credits">
-          Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a><br />
-          Fork of <a href="https://github.com/rubenv/pofile">pofile</a> by Ruben Vermeersch<br />
-          Inspired by <a href="https://github.com/timofei-iatsenko/pofile">@lingui/pofile</a> by
-          Timofei Iatsenko<br />
-          Icons by <a href="https://lucide.dev/">Lucide</a> (ISC License)
-        </p>
-      </footer>
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <!-- Features -->
+          <section>
+            <h2>Features</h2>
+            <div class="features">
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/book-open.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Parse PO Files</h4>
+                <p>Read PO files from strings with full escape sequence support</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/pen-line.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Serialize PO Files</h4>
+                <p>Convert PO data back to properly formatted strings</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/target.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Full PO Support</h4>
+                <p>Headers, comments, flags, plurals, and message context</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/package.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Zero Dependencies</h4>
+                <p>No Node.js APIs required — works in browsers too</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/code.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>TypeScript First</h4>
+                <p>Full type definitions for excellent IDE support</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/zap.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Blazing Fast</h4>
+                <p>Up to 23× faster than alternatives — optimized hot paths</p>
+              </div>
+              <div class="feature">
+                <div class="feature-icon">
+                  <img src="icons/globe.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>i18n Workflow Helpers</h4>
+                <p>Catalog conversion, message IDs, reference parsing — batteries included</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Why Section -->
+          <section id="why">
+            <h2>Why pofile-ts?</h2>
+            <p>
+              pofile-ts is a modernized fork of
+              <a href="https://github.com/rubenv/pofile">pofile</a>
+              with a clear philosophy: do one thing exceptionally well.
+            </p>
+
+            <div class="why-grid">
+              <div class="why-card">
+                <div class="why-icon">
+                  <img src="icons/target.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Focused</h4>
+                <p>PO files only — optimized for the 99% use case</p>
+              </div>
+              <div class="why-card">
+                <div class="why-icon">
+                  <img src="icons/globe.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Modern</h4>
+                <p>UTF-8 exclusively, like every tool since 2010</p>
+              </div>
+              <div class="why-card">
+                <div class="why-icon">
+                  <img src="icons/monitor.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Universal</h4>
+                <p>Runs in Node.js and browsers without polyfills</p>
+              </div>
+              <div class="why-card">
+                <div class="why-icon">
+                  <img src="icons/zap.svg" alt="" width="24" height="24" />
+                </div>
+                <h4>Hand-optimized</h4>
+                <p>We spent way too much time making this fast 😅</p>
+              </div>
+            </div>
+
+            <p class="why-result">The result? <strong>23× faster parsing</strong>.</p>
+          </section>
+
+          <!-- Performance Section -->
+          <section id="performance">
+            <h2>Performance</h2>
+            <p>Benchmarked with 10,000 entries (~10% plurals, reflecting real-world usage):</p>
+
+            <table class="api-table perf-table">
+              <thead>
+                <tr>
+                  <th>Library</th>
+                  <th>Parsing</th>
+                  <th style="width: 25%"></th>
+                  <th>Serialization</th>
+                  <th style="width: 25%"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>pofile-ts</strong></td>
+                  <td><code>185 ops/s</code></td>
+                  <td>
+                    <div
+                      class="perf-bar"
+                      style="
+                        width: 100%;
+                        background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+                      "
+                    ></div>
+                  </td>
+                  <td><code>217 ops/s</code></td>
+                  <td>
+                    <div
+                      class="perf-bar"
+                      style="
+                        width: 100%;
+                        background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+                      "
+                    ></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <a href="https://github.com/smhg/gettext-parser" target="_blank" rel="noopener"
+                      >gettext-parser</a
+                    >
+                  </td>
+                  <td><code>27 ops/s</code></td>
+                  <td><div class="perf-bar" style="width: 15%"></div></td>
+                  <td><code>53 ops/s</code></td>
+                  <td><div class="perf-bar" style="width: 24%"></div></td>
+                </tr>
+                <tr>
+                  <td>
+                    <a href="https://github.com/rubenv/pofile" target="_blank" rel="noopener"
+                      >pofile</a
+                    >
+                  </td>
+                  <td><code>8 ops/s</code></td>
+                  <td><div class="perf-bar" style="width: 4%"></div></td>
+                  <td><code>100 ops/s</code></td>
+                  <td><div class="perf-bar" style="width: 46%"></div></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="perf-summary">
+              <div class="perf-stat">
+                <span class="perf-number">23×</span>
+                <span class="perf-label">faster parsing vs pofile</span>
+              </div>
+              <div class="perf-stat">
+                <span class="perf-number">7×</span>
+                <span class="perf-label">faster parsing vs gettext-parser</span>
+              </div>
+              <div class="perf-stat">
+                <span class="perf-number">2×</span>
+                <span class="perf-label">faster serialization vs pofile</span>
+              </div>
+              <div class="perf-stat">
+                <span class="perf-number">4×</span>
+                <span class="perf-label">faster serialization vs gettext-parser</span>
+              </div>
+            </div>
+
+            <p class="compat-note">
+              Run the benchmark yourself:
+              <code style="background: var(--bg-code); padding: 4px 8px; border-radius: 4px"
+                >cd benchmark && pnpm install && pnpm bench</code
+              >
+            </p>
+          </section>
+
+          <!-- Compatible With -->
+          <section id="compatible">
+            <h2>Compatible With</h2>
+            <p>
+              pofile-ts implements the
+              <a
+                href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html"
+                target="_blank"
+                rel="noopener"
+                >GNU gettext PO file format</a
+              >
+              and integrates seamlessly with translation platforms.
+            </p>
+            <div class="compat-logos">
+              <a
+                href="https://www.gnu.org/software/gettext/"
+                class="compat-logo compat-logo--gnu"
+                target="_blank"
+                rel="noopener"
+              >
+                <img src="gnu.svg" alt="GNU" class="compat-logo-img" />
+                <span>GNU gettext</span>
+              </a>
+              <a
+                href="https://crowdin.com/"
+                class="compat-logo compat-logo--crowdin"
+                target="_blank"
+                rel="noopener"
+              >
+                <img src="crowdin.svg" alt="Crowdin" class="compat-logo-img" />
+                <span>Crowdin</span>
+              </a>
+            </div>
+            <p class="compat-note">
+              <strong>Crowdin-optimized output:</strong> By default, pofile-ts uses a compact
+              multiline format that avoids unnecessary diffs when syncing with Crowdin.
+            </p>
+          </section>
+
+          <footer>
+            <p>
+              Released under the
+              <a href="https://github.com/sebastian-software/pofile-ts/blob/main/LICENSE"
+                >MIT License</a
+              >
+            </p>
+            <p class="credits">
+              Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a>
+            </p>
+          </footer>
+        </div>
+      </main>
     </div>
 
     <script>
@@ -1720,6 +429,10 @@ PO.<span class="code-function">load</span>(<span class="code-string">"messages.p
         const next = current === "light" ? "dark" : "light"
         html.setAttribute("data-theme", next)
         localStorage.setItem("theme", next)
+      }
+
+      function toggleMenu() {
+        document.getElementById("sidebar").classList.toggle("open")
       }
 
       // Load saved theme

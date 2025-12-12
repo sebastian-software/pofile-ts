@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Start — pofile-ts</title>
+    <meta
+      name="description"
+      content="Get started with pofile-ts: parsing, serialization, and i18n workflow helpers."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-logo">
+          <img src="logo.svg" alt="pofile-ts" />
+          <span>pofile-ts</span>
+        </a>
+
+        <nav class="sidebar-nav">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Getting Started</div>
+            <a href="index.html" class="sidebar-link">Overview</a>
+            <a href="guide.html" class="sidebar-link active">Quick Start</a>
+            <a href="guide.html#helpers" class="sidebar-link">i18n Helpers</a>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Reference</div>
+            <a href="format.html" class="sidebar-link">PO File Format</a>
+            <a href="api.html" class="sidebar-link">API Reference</a>
+            <a href="api.html#options" class="sidebar-link">Options</a>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">More</div>
+            <a href="migration.html" class="sidebar-link">Migration Guide</a>
+            <a
+              href="https://github.com/sebastian-software/pofile-ts"
+              class="sidebar-link"
+              target="_blank"
+              rel="noopener"
+              >GitHub ↗</a
+            >
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main">
+        <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg
+            class="sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+
+        <div class="container">
+          <header class="compact">
+            <h1 class="page-title">Quick Start</h1>
+            <p class="page-subtitle">Get up and running with pofile-ts in seconds.</p>
+          </header>
+
+          <!-- Installation -->
+          <section>
+            <h2>Installation</h2>
+            <pre><span class="code-comment"># npm</span>
+npm install pofile-ts
+
+<span class="code-comment"># pnpm</span>
+pnpm add pofile-ts
+
+<span class="code-comment"># yarn</span>
+yarn add pofile-ts</pre>
+          </section>
+
+          <!-- Basic Usage -->
+          <section>
+            <h2>Basic Usage</h2>
+
+            <h3>Parse a PO file</h3>
+            <pre><span class="code-keyword">import</span> { parsePo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(<span class="code-string">`
+msgid "Hello"
+msgstr "Hallo"
+`</span>)
+
+console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgid)   <span class="code-comment">// "Hello"</span>
+console.<span class="code-function">log</span>(po.items[<span class="code-number">0</span>].msgstr)  <span class="code-comment">// ["Hallo"]</span></pre>
+
+            <h3>Create a new PO file</h3>
+            <pre><span class="code-keyword">import</span> { createPoFile, createItem, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> po = <span class="code-function">createPoFile</span>()
+po.headers[<span class="code-string">"Content-Type"</span>] = <span class="code-string">"text/plain; charset=UTF-8"</span>
+
+<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
+item.msgid = <span class="code-string">"Welcome"</span>
+item.msgstr = [<span class="code-string">"Willkommen"</span>]
+po.items.<span class="code-function">push</span>(item)
+
+console.<span class="code-function">log</span>(<span class="code-function">stringifyPo</span>(po))</pre>
+
+            <h3>File I/O (Node.js)</h3>
+            <pre><span class="code-keyword">import</span> { readFile, writeFile } <span class="code-keyword">from</span> <span class="code-string">"node:fs/promises"</span>
+<span class="code-keyword">import</span> { parsePo, stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Load from file</span>
+<span class="code-keyword">const</span> content = <span class="code-keyword">await</span> <span class="code-function">readFile</span>(<span class="code-string">"messages.po"</span>, <span class="code-string">"utf-8"</span>)
+<span class="code-keyword">const</span> po = <span class="code-function">parsePo</span>(content)
+
+<span class="code-comment">// Save to file</span>
+<span class="code-keyword">await</span> <span class="code-function">writeFile</span>(<span class="code-string">"output.po"</span>, <span class="code-function">stringifyPo</span>(po))</pre>
+          </section>
+
+          <!-- Working with Plurals -->
+          <section id="plurals">
+            <h2>Working with Plurals</h2>
+            <p>PO files support plural forms. The number of forms depends on the language.</p>
+
+            <pre><span class="code-keyword">import</span> { createItem } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> item = <span class="code-function">createItem</span>()
+item.msgid = <span class="code-string">"One item"</span>
+item.msgid_plural = <span class="code-string">"{count} items"</span>
+item.msgstr = [
+  <span class="code-string">"Ein Element"</span>,      <span class="code-comment">// singular</span>
+  <span class="code-string">"{count} Elemente"</span>  <span class="code-comment">// plural</span>
+]
+
+po.items.<span class="code-function">push</span>(item)</pre>
+
+            <p class="compat-note">
+              See <a href="format.html#gettext-vs-icu">PO File Format</a> for more on Gettext vs ICU
+              plurals.
+            </p>
+          </section>
+
+          <!-- i18n Workflow Helpers -->
+          <section id="helpers">
+            <h2>i18n Workflow Helpers</h2>
+            <p>
+              Beyond parsing and serialization, pofile-ts includes utilities for common i18n
+              workflows. All helpers are tree-shakeable — only import what you need.
+            </p>
+
+            <h3>Default Headers</h3>
+            <p>Create properly formatted PO headers with sensible defaults:</p>
+
+            <pre><span class="code-keyword">import</span> { createDefaultHeaders } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-keyword">const</span> headers = <span class="code-function">createDefaultHeaders</span>({
+  <span class="code-type">language</span>: <span class="code-string">"de"</span>,
+  <span class="code-type">generator</span>: <span class="code-string">"my-tool"</span>,
+  <span class="code-type">pluralForms</span>: <span class="code-string">"nplurals=2; plural=(n != 1);"</span>
+})
+
+<span class="code-comment">// Includes: POT-Creation-Date, MIME-Version, Content-Type, etc.</span></pre>
+
+            <h3>Catalog Conversion</h3>
+            <p>
+              Convert between simple key-value catalogs and PO items — with full plural support:
+            </p>
+
+            <pre><span class="code-keyword">import</span> { catalogToItems, itemsToCatalog } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Simple catalog format</span>
+<span class="code-keyword">const</span> catalog = {
+  <span class="code-string">"Hello"</span>: { <span class="code-type">translation</span>: <span class="code-string">"Hallo"</span> },
+  <span class="code-string">"{count} item"</span>: {
+    <span class="code-type">translation</span>: [<span class="code-string">"{count} Element"</span>, <span class="code-string">"{count} Elemente"</span>],
+    <span class="code-type">pluralSource</span>: <span class="code-string">"{count} items"</span>
+  }
+}
+
+<span class="code-keyword">const</span> items = <span class="code-function">catalogToItems</span>(catalog)
+<span class="code-keyword">const</span> backToCatalog = <span class="code-function">itemsToCatalog</span>(items)</pre>
+
+            <h3>Message ID Generation</h3>
+            <p>
+              Generate stable, collision-resistant IDs from message content. Uses SHA-256 with
+              Base64URL encoding — 281 trillion possibilities, practically zero collisions even at
+              1M messages:
+            </p>
+
+            <pre><span class="code-keyword">import</span> { generateMessageId, generateMessageIdSync } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Async (works in browsers and Node.js)</span>
+<span class="code-keyword">const</span> id = <span class="code-keyword">await</span> <span class="code-function">generateMessageId</span>(<span class="code-string">"Hello {name}"</span>, <span class="code-string">"greeting"</span>)
+<span class="code-comment">// → "Kj9xMnPq" (8-char Base64URL)</span>
+
+<span class="code-comment">// Sync (Node.js only, faster)</span>
+<span class="code-keyword">const</span> syncId = <span class="code-function">generateMessageIdSync</span>(<span class="code-string">"Hello {name}"</span>)</pre>
+
+            <h3>Reference Utilities</h3>
+            <p>Parse and format source file references with proper path normalization:</p>
+
+            <pre><span class="code-keyword">import</span> { parseReference, formatReference, createReference } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-function">parseReference</span>(<span class="code-string">"src/App.tsx:42"</span>)
+<span class="code-comment">// → { file: "src/App.tsx", line: 42 }</span>
+
+<span class="code-function">formatReference</span>({ <span class="code-type">file</span>: <span class="code-string">"src/App.tsx"</span>, <span class="code-type">line</span>: <span class="code-number">42</span> })
+<span class="code-comment">// → "src/App.tsx:42"</span>
+
+<span class="code-comment">// Validates relative paths, normalizes Windows backslashes</span>
+<span class="code-function">createReference</span>(<span class="code-string">"src\\components\\Button.tsx"</span>, <span class="code-number">10</span>)
+<span class="code-comment">// → { file: "src/components/Button.tsx", line: 10 }</span></pre>
+          </section>
+
+          <footer>
+            <p>
+              Released under the
+              <a href="https://github.com/sebastian-software/pofile-ts/blob/main/LICENSE"
+                >MIT License</a
+              >
+            </p>
+            <p class="credits">
+              Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a>
+            </p>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      function toggleTheme() {
+        const html = document.documentElement
+        const current = html.getAttribute("data-theme")
+        const next = current === "light" ? "dark" : "light"
+        html.setAttribute("data-theme", next)
+        localStorage.setItem("theme", next)
+      }
+
+      function toggleMenu() {
+        document.getElementById("sidebar").classList.toggle("open")
+      }
+
+      const saved = localStorage.getItem("theme")
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved)
+      } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+        document.documentElement.setAttribute("data-theme", "light")
+      }
+    </script>
+  </body>
+</html>

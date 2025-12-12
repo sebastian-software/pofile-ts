@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Reference — pofile-ts</title>
+    <meta name="description" content="Complete API reference for pofile-ts functions and types." />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <a href="index.html" class="sidebar-logo">
+          <img src="logo.svg" alt="pofile-ts" />
+          <span>pofile-ts</span>
+        </a>
+
+        <nav class="sidebar-nav">
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Getting Started</div>
+            <a href="index.html" class="sidebar-link">Overview</a>
+            <a href="guide.html" class="sidebar-link">Quick Start</a>
+            <a href="guide.html#helpers" class="sidebar-link">i18n Helpers</a>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">Reference</div>
+            <a href="format.html" class="sidebar-link">PO File Format</a>
+            <a href="api.html" class="sidebar-link active">API Reference</a>
+            <a href="api.html#options" class="sidebar-link">Options</a>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">More</div>
+            <a href="migration.html" class="sidebar-link">Migration Guide</a>
+            <a
+              href="https://github.com/sebastian-software/pofile-ts"
+              class="sidebar-link"
+              target="_blank"
+              rel="noopener"
+              >GitHub ↗</a
+            >
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main">
+        <button class="mobile-menu-toggle" onclick="toggleMenu()" aria-label="Toggle menu">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <svg
+            class="sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg
+            class="moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+
+        <div class="container">
+          <header class="compact">
+            <h1 class="page-title">API Reference</h1>
+            <p class="page-subtitle">Complete reference for all exported functions and types.</p>
+          </header>
+
+          <!-- Functions -->
+          <section>
+            <h2>Functions</h2>
+            <p>All exports are named functions — no classes, no default export.</p>
+
+            <table class="api-table">
+              <thead>
+                <tr>
+                  <th>Function</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>parsePo(content)</code></td>
+                  <td>Parse a PO file string into a <code>PoFile</code> object</td>
+                </tr>
+                <tr>
+                  <td><code>stringifyPo(po, options?)</code></td>
+                  <td>Serialize a <code>PoFile</code> to string</td>
+                </tr>
+                <tr>
+                  <td><code>createPoFile()</code></td>
+                  <td>Create a new empty <code>PoFile</code></td>
+                </tr>
+                <tr>
+                  <td><code>createItem(options?)</code></td>
+                  <td>Create a new translation item</td>
+                </tr>
+                <tr>
+                  <td><code>stringifyItem(item, options?)</code></td>
+                  <td>Serialize a single item to string</td>
+                </tr>
+                <tr>
+                  <td><code>parsePluralForms(header)</code></td>
+                  <td>Parse the Plural-Forms header value</td>
+                </tr>
+                <tr>
+                  <td><code>createDefaultHeaders(options?)</code></td>
+                  <td>Create default PO headers with sensible defaults</td>
+                </tr>
+                <tr>
+                  <td><code>catalogToItems(catalog)</code></td>
+                  <td>Convert a simple catalog to PO items</td>
+                </tr>
+                <tr>
+                  <td><code>itemsToCatalog(items)</code></td>
+                  <td>Convert PO items to a simple catalog</td>
+                </tr>
+                <tr>
+                  <td><code>generateMessageId(msg, ctx?)</code></td>
+                  <td>Generate stable 8-char Base64URL ID (async)</td>
+                </tr>
+                <tr>
+                  <td><code>generateMessageIdSync(msg, ctx?)</code></td>
+                  <td>Generate stable ID synchronously (Node.js)</td>
+                </tr>
+                <tr>
+                  <td><code>parseReference(ref)</code></td>
+                  <td>Parse "file:line" reference string</td>
+                </tr>
+                <tr>
+                  <td><code>formatReference(ref)</code></td>
+                  <td>Format reference object to string</td>
+                </tr>
+                <tr>
+                  <td><code>createReference(file, line?)</code></td>
+                  <td>Create validated reference (relative paths only)</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- Types -->
+          <section>
+            <h2>Types</h2>
+
+            <table class="api-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>PoFile</code></td>
+                  <td>Complete PO file with headers and items</td>
+                </tr>
+                <tr>
+                  <td><code>PoItem</code></td>
+                  <td>Single translation entry</td>
+                </tr>
+                <tr>
+                  <td><code>Headers</code></td>
+                  <td>Standard PO file headers interface</td>
+                </tr>
+                <tr>
+                  <td><code>SerializeOptions</code></td>
+                  <td>Options for controlling output format</td>
+                </tr>
+                <tr>
+                  <td><code>Catalog</code></td>
+                  <td>Simple key-value catalog format</td>
+                </tr>
+                <tr>
+                  <td><code>CatalogEntry</code></td>
+                  <td>Single catalog entry with translation and metadata</td>
+                </tr>
+                <tr>
+                  <td><code>SourceReference</code></td>
+                  <td>Parsed file:line reference</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- PoFile Properties -->
+          <section>
+            <h2>PoFile Properties</h2>
+
+            <table class="api-table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>headers</code></td>
+                  <td><code>Partial&lt;Headers&gt;</code></td>
+                  <td>PO file headers (Content-Type, Language, etc.)</td>
+                </tr>
+                <tr>
+                  <td><code>comments</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Translator comments at file header</td>
+                </tr>
+                <tr>
+                  <td><code>extractedComments</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Extracted comments at file header</td>
+                </tr>
+                <tr>
+                  <td><code>items</code></td>
+                  <td><code>PoItem[]</code></td>
+                  <td>Translation entries</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- PoItem Properties -->
+          <section>
+            <h2>PoItem Properties</h2>
+
+            <table class="api-table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>msgid</code></td>
+                  <td><code>string</code></td>
+                  <td>Source string</td>
+                </tr>
+                <tr>
+                  <td><code>msgid_plural</code></td>
+                  <td><code>string | null</code></td>
+                  <td>Plural form of source string</td>
+                </tr>
+                <tr>
+                  <td><code>msgstr</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Translated string(s)</td>
+                </tr>
+                <tr>
+                  <td><code>msgctxt</code></td>
+                  <td><code>string | null</code></td>
+                  <td>Message context for disambiguation</td>
+                </tr>
+                <tr>
+                  <td><code>references</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Source file references</td>
+                </tr>
+                <tr>
+                  <td><code>comments</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Translator comments</td>
+                </tr>
+                <tr>
+                  <td><code>extractedComments</code></td>
+                  <td><code>string[]</code></td>
+                  <td>Extracted comments from source</td>
+                </tr>
+                <tr>
+                  <td><code>flags</code></td>
+                  <td><code>Record&lt;string, boolean&gt;</code></td>
+                  <td>Flags like <code>fuzzy</code></td>
+                </tr>
+                <tr>
+                  <td><code>obsolete</code></td>
+                  <td><code>boolean</code></td>
+                  <td>Whether entry is obsolete</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- Serialization Options -->
+          <section id="options">
+            <h2>Serialization Options</h2>
+            <p>
+              Control the output format when serializing PO files. The defaults are optimized for
+              compatibility with translation platforms like Crowdin.
+            </p>
+
+            <pre><span class="code-keyword">import</span> { stringifyPo } <span class="code-keyword">from</span> <span class="code-string">"pofile-ts"</span>
+
+<span class="code-comment">// Default: compact format, 80 char line width</span>
+<span class="code-function">stringifyPo</span>(po)
+
+<span class="code-comment">// Traditional GNU gettext format (empty first line for multiline)</span>
+<span class="code-function">stringifyPo</span>(po, { <span class="code-type">compactMultiline</span>: <span class="code-keyword">false</span> })
+
+<span class="code-comment">// Disable line folding</span>
+<span class="code-function">stringifyPo</span>(po, { <span class="code-type">foldLength</span>: <span class="code-number">0</span> })</pre>
+
+            <table class="api-table">
+              <thead>
+                <tr>
+                  <th>Option</th>
+                  <th>Default</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>foldLength</code></td>
+                  <td><code>80</code></td>
+                  <td>Max line width before folding. Set to <code>0</code> to disable.</td>
+                </tr>
+                <tr>
+                  <td><code>compactMultiline</code></td>
+                  <td><code>true</code></td>
+                  <td>Use compact format for multiline strings (Crowdin-compatible)</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Multiline Format Comparison</h3>
+            <p>
+              Strings containing newlines can be formatted in two ways. Both are valid PO syntax and
+              represent the <strong>exact same value</strong>:
+            </p>
+
+            <pre><span class="code-comment">// Compact (default) — Crowdin-compatible</span>
+msgid <span class="code-string">"First line\n"</span>
+<span class="code-string">"Second line"</span>
+
+<span class="code-comment">// Traditional GNU gettext — with empty first line</span>
+msgid <span class="code-string">""</span>
+<span class="code-string">"First line\n"</span>
+<span class="code-string">"Second line"</span>
+
+<span class="code-comment">// Both parse to: "First line\nSecond line"</span></pre>
+
+            <p class="compat-note">
+              <strong>Why does this matter?</strong> Without consistent formatting, you'll see
+              constant diffs in Git when syncing with Crowdin. The compact format matches Crowdin's
+              normalization.
+            </p>
+          </section>
+
+          <footer>
+            <p>
+              Released under the
+              <a href="https://github.com/sebastian-software/pofile-ts/blob/main/LICENSE"
+                >MIT License</a
+              >
+            </p>
+            <p class="credits">
+              Maintained by <a href="https://sebastian-software.de/">Sebastian Software</a>
+            </p>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      function toggleTheme() {
+        const html = document.documentElement
+        const current = html.getAttribute("data-theme")
+        const next = current === "light" ? "dark" : "light"
+        html.setAttribute("data-theme", next)
+        localStorage.setItem("theme", next)
+      }
+
+      function toggleMenu() {
+        document.getElementById("sidebar").classList.toggle("open")
+      }
+
+      const saved = localStorage.getItem("theme")
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved)
+      } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+        document.documentElement.setAttribute("data-theme", "light")
+      }
+    </script>
+  </body>
+</html>
