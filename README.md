@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://sebastian-software.github.io/pofile-ts/">
-    <img src="https://sebastian-software.github.io/pofile-ts/logo.svg" alt="pofile-ts" width="120" height="120">
+    <img src="logo.svg" alt="pofile-ts" width="120" height="120">
   </a>
 </p>
 
