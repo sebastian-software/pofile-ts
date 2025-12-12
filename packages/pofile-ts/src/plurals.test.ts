@@ -132,4 +132,48 @@ describe("getPluralFunction", () => {
     expect(fn(22)).toBe(1) // few
     expect(fn(25)).toBe(2) // other
   })
+
+  it("returns correct indices for Scottish Gaelic (4 forms - Celtic)", () => {
+    const fn = getPluralFunction("gd")
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // two
+    expect(fn(3)).toBe(2) // few (3-10)
+    expect(fn(10)).toBe(2) // few
+    expect(fn(11)).toBe(3) // other (>10)
+    expect(fn(20)).toBe(3) // other
+  })
+
+  it("returns correct indices for Irish (5 forms)", () => {
+    const fn = getPluralFunction("ga")
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // two
+    expect(fn(3)).toBe(2) // few (3-10)
+    expect(fn(10)).toBe(2) // few
+    expect(fn(11)).toBe(3) // many (11-99)
+    expect(fn(99)).toBe(3) // many
+    expect(fn(100)).toBe(4) // other (>=100)
+  })
+
+  it("returns default for unknown locale with region", () => {
+    const fn = getPluralFunction("xx-YY")
+    expect(fn(1)).toBe(0) // defaults to "one, other"
+    expect(fn(2)).toBe(1)
+  })
+
+  it("returns correct indices for Welsh (6 forms)", () => {
+    const fn = getPluralFunction("cy")
+    expect(fn(0)).toBe(0) // zero
+    expect(fn(1)).toBe(1) // one
+    expect(fn(2)).toBe(2) // two
+    expect(fn(3)).toBe(3) // few
+    expect(fn(100)).toBe(5) // other
+  })
+
+  it("returns correct indices for Slovenian (3 forms with two)", () => {
+    const fn = getPluralFunction("sl")
+    expect(fn(1)).toBe(0) // one
+    expect(fn(2)).toBe(1) // two
+    expect(fn(3)).toBe(2) // other
+    expect(fn(5)).toBe(2) // other
+  })
 })

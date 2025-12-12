@@ -296,6 +296,18 @@ describe("itemsToCatalog", () => {
     expect(entry).toBeDefined()
     expect(entry?.message).toBe("Hello World")
   })
+
+  it("falls back to msgid when useMsgidAsKey is false and no keyGenerator", () => {
+    const item = createItem()
+    item.msgid = "Hello World"
+    item.msgstr = ["Hallo Welt"]
+
+    const catalog = itemsToCatalog([item], { useMsgidAsKey: false })
+
+    // Falls back to msgid as key
+    expect(catalog["Hello World"]).toBeDefined()
+    expect(catalog["Hello World"]?.translation).toBe("Hallo Welt")
+  })
 })
 
 describe("mergeCatalogs", () => {

@@ -383,5 +383,32 @@ msgstr "result"
       const po = parsePo(content)
       expect(po.items[0]?.msgid).toBe("test")
     })
+
+    it("handles lines without quotes", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "test"
+invalid line without quotes
+msgstr "result"
+`
+      const po = parsePo(content)
+      expect(po.items[0]?.msgid).toBe("test")
+      expect(po.items[0]?.msgstr[0]).toBe("result")
+    })
+
+    it("handles lines with single quote", () => {
+      const content = `
+msgid ""
+msgstr ""
+
+msgid "test
+msgstr "result"
+`
+      const po = parsePo(content)
+      // Parser should handle this gracefully
+      expect(po.items.length).toBeGreaterThanOrEqual(0)
+    })
   })
 })

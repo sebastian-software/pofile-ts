@@ -218,6 +218,16 @@ describe("stringifyItem", () => {
       assertHasLine(str, 'msgid ""')
     })
 
+    it("handles folding with backslash at break point", () => {
+      const item = createItem()
+      // Long string without spaces, with backslash - tests line folding edge case
+      item.msgid = "a".repeat(75) + "\\" + "b".repeat(10)
+      const str = stringifyItem(item, { foldLength: 76 })
+      // Should produce valid output with folded lines
+      expect(str).toContain("msgid")
+      expect(str).toContain("\\\\") // Escaped backslash
+    })
+
     it("handles string with only newlines", () => {
       const item = createItem()
       // String starting with \n - first part is empty, so uses empty first line

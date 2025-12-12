@@ -44,6 +44,12 @@ describe("parseReference", () => {
     expect(() => parseReference("   ")).toThrow("Reference cannot be empty")
   })
 
+  it("treats :42 as filename (colon at start)", () => {
+    // When colon is at position 0, treat entire string as filename
+    const result = parseReference(":42")
+    expect(result).toEqual({ file: ":42" })
+  })
+
   it("handles file with colon in name but no line number", () => {
     // If the part after colon is not a valid number, treat as filename
     const result = parseReference("src/file:name.tsx")

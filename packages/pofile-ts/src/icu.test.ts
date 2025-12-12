@@ -219,6 +219,10 @@ describe("icuToGettextSource", () => {
     expect(icuToGettextSource("{gender, select, male {He} female {She}}")).toBeNull()
   })
 
+  it("returns null for plural with only one case", () => {
+    expect(icuToGettextSource("{count, plural, other {items}}")).toBeNull()
+  })
+
   it("handles 4-form Polish ICU", () => {
     const icu = "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
     const result = icuToGettextSource(icu)
