@@ -150,10 +150,10 @@ describe("normalizeToIcu", () => {
 
     const result = normalizeToIcu(po, { locale: "de" })
 
-    expect(result.items[0].msgstr[0]).toBe(
+    expect(result.items[0]!.msgstr[0]).toBe(
       "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
     )
-    expect(result.items[1].msgstr[0]).toBe("Hallo")
+    expect(result.items[1]!.msgstr[0]).toBe("Hallo")
   })
 
   it("does not modify original when inPlace is false", () => {
@@ -162,10 +162,10 @@ describe("normalizeToIcu", () => {
       items: [createPluralItem()]
     }
 
-    const originalMsgstr = [...po.items[0].msgstr]
+    const originalMsgstr = [...po.items[0]!.msgstr]
     normalizeToIcu(po, { locale: "de", inPlace: false })
 
-    expect(po.items[0].msgstr).toEqual(originalMsgstr)
+    expect(po.items[0]!.msgstr).toEqual(originalMsgstr)
   })
 
   it("modifies original when inPlace is true", () => {
@@ -176,7 +176,7 @@ describe("normalizeToIcu", () => {
 
     normalizeToIcu(po, { locale: "de", inPlace: true })
 
-    expect(po.items[0].msgstr[0]).toContain("plural")
+    expect(po.items[0]!.msgstr[0]).toContain("plural")
   })
 })
 
