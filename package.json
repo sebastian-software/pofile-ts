@@ -1,85 +1,33 @@
 {
-  "name": "pofile-ts",
-  "description": "Parse and serialize Gettext PO files.",
-  "version": "3.2.0",
-  "author": {
-    "name": "Sebastian Software GmbH",
-    "email": "s.werner@sebastian-software.de",
-    "url": "https://sebastian-software.de/"
-  },
-  "contributors": [
-    "Ruben Vermeersch",
-    "Eyal Lewinsohn",
-    "Gabe Gorelick",
-    "Julian Bäume",
-    "Mike Holly",
-    "Sander Houttekier"
-  ],
+  "name": "pofile-ts-monorepo",
+  "private": true,
+  "description": "Monorepo for pofile-ts and documentation",
   "license": "MIT",
-  "homepage": "https://sebastian-software.github.io/pofile-ts/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sebastian-software/pofile-ts.git"
   },
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "keywords": [
-    "i18n",
-    "l10n",
-    "gettext",
-    "mo",
-    "po"
-  ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "build": "pnpm --filter pofile-ts build",
+    "dev": "pnpm --filter pofile-ts dev",
+    "test": "pnpm --filter pofile-ts test",
+    "test:coverage": "pnpm --filter pofile-ts test:coverage",
+    "lint": "pnpm --filter pofile-ts lint",
+    "lint:fix": "pnpm --filter pofile-ts lint:fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build",
+    "typecheck": "pnpm --filter pofile-ts typecheck",
     "prepare": "husky",
-    "release": "release-it",
-    "release:auto": "release-it --ci",
+    "release": "pnpm --filter pofile-ts release",
     "bench": "pnpm --filter pofile-ts-benchmark bench",
-    "bench:generate": "pnpm --filter pofile-ts-benchmark generate-fixture"
+    "bench:generate": "pnpm --filter pofile-ts-benchmark generate-fixture",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@release-it/conventional-changelog": "^10.0.2",
-    "@types/node": "^22.19.1",
-    "@vitest/coverage-v8": "^4.0.15",
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
-    "prettier": "^3.7.4",
-    "release-it": "^19.0.6",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.49.0",
-    "vitest": "^4.0.15"
+    "prettier": "^3.7.4"
   },
   "engines": {
     "node": ">=20"

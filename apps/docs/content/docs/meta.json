@@ -1,0 +1,14 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "---Getting Started---",
+    "quick-start",
+    "helpers",
+    "---Reference---",
+    "format",
+    "api",
+    "---More---",
+    "migration"
+  ]
+}

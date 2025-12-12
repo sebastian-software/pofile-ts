@@ -1,0 +1,92 @@
+---
+title: PO File Format
+description: Understanding the GNU gettext PO file structure and content formats
+---
+
+The [PO (Portable Object) format](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html) is the standard for software translation since the 1990s. pofile-ts fully supports this format.
+
+## What We Support
+
+| Feature                                                                                 | Supported | Example                                        |
+| --------------------------------------------------------------------------------------- | :-------: | ---------------------------------------------- |
+| Singular translations                                                                   |    ✅     | `msgid` / `msgstr`                             |
+| [Plural forms](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) |    ✅     | `msgid_plural` / `msgstr[0]`, `msgstr[1]`, ... |
+| Message context                                                                         |    ✅     | `msgctxt`                                      |
+| Comments                                                                                |    ✅     | `#`, `#.`, `#:`, `#,`                          |
+| Flags                                                                                   |    ✅     | `fuzzy`, `no-wrap`, etc.                       |
+| Obsolete entries                                                                        |    ✅     | `#~`                                           |
+| All UTF-8 content                                                                       |    ✅     | —                                              |
+
+## Content Agnostic
+
+pofile-ts parses the **PO structure** — it doesn't interpret what's inside `msgid` or `msgstr`. Your strings can contain:
+
+- Plain text: `"Hello, World!"`
+- [Unicode ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) (v1): `"{count, plural, one {# item} other {# items}}"`
+- [Unicode MessageFormat 2.0](https://unicode-org.github.io/icu/userguide/format_parse/messages/mf2.html): `.match {$count} one {{...}} * {{...}}`
+- Any other format your i18n library uses
+
+This makes pofile-ts a **universal PO parser** that works with any translation workflow.
+
+<Callout type="info">
+  **Important:** There is no normalization between formats. Native Gettext plurals and ICU-embedded
+  plurals result in different data structures.
+</Callout>
+
+```typescript
+// Native Gettext: msgid_plural set, msgstr has multiple entries
+{ msgid_plural: "{count} items", msgstr: ["Ein Element", "{count} Elemente"] }
+
+// ICU embedded: msgid_plural null, msgstr has one entry with ICU syntax
+{ msgid_plural: null, msgstr: ["{count, plural, one {...} other {...}}"] }
+```
+
+## Gettext Plurals vs ICU Plurals
+
+There are two ways to handle pluralization in PO files.
+
+### Native Gettext Plurals
+
+The original [Gettext plural system](https://www.gnu.org/software/gettext/manual/html_node/Plural-forms.html) uses **indexed forms** defined by a formula in the header:
+
+```po
+# Header defines plural rules
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# German (2 forms: singular, plural)
+msgid "One item"
+msgid_plural "{count} items"
+msgstr[0] "Ein Element"
+msgstr[1] "{count} Elemente"
+
+# Arabic (6 forms: zero, one, two, few, many, other)
+msgstr[0] "..."  # zero
+msgstr[1] "..."  # one
+msgstr[2] "..."  # two
+msgstr[3] "..."  # few
+msgstr[4] "..."  # many
+msgstr[5] "..."  # other
+```
+
+### ICU MessageFormat (embedded in msgstr)
+
+Libraries like [Lingui](https://lingui.dev/) embed [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) syntax directly in the `msgstr`:
+
+```po
+# ICU plural embedded in single msgstr
+msgid "{count, plural, one {# item} other {# items}}"
+msgstr "{count, plural, one {# Element} other {# Elemente}}"
+```
+
+### Comparison
+
+| Feature           | Gettext Plurals |         ICU in msgstr         |
+| ----------------- | :-------------: | :---------------------------: |
+| Plural forms      | ✅ Index-based  |           ✅ Named            |
+| Select (gender)   |       ❌        |              ✅               |
+| SelectOrdinal     |       ❌        |              ✅               |
+| Nested constructs |       ❌        |              ✅               |
+| TMS support       |    ✅ Native    |  ⚠️ Requires ICU-aware tools  |
+| Translator UX     |    ✅ Simple    | ⚠️ Must understand ICU syntax |
+
+**TL;DR:** Use native Gettext plurals for simple pluralization. Use ICU when you need select, selectordinal, or nested constructs.

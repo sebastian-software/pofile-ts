@@ -1,0 +1,93 @@
+---
+title: Migration Guide
+description: Upgrading from pofile 1.x to pofile-ts
+---
+
+pofile-ts is a modernized fork of the original [pofile](https://github.com/rubenv/pofile) package. The API has been redesigned to use pure functions instead of classes.
+
+<Callout type="info">
+  **Key changes:** Class-based API → Functional API, callbacks → async, and ESM-first with full
+  TypeScript support.
+</Callout>
+
+## Requirements
+
+- **Node.js 20+** or modern browsers
+- **ESM-first** with full TypeScript support
+- **Named exports only** — no default export
+
+## API Changes
+
+### Parsing
+
+```typescript
+// ❌ Old API (pofile 1.x)
+import PO from "pofile"
+const po = PO.parse(content)
+
+// ✅ New API (pofile-ts)
+import { parsePo } from "pofile-ts"
+const po = parsePo(content)
+```
+
+### Creating Items
+
+```typescript
+// ❌ Old API (pofile 1.x)
+const item = new PO.Item()
+
+// ✅ New API (pofile-ts)
+import { createItem } from "pofile-ts"
+const item = createItem()
+```
+
+### Serialization
+
+```typescript
+// ❌ Old API (pofile 1.x)
+po.toString()
+
+// ✅ New API (pofile-ts)
+import { stringifyPo } from "pofile-ts"
+stringifyPo(po)
+```
+
+### File I/O
+
+The `load()` and `save()` methods have been removed. Use native file system APIs instead:
+
+```typescript
+// ❌ Old API (pofile 1.x)
+PO.load("messages.po", (err, po) => {
+  if (err) throw err
+  // use po
+})
+
+// ✅ New API (pofile-ts)
+import { readFile } from "node:fs/promises"
+import { parsePo } from "pofile-ts"
+
+const content = await readFile("messages.po", "utf-8")
+const po = parsePo(content)
+```
+
+## Quick Reference
+
+| pofile 1.x                | pofile-ts                          |
+| ------------------------- | ---------------------------------- |
+| `PO.parse(content)`       | `parsePo(content)`                 |
+| `new PO()`                | `createPoFile()`                   |
+| `new PO.Item()`           | `createItem()`                     |
+| `po.toString()`           | `stringifyPo(po)`                  |
+| `item.toString()`         | `stringifyItem(item)`              |
+| `PO.load(path, callback)` | Use `fs.readFile` + `parsePo`      |
+| `po.save(path, callback)` | Use `stringifyPo` + `fs.writeFile` |
+
+## Why Migrate?
+
+- **23× faster parsing** — hand-optimized hot paths
+- **Full TypeScript support** — complete type definitions
+- **Modern API** — functional, tree-shakeable exports
+- **Browser support** — no Node.js-specific APIs
+- **i18n helpers** — catalog conversion, message IDs, and more
+- **Actively maintained** — regular updates and fixes

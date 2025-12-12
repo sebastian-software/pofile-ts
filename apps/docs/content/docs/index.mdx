@@ -1,0 +1,49 @@
+---
+title: Introduction
+description: A modern, focused library for GNU gettext PO files
+---
+
+**pofile-ts** is a robust TypeScript library for reading and writing GNU gettext PO files. Zero dependencies, full type safety, runs everywhere.
+
+## Features
+
+- **Parse PO Files** — Read PO files from strings with full escape sequence support
+- **Serialize PO Files** — Convert PO data back to properly formatted strings
+- **Full PO Support** — Headers, comments, flags, plurals, and message context
+- **Zero Dependencies** — No Node.js APIs required, works in browsers too
+- **TypeScript First** — Full type definitions for excellent IDE support
+- **Blazing Fast** — Up to 23× faster than alternatives
+
+## Installation
+
+```bash
+npm install pofile-ts
+```
+
+## Quick Example
+
+```typescript
+import { parsePo, stringifyPo } from "pofile-ts"
+
+// Parse a PO file
+const po = parsePo(`
+msgid "Hello"
+msgstr "Hallo"
+`)
+
+console.log(po.items[0].msgid) // "Hello"
+console.log(po.items[0].msgstr) // ["Hallo"]
+
+// Serialize back to string
+console.log(stringifyPo(po))
+```
+
+## Performance
+
+Benchmarked with 10,000 entries (~10% plurals, reflecting real-world usage):
+
+| Library        |       Parsing | Serialization |
+| -------------- | ------------: | ------------: |
+| **pofile-ts**  | **185 ops/s** | **217 ops/s** |
+| gettext-parser |      27 ops/s |      53 ops/s |
+| pofile         |       8 ops/s |     100 ops/s |

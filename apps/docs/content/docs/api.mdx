@@ -1,0 +1,148 @@
+---
+title: API Reference
+description: Complete reference for all exported functions and types
+---
+
+All exports are named functions — no classes, no default export.
+
+## Core Functions
+
+| Function                        | Description                                   |
+| ------------------------------- | --------------------------------------------- |
+| `parsePo(content)`              | Parse a PO file string into a `PoFile` object |
+| `stringifyPo(po, options?)`     | Serialize a `PoFile` to string                |
+| `createPoFile()`                | Create a new empty `PoFile`                   |
+| `createItem(options?)`          | Create a new translation item                 |
+| `stringifyItem(item, options?)` | Serialize a single item to string             |
+| `parsePluralForms(header)`      | Parse the Plural-Forms header value           |
+
+## Types
+
+### PoFile
+
+| Property            | Type               | Description                                    |
+| ------------------- | ------------------ | ---------------------------------------------- |
+| `headers`           | `Partial<Headers>` | PO file headers (Content-Type, Language, etc.) |
+| `comments`          | `string[]`         | Translator comments at file header             |
+| `extractedComments` | `string[]`         | Extracted comments at file header              |
+| `items`             | `PoItem[]`         | Translation entries                            |
+
+### PoItem
+
+| Property            | Type                      | Description                        |
+| ------------------- | ------------------------- | ---------------------------------- |
+| `msgid`             | `string`                  | Source string                      |
+| `msgid_plural`      | `string \| null`          | Plural form of source string       |
+| `msgstr`            | `string[]`                | Translated string(s)               |
+| `msgctxt`           | `string \| null`          | Message context for disambiguation |
+| `references`        | `string[]`                | Source file references             |
+| `comments`          | `string[]`                | Translator comments                |
+| `extractedComments` | `string[]`                | Extracted comments from source     |
+| `flags`             | `Record<string, boolean>` | Flags like `fuzzy`                 |
+| `obsolete`          | `boolean`                 | Whether entry is obsolete          |
+
+### SerializeOptions
+
+| Option             | Default | Description                                                   |
+| ------------------ | ------- | ------------------------------------------------------------- |
+| `foldLength`       | `80`    | Max line width before folding. Set to `0` to disable.         |
+| `compactMultiline` | `true`  | Use compact format for multiline strings (Crowdin-compatible) |
+
+## i18n Helpers
+
+### createDefaultHeaders
+
+Create default PO headers with sensible defaults.
+
+```typescript
+import { createDefaultHeaders } from "pofile-ts"
+
+const headers = createDefaultHeaders({
+  language: "de",
+  generator: "my-tool",
+  pluralForms: "nplurals=2; plural=(n != 1);"
+})
+```
+
+**Options:**
+
+| Option           | Type     | Description                             |
+| ---------------- | -------- | --------------------------------------- |
+| `language`       | `string` | Target language code (e.g., "de", "fr") |
+| `pluralForms`    | `string` | Plural-Forms header value               |
+| `generator`      | `string` | Tool name for X-Generator header        |
+| `creationDate`   | `Date`   | POT-Creation-Date (defaults to now)     |
+| `revisionDate`   | `Date`   | PO-Revision-Date (defaults to now)      |
+| `team`           | `string` | Language-Team header value              |
+| `lastTranslator` | `string` | Last-Translator header value            |
+
+### Catalog Conversion
+
+Convert between simple key-value catalogs and PO items.
+
+```typescript
+import { catalogToItems, itemsToCatalog } from "pofile-ts"
+
+const catalog = {
+  Hello: { translation: "Hallo" },
+  "{count} item": {
+    translation: ["{count} Element", "{count} Elemente"],
+    pluralSource: "{count} items"
+  }
+}
+
+const items = catalogToItems(catalog)
+const backToCatalog = itemsToCatalog(items)
+```
+
+**CatalogEntry:**
+
+| Property       | Type                   | Description                 |
+| -------------- | ---------------------- | --------------------------- |
+| `translation`  | `string \| string[]`   | Translated string(s)        |
+| `pluralSource` | `string`               | Original plural form source |
+| `context`      | `string`               | Message context             |
+| `comments`     | `string[]`             | Translator comments         |
+| `references`   | `SourceReference[]`    | Source file references      |
+| `flags`        | `Record<string, bool>` | Flags like `fuzzy`          |
+
+## Reference Utilities
+
+Parse and format source file references.
+
+```typescript
+import { parseReference, formatReference, createReference } from "pofile-ts"
+
+parseReference("src/App.tsx:42")
+// → { file: "src/App.tsx", line: 42 }
+
+formatReference({ file: "src/App.tsx", line: 42 })
+// → "src/App.tsx:42"
+
+createReference("src/Button.tsx", 10)
+// → { file: "src/Button.tsx", line: 10 }
+```
+
+**SourceReference:**
+
+| Property | Type     | Description |
+| -------- | -------- | ----------- |
+| `file`   | `string` | File path   |
+| `line`   | `number` | Line number |
+
+## Message ID Generation
+
+Generate stable, collision-resistant IDs from message content.
+
+```typescript
+import { generateMessageId, generateMessageIdSync } from "pofile-ts"
+
+// Async (works in browsers and Node.js)
+const id = await generateMessageId("Hello {name}", "greeting")
+// → "Kj9xMnPq" (8-char Base64URL)
+
+// Sync (Node.js only, faster)
+const syncId = generateMessageIdSync("Hello {name}")
+```
+
+Uses SHA-256 with Base64URL encoding — 281 trillion possibilities, practically zero collisions even at 1M messages.

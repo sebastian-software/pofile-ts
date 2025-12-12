@@ -1,0 +1,83 @@
+---
+title: Quick Start
+description: Get up and running with pofile-ts in seconds
+---
+
+## Installation
+
+```bash
+# npm
+npm install pofile-ts
+
+# pnpm
+pnpm add pofile-ts
+
+# yarn
+yarn add pofile-ts
+```
+
+## Basic Usage
+
+### Parse a PO file
+
+```typescript
+import { parsePo } from "pofile-ts"
+
+const po = parsePo(`
+msgid "Hello"
+msgstr "Hallo"
+`)
+
+console.log(po.items[0].msgid) // "Hello"
+console.log(po.items[0].msgstr) // ["Hallo"]
+```
+
+### Create a new PO file
+
+```typescript
+import { createPoFile, createItem, stringifyPo } from "pofile-ts"
+
+const po = createPoFile()
+po.headers["Content-Type"] = "text/plain; charset=UTF-8"
+
+const item = createItem()
+item.msgid = "Welcome"
+item.msgstr = ["Willkommen"]
+po.items.push(item)
+
+console.log(stringifyPo(po))
+```
+
+### File I/O (Node.js)
+
+```typescript
+import { readFile, writeFile } from "node:fs/promises"
+import { parsePo, stringifyPo } from "pofile-ts"
+
+// Load from file
+const content = await readFile("messages.po", "utf-8")
+const po = parsePo(content)
+
+// Save to file
+await writeFile("output.po", stringifyPo(po))
+```
+
+## Working with Plurals
+
+PO files support plural forms. The number of forms depends on the language.
+
+```typescript
+import { createItem } from "pofile-ts"
+
+const item = createItem()
+item.msgid = "One item"
+item.msgid_plural = "{count} items"
+item.msgstr = [
+  "Ein Element", // singular
+  "{count} Elemente" // plural
+]
+
+po.items.push(item)
+```
+
+See [PO File Format](/docs/format) for more on Gettext vs ICU plurals.
