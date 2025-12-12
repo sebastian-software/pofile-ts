@@ -94,8 +94,8 @@ pofile-ts implements the [GNU gettext PO file format](https://www.gnu.org/softwa
 pofile-ts parses the **PO structure** — it doesn't interpret what's inside `msgid` or `msgstr`. Your strings can contain:
 
 - Plain text: `"Hello, World!"`
-- [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/): `"{count, plural, one {# item} other {# items}}"`
-- [MessageFormat 2](https://unicode-org.github.io/icu/userguide/format_parse/messages/mf2.html): `.match {$count} one {{# item}} * {{# items}}`
+- [Unicode ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) (v1): `"{count, plural, one {# item} other {# items}}"`
+- [Unicode MessageFormat 2.0](https://unicode-org.github.io/icu/userguide/format_parse/messages/mf2.html): `.match {$count} one {{# item}} * {{# items}}`
 - Any other format your i18n library uses
 
 This makes pofile-ts a **universal PO parser** that works with any translation workflow.
