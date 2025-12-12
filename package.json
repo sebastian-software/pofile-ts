@@ -19,6 +19,7 @@
     "typecheck": "pnpm --filter pofile-ts typecheck",
     "prepare": "husky",
     "release": "pnpm --filter pofile-ts release",
+    "release:auto": "pnpm --filter pofile-ts release:auto",
     "bench": "pnpm --filter pofile-ts-benchmark bench",
     "bench:generate": "pnpm --filter pofile-ts-benchmark generate-fixture",
     "docs:dev": "pnpm --filter docs dev",
