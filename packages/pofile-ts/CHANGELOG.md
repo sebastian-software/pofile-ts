@@ -1,5 +1,53 @@
 # Changelog
 
+## [3.3.0](///compare/v3.2.0...v3.3.0) (2025-12-12)
+
+### Features
+
+- add catalog conversion helpers bfd30c7
+- add CLDR plural categories and Gettext to ICU conversion aade2bd
+- add createDefaultHeaders and formatPoDate helpers f1e6bc6
+- add expandOctothorpe option for better TMS readability 1c030ba
+- add message ID generation utilities 1cc9b6c
+- add reference parsing and formatting utilities 3fffae8
+- **docs:** add fumadocs-typescript for auto-generated type tables 8330699
+- use 8-char Base64URL for message IDs d4e8c1e
+
+### Bug Fixes
+
+- add explicit slug for Codecov 428e5bc
+- add logo to repo and add Codecov token support d7e0b89
+- copy assets to pofile-ts subfolder for GitHub Pages 9085195
+- correct GitHub Pages upload path ffbb090
+- move static assets to correct path for GitHub Pages efc40ca
+- remove basePath for correct GitHub Pages deployment 5b1d29b
+- restore base path for correct asset URLs b3eebdb
+- **tests:** normalize line endings for Windows compatibility 639b5a1
+
+### Performance
+
+- optimize hot paths in new helper functions 968e852
+- optimize plural serialization e98fcb8
+
+### Refactoring
+
+- code cleanup and eliminate magic numbers 38b6a45
+- migrate to monorepo structure with Fumadocs 49d5b37
+- replace eval with native plural functions 2598919
+
+### Documentation
+
+- add i18n workflow helpers to README and homepage 4c89519
+- add logo and fix documentation link e6ed5fc
+- add PO format documentation and update benchmarks 320ace9
+- clarify no normalization between plural formats 97dcec0
+- clarify Unicode MessageFormat v1 vs 2.0 db73b07
+- fix bold claim and update MF2 link to ICU docs b296649
+- redesign logo with gradients and document icon 78263fe
+- simplify README and fix broken links d4d4e75
+- split into multiple pages with sidebar navigation f9852a8
+- update benchmarks and document new ICU features 32b70c5
+
 ## [3.2.0](///compare/v3.1.0...v3.2.0) (2025-12-11)
 
 ### Features
