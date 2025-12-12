@@ -1,5 +1,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <rect width="120" height="120" rx="24" fill="#0ea5e9"/>
-  <text x="60" y="72" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="white" text-anchor="middle">PO</text>
-  <text x="60" y="100" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="500" fill="white" fill-opacity="0.8" text-anchor="middle">ts</text>
+  <defs>
+    <!-- Main gradient - vibrant blue to purple -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#d946ef"/>
+    </linearGradient>
+    
+    <!-- Subtle inner glow -->
+    <linearGradient id="innerGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    
+    <!-- Document icon gradient -->
+    <linearGradient id="docGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0e7ff"/>
+    </linearGradient>
+    
+    <!-- Shadow for depth -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#1e1b4b" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background rounded square -->
+  <rect width="120" height="120" rx="28" fill="url(#bgGradient)"/>
+  
+  <!-- Inner highlight -->
+  <rect x="4" y="4" width="112" height="56" rx="24" fill="url(#innerGlow)"/>
+  
+  <!-- Document/File icon - stylized -->
+  <g filter="url(#shadow)">
+    <!-- Main document shape -->
+    <path d="M32 24h36l20 20v52c0 4.4-3.6 8-8 8H32c-4.4 0-8-3.6-8-8V32c0-4.4 3.6-8 8-8z" fill="url(#docGradient)"/>
+    <!-- Folded corner -->
+    <path d="M68 24v16c0 2.2 1.8 4 4 4h16" fill="none" stroke="#c7d2fe" stroke-width="2"/>
+    <path d="M68 24l20 20h-16c-2.2 0-4-1.8-4-4V24z" fill="#c7d2fe"/>
+  </g>
+  
+  <!-- PO text lines representation -->
+  <g opacity="0.6">
+    <rect x="34" y="52" width="28" height="4" rx="2" fill="#6366f1"/>
+    <rect x="34" y="62" width="40" height="4" rx="2" fill="#8b5cf6"/>
+    <rect x="34" y="72" width="24" height="4" rx="2" fill="#6366f1"/>
+    <rect x="34" y="82" width="36" height="4" rx="2" fill="#8b5cf6"/>
+  </g>
+  
+  <!-- "ts" badge -->
+  <g>
+    <rect x="70" y="70" width="36" height="24" rx="6" fill="#0ea5e9"/>
+    <rect x="70" y="70" width="36" height="12" rx="6" fill="#38bdf8" fill-opacity="0.5"/>
+    <text x="88" y="87" font-family="system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="14" font-weight="700" fill="white" text-anchor="middle">TS</text>
+  </g>
 </svg>
