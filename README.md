@@ -95,7 +95,7 @@ pofile-ts parses the **PO structure** — it doesn't interpret what's inside `ms
 
 - Plain text: `"Hello, World!"`
 - [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/): `"{count, plural, one {# item} other {# items}}"`
-- [MessageFormat 2](https://github.com/unicode-org/message-format-wg): `.match {$count} one {{# item}} * {{# items}}`
+- [MessageFormat 2](https://unicode-org.github.io/icu/userguide/format_parse/messages/mf2.html): `.match {$count} one {{# item}} * {{# items}}`
 - Any other format your i18n library uses
 
 This makes pofile-ts a **universal PO parser** that works with any translation workflow.
