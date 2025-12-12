@@ -22,6 +22,13 @@ export interface GettextToIcuOptions {
    * @default "count"
    */
   pluralVariable?: string
+
+  /**
+   * Replace `#` with the explicit variable reference `{varname}`.
+   * Makes translations more readable in TMS tools.
+   * @default true
+   */
+  expandOctothorpe?: boolean
 }
 
 /**
@@ -100,7 +107,7 @@ function getMsgstrToCategory(locale: string): string[] {
  * // → "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
  */
 export function gettextToIcu(item: PoItem, options: GettextToIcuOptions): string | null {
-  const { locale, pluralVariable = "count" } = options
+  const { locale, pluralVariable = "count", expandOctothorpe = true } = options
 
   // Not a plural item
   if (!item.msgid_plural || item.msgstr.length <= 1) {
@@ -114,7 +121,9 @@ export function gettextToIcu(item: PoItem, options: GettextToIcuOptions): string
   const clauses = item.msgstr
     .map((translation, index) => {
       const category = categories[index] ?? "other"
-      return `${category} {${translation}}`
+      // Replace # with explicit variable reference for better TMS readability
+      const text = expandOctothorpe ? translation.replace(/#/g, `{${pluralVariable}}`) : translation
+      return `${category} {${text}}`
     })
     .join(" ")
 
@@ -179,6 +188,39 @@ export function normalizeToIcu(po: PoFile, options: NormalizeToIcuOptions): PoFi
   return result
 }
 
+export interface IcuToGettextOptions {
+  /**
+   * Replace `#` with the explicit variable reference `{varname}`.
+   * Makes source strings more readable.
+   * @default true
+   */
+  expandOctothorpe?: boolean
+}
+
+interface PluralCase {
+  category: string
+  text: string
+}
+
+/**
+ * Extracts plural cases from ICU case string.
+ */
+function extractPluralCases(casesStr: string): PluralCase[] {
+  const caseRegex = /(\w+)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g
+  const cases: PluralCase[] = []
+
+  let match: RegExpExecArray | null
+  while ((match = caseRegex.exec(casesStr)) !== null) {
+    const category = match[1]
+    const text = match[2]
+    if (category && text !== undefined) {
+      cases.push({ category, text })
+    }
+  }
+
+  return cases
+}
+
 /**
  * Converts ICU plural back to source msgid/msgid_plural.
  * Extracts the first and last plural cases.
@@ -186,40 +228,31 @@ export function normalizeToIcu(po: PoFile, options: NormalizeToIcuOptions): PoFi
  * @example
  * const icu = "{count, plural, one {# item} other {# items}}"
  * icuToGettextSource(icu)
+ * // → { msgid: "{count} item", msgid_plural: "{count} items", pluralVariable: "count" }
+ *
+ * icuToGettextSource(icu, { expandOctothorpe: false })
  * // → { msgid: "# item", msgid_plural: "# items", pluralVariable: "count" }
  */
-export function icuToGettextSource(icu: string): {
+export function icuToGettextSource(
+  icu: string,
+  options: IcuToGettextOptions = {}
+): {
   msgid: string
   msgid_plural: string
   pluralVariable: string
 } | null {
+  const { expandOctothorpe = true } = options
+
   // Simple regex-based extraction (no full ICU parser needed)
   const icuPluralRegex = /^\{(\w+),\s*plural,\s*(.+)\}$/s
   const match = icuPluralRegex.exec(icu)
 
-  if (!match) {
+  if (!match?.[1] || !match[2]) {
     return null
   }
 
   const pluralVariable = match[1]
-  const casesStr = match[2]
-
-  if (!pluralVariable || !casesStr) {
-    return null
-  }
-
-  // Extract individual cases: "one {text} other {text}"
-  const caseRegex = /(\w+)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g
-  const cases: { category: string; text: string }[] = []
-
-  let caseMatch: RegExpExecArray | null
-  while ((caseMatch = caseRegex.exec(casesStr)) !== null) {
-    const category = caseMatch[1]
-    const text = caseMatch[2]
-    if (category && text !== undefined) {
-      cases.push({ category, text })
-    }
-  }
+  const cases = extractPluralCases(match[2])
 
   if (cases.length < 2) {
     return null
@@ -232,10 +265,13 @@ export function icuToGettextSource(icu: string): {
     return null
   }
 
-  // Use first case as msgid, last as msgid_plural
+  // Replace # with explicit variable reference for better readability
+  const expand = (text: string) =>
+    expandOctothorpe ? text.replace(/#/g, `{${pluralVariable}}`) : text
+
   return {
-    msgid: first.text,
-    msgid_plural: last.text,
+    msgid: expand(first.text),
+    msgid_plural: expand(last.text),
     pluralVariable
   }
 }

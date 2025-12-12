@@ -74,6 +74,26 @@ describe("gettextToIcu", () => {
 
     expect(gettextToIcu(item, { locale: "de" })).toBeNull()
   })
+
+  it("expands # to {var} by default", () => {
+    const item = createPluralItem({
+      msgstr: ["# Artikel", "# Artikel"]
+    })
+
+    const result = gettextToIcu(item, { locale: "de" })
+
+    expect(result).toBe("{count, plural, one {{count} Artikel} other {{count} Artikel}}")
+  })
+
+  it("preserves # when expandOctothorpe is false", () => {
+    const item = createPluralItem({
+      msgstr: ["# Artikel", "# Artikel"]
+    })
+
+    const result = gettextToIcu(item, { locale: "de", expandOctothorpe: false })
+
+    expect(result).toBe("{count, plural, one {# Artikel} other {# Artikel}}")
+  })
 })
 
 describe("isPluralItem", () => {
@@ -161,9 +181,20 @@ describe("normalizeToIcu", () => {
 })
 
 describe("icuToGettextSource", () => {
-  it("extracts msgid and msgid_plural from ICU", () => {
+  it("expands # to {var} by default", () => {
     const icu = "{count, plural, one {# item} other {# items}}"
     const result = icuToGettextSource(icu)
+
+    expect(result).toEqual({
+      msgid: "{count} item",
+      msgid_plural: "{count} items",
+      pluralVariable: "count"
+    })
+  })
+
+  it("preserves # when expandOctothorpe is false", () => {
+    const icu = "{count, plural, one {# item} other {# items}}"
+    const result = icuToGettextSource(icu, { expandOctothorpe: false })
 
     expect(result).toEqual({
       msgid: "# item",
