@@ -5,6 +5,9 @@
  * Example: "src/App.tsx:42"
  */
 
+/** Pre-compiled regex for backslash replacement */
+const BACKSLASH_REGEX = /\\/g
+
 /**
  * A parsed source reference.
  */
@@ -116,7 +119,7 @@ export function formatReference(
  * // → "src/components/App.tsx"
  */
 export function normalizeFilePath(filePath: string): string {
-  return filePath.replace(/\\/g, "/")
+  return filePath.replace(BACKSLASH_REGEX, "/")
 }
 
 /**

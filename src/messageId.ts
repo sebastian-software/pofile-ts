@@ -72,23 +72,22 @@ const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
  */
 function bytesToBase64Url(bytes: Uint8Array): string {
   // We need ceil(ID_LENGTH * 6 / 8) = 6 bytes for 8 Base64 chars
-  let result = ""
+  const chars: string[] = []
   let bits = 0
   let value = 0
 
-  for (let i = 0; i < bytes.length && result.length < ID_LENGTH; i++) {
+  for (let i = 0; i < bytes.length && chars.length < ID_LENGTH; i++) {
     const byte = bytes[i] ?? 0
     value = (value << 8) | byte
     bits += 8
 
-    while (bits >= 6 && result.length < ID_LENGTH) {
+    while (bits >= 6 && chars.length < ID_LENGTH) {
       bits -= 6
-      const index = (value >> bits) & 0x3f
-      result += BASE64URL.charAt(index)
+      chars.push(BASE64URL.charAt((value >> bits) & 0x3f))
     }
   }
 
-  return result
+  return chars.join("")
 }
 
 /**

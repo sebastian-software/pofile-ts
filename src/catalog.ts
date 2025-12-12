@@ -8,6 +8,14 @@ import type { PoItem } from "./types"
 import { createItem } from "./Item"
 import { parseReference, formatReference, type SourceReference } from "./references"
 
+/** Checks if an object has any own properties (faster than Object.keys().length) */
+function hasOwnProperties(obj: object): boolean {
+  for (const _ in obj) {
+    return true
+  }
+  return false
+}
+
 /**
  * A single entry in the catalog.
  */
@@ -228,7 +236,7 @@ function addMetadataFields(entry: CatalogEntry, item: PoItem, includeOrigins: bo
   if (item.obsolete) {
     entry.obsolete = true
   }
-  if (Object.keys(item.flags).length > 0) {
+  if (hasOwnProperties(item.flags)) {
     entry.flags = { ...item.flags }
   }
 }
@@ -280,16 +288,17 @@ export function mergeCatalogs(base: Catalog, updates: Catalog): Catalog {
 
   // Merge updates
   for (const [key, update] of Object.entries(updates)) {
-    if (merged[key]) {
+    const existing = merged[key]
+    if (existing) {
       // Merge with existing entry
       merged[key] = {
-        ...merged[key],
+        ...existing,
         ...update,
         // Merge arrays instead of replacing
-        comments: update.comments ?? merged[key].comments,
-        extractedComments: update.extractedComments ?? merged[key].extractedComments,
-        origins: update.origins ?? merged[key].origins,
-        flags: { ...merged[key].flags, ...update.flags }
+        comments: update.comments ?? existing.comments,
+        extractedComments: update.extractedComments ?? existing.extractedComments,
+        origins: update.origins ?? existing.origins,
+        flags: { ...existing.flags, ...update.flags }
       }
     } else {
       merged[key] = { ...update }
