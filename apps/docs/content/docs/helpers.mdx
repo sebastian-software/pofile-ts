@@ -73,3 +73,60 @@ formatReference({ file: "src/App.tsx", line: 42 })
 createReference("src\\components\\Button.tsx", 10)
 // → { file: "src/components/Button.tsx", line: 10 }
 ```
+
+## Plural Categories (CLDR)
+
+Get CLDR plural categories for any locale — useful for building ICU messages or validating translations:
+
+```typescript
+import { getPluralCategories, getPluralCount, getPluralFormsHeader } from "pofile-ts"
+
+getPluralCategories("de") // → ["one", "other"]
+getPluralCategories("pl") // → ["one", "few", "many", "other"]
+getPluralCategories("ar") // → ["zero", "one", "two", "few", "many", "other"]
+
+getPluralCount("de") // → 2
+getPluralCount("ar") // → 6
+
+// Generate Gettext Plural-Forms header
+getPluralFormsHeader("de")
+// → "nplurals=2; plural=(n != 1);"
+```
+
+## ICU Conversion
+
+Convert Gettext plurals to ICU MessageFormat — perfect for modern i18n libraries like Lingui or FormatJS:
+
+```typescript
+import { gettextToIcu, normalizeToIcu, parsePo } from "pofile-ts"
+
+// Convert a single plural item
+const item = {
+  msgid: "One item",
+  msgid_plural: "{count} items",
+  msgstr: ["Ein Artikel", "{count} Artikel"]
+}
+
+gettextToIcu(item, { locale: "de" })
+// → "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
+
+// Convert an entire PO file
+const po = parsePo(content)
+const normalized = normalizeToIcu(po, { locale: "de" })
+
+// All plural items now have ICU in msgstr[0]
+normalized.items[0].msgstr[0]
+// → "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
+```
+
+Works with all CLDR locales, including complex cases:
+
+```typescript
+// Polish (4 forms)
+gettextToIcu(plItem, { locale: "pl" })
+// → "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
+
+// Arabic (6 forms)
+gettextToIcu(arItem, { locale: "ar" })
+// → "{count, plural, zero {...} one {...} two {...} few {...} many {...} other {...}}"
+```

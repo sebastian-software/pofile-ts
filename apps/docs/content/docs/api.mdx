@@ -110,3 +110,38 @@ const syncId = generateMessageIdSync("Hello {name}")
 ```
 
 Uses SHA-256 with Base64URL encoding — 281 trillion possibilities, practically zero collisions even at 1M messages.
+
+## Plural Categories
+
+Get CLDR plural categories and Gettext Plural-Forms headers for any locale.
+
+```typescript
+import { getPluralCategories, getPluralCount, getPluralFormsHeader } from "pofile-ts"
+
+getPluralCategories("de") // → ["one", "other"]
+getPluralCategories("pl") // → ["one", "few", "many", "other"]
+
+getPluralCount("ar") // → 6
+
+getPluralFormsHeader("de")
+// → "nplurals=2; plural=(n != 1);"
+```
+
+## ICU Conversion
+
+Convert Gettext plurals to ICU MessageFormat.
+
+```typescript
+import { gettextToIcu, normalizeToIcu } from "pofile-ts"
+
+// Single item
+gettextToIcu(item, { locale: "de" })
+// → "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
+
+// Entire PO file
+const normalized = normalizeToIcu(po, { locale: "de" })
+```
+
+### GettextToIcuOptions
+
+<auto-type-table path="../../../../packages/pofile-ts/src/icu.ts" name="GettextToIcuOptions" />
