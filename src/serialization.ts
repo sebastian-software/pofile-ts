@@ -147,8 +147,8 @@ export function formatKeyword(
     compactMultiline = DEFAULT_SERIALIZE_OPTIONS.compactMultiline
   } = options
 
-  const indexStr = index !== undefined ? "[" + String(index) + "]" : ""
-  const keywordPrefix = keyword + indexStr + " "
+  // Build keyword prefix (e.g., "msgstr[0] ")
+  const keywordPrefix = index !== undefined ? keyword + "[" + String(index) + "] " : keyword + " "
 
   // Fast path: simple single-line string without newlines
   // This is the most common case and avoids split/map/fold overhead

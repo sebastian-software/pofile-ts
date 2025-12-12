@@ -1,5 +1,9 @@
 import { ESCAPE_MAP, UNESCAPE_MAP, RE_ESCAPE, RE_UNESCAPE } from "./constants"
 
+/** Pre-compiled regex for fast-path escape check */
+// eslint-disable-next-line no-control-regex
+const RE_NEEDS_ESCAPE = /[\x07\b\t\v\f\r"\\]/
+
 /**
  * Escapes special characters in a string for PO file format.
  * Handles bell, backspace, tab, vertical tab, form feed, carriage return,
@@ -8,14 +12,12 @@ import { ESCAPE_MAP, UNESCAPE_MAP, RE_ESCAPE, RE_UNESCAPE } from "./constants"
 export function escapeString(str: string): string {
   // Fast path: check if any escapable characters exist
   // Common case: most strings don't need escaping
-  // eslint-disable-next-line no-control-regex
-  if (!/[\x07\b\t\v\f\r"\\]/.test(str)) {
+  if (!RE_NEEDS_ESCAPE.test(str)) {
     return str
   }
 
-  return str.replace(RE_ESCAPE, (match) => {
-    return ESCAPE_MAP[match] ?? "\\" + match
-  })
+  // ESCAPE_MAP now contains all mappings including " and \
+  return str.replace(RE_ESCAPE, (match) => ESCAPE_MAP[match] ?? match)
 }
 
 /**

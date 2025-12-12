@@ -82,7 +82,9 @@ export const ESCAPE_MAP: Record<string, string> = {
   "\t": "\\t",
   "\v": "\\v",
   "\f": "\\f",
-  "\r": "\\r"
+  "\r": "\\r",
+  '"': '\\"',
+  "\\": "\\\\"
 }
 
 /**
