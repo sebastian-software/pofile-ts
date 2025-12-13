@@ -29,8 +29,9 @@ export interface CatalogEntry {
   /**
    * The translated string(s).
    * Use an array for plural forms: [singular, plural, ...]
+   * Optional for extraction workflows where translations don't exist yet.
    */
-  translation: string | string[]
+  translation?: string | string[]
 
   /**
    * Source string for plural forms (msgid_plural).
@@ -122,7 +123,13 @@ export interface ItemsToCatalogOptions {
 
 /** Applies translation to an item */
 function applyTranslation(item: PoItem, entry: CatalogEntry): void {
-  if (Array.isArray(entry.translation)) {
+  if (entry.translation === undefined) {
+    // No translation yet (extraction workflow)
+    item.msgstr = entry.pluralSource ? ["", ""] : [""]
+    if (entry.pluralSource) {
+      item.msgid_plural = entry.pluralSource
+    }
+  } else if (Array.isArray(entry.translation)) {
     item.msgstr = entry.translation
     if (entry.pluralSource) {
       item.msgid_plural = entry.pluralSource
@@ -222,22 +229,34 @@ function addMessageField(
   }
 }
 
-/** Adds metadata fields to an entry */
+/** Adds comments fields to entry if non-empty (handles incomplete items) */
+function addCommentsFields(entry: CatalogEntry, item: PoItem): void {
+  const comments = item.comments as string[] | undefined
+  const extractedComments = item.extractedComments as string[] | undefined
+  if (comments && comments.length > 0) {
+    entry.comments = comments
+  }
+  if (extractedComments && extractedComments.length > 0) {
+    entry.extractedComments = extractedComments
+  }
+}
+
+/** Adds metadata fields to an entry (handles incomplete items gracefully) */
 function addMetadataFields(entry: CatalogEntry, item: PoItem, includeOrigins: boolean): void {
-  if (item.comments.length > 0) {
-    entry.comments = item.comments
+  addCommentsFields(entry, item)
+
+  const references = item.references as string[] | undefined
+  if (includeOrigins && references && references.length > 0) {
+    entry.origins = references.map((ref) => parseReference(ref))
   }
-  if (item.extractedComments.length > 0) {
-    entry.extractedComments = item.extractedComments
-  }
-  if (includeOrigins && item.references.length > 0) {
-    entry.origins = item.references.map((ref) => parseReference(ref))
-  }
+
   if (item.obsolete) {
     entry.obsolete = true
   }
-  if (hasOwnProperties(item.flags)) {
-    entry.flags = { ...item.flags }
+
+  const flags = item.flags as Record<string, boolean> | undefined
+  if (flags && hasOwnProperties(flags)) {
+    entry.flags = { ...flags }
   }
 }
 
@@ -258,8 +277,9 @@ export function itemsToCatalog(items: PoItem[], options: ItemsToCatalogOptions =
     }
 
     const key = getCatalogKey(item, useMsgidAsKey, keyGenerator)
+    const msgstr = item.msgstr as string[] | undefined
     const entry: CatalogEntry = {
-      translation: item.msgid_plural ? item.msgstr : (item.msgstr[0] ?? "")
+      translation: item.msgid_plural ? (msgstr ?? []) : (msgstr?.[0] ?? "")
     }
 
     addMessageField(entry, item, key, useMsgidAsKey)

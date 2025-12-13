@@ -35,20 +35,26 @@ export function stringifyItem(item: PoItem, options?: SerializeOptions): string 
   const obsoletePrefix = item.obsolete ? "#~ " : ""
 
   // Comments (order: translator, extracted, references, flags)
-  for (const c of item.comments) {
+  // Cast to allow undefined - handles incomplete items created manually
+  const comments = item.comments as string[] | undefined
+  const extractedComments = item.extractedComments as string[] | undefined
+  const references = item.references as string[] | undefined
+  const flags = item.flags as Record<string, boolean> | undefined
+
+  for (const c of comments ?? []) {
     lines.push(c ? "# " + c : "#")
   }
-  for (const c of item.extractedComments) {
+  for (const c of extractedComments ?? []) {
     lines.push(c ? "#. " + c : "#.")
   }
-  for (const ref of item.references) {
+  for (const ref of references ?? []) {
     lines.push("#: " + ref)
   }
 
   // Collect active flags without creating intermediate arrays
   let flagStr = ""
-  for (const flag in item.flags) {
-    if (item.flags[flag]) {
+  for (const flag in flags ?? {}) {
+    if (flags?.[flag]) {
       flagStr += (flagStr ? "," : "") + flag
     }
   }
@@ -92,12 +98,13 @@ function appendMsgstr(
   options?: SerializeOptions
 ): void {
   const hasPlural = item.msgid_plural != null
-  const msgstrLen = item.msgstr.length
+  const msgstr = (item.msgstr as string[] | undefined) ?? []
+  const msgstrLen = msgstr.length
 
   if (msgstrLen > 1) {
-    appendMultipleMsgstr(lines, item.msgstr, prefix, options)
-  } else if (hasPlural && (msgstrLen === 0 || !item.msgstr[0])) {
-    appendEmptyMsgstr(lines, item.nplurals, prefix)
+    appendMultipleMsgstr(lines, msgstr, prefix, options)
+  } else if (hasPlural && (msgstrLen === 0 || !msgstr[0])) {
+    appendEmptyMsgstr(lines, (item.nplurals as number | undefined) ?? 2, prefix)
   } else {
     appendSingleMsgstr(lines, item, hasPlural, prefix, options)
   }
@@ -155,7 +162,8 @@ function appendSingleMsgstr(
   options?: SerializeOptions
 ): void {
   const index = hasPlural ? 0 : undefined
-  const text = item.msgstr.length === 1 ? (item.msgstr[0] ?? "") : item.msgstr.join("")
+  const msgstr = (item.msgstr as string[] | undefined) ?? []
+  const text = msgstr.length === 1 ? (msgstr[0] ?? "") : msgstr.join("")
   const formatted = formatKeyword("msgstr", text, index, options)
   lines.push(prefix + formatted.join("\n" + prefix))
 }

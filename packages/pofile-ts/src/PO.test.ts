@@ -205,5 +205,24 @@ describe("parsePo", () => {
       const output2 = stringifyPo(po2)
       expect(output2).toBe(output1)
     })
+
+    it("accepts partial input with only headers and items", () => {
+      // Simulates real-world usage where items may be created manually
+      const output = stringifyPo({
+        headers: { Language: "de" },
+        items: [{ msgid: "Hello", msgstr: ["Hallo"] } as unknown as PoFile["items"][0]]
+      })
+
+      expect(output).toContain('msgid "Hello"')
+      expect(output).toContain('msgstr "Hallo"')
+      expect(output).toContain('"Language: de\\n"')
+    })
+
+    it("accepts minimal partial input", () => {
+      const output = stringifyPo({})
+
+      expect(output).toContain('msgid ""')
+      expect(output).toContain('msgstr ""')
+    })
   })
 })

@@ -1,4 +1,4 @@
-import type { ParsedPluralForms, PoFile, SerializeOptions } from "./types"
+import type { Headers, ParsedPluralForms, PoFile, SerializeOptions } from "./types"
 import { DEFAULT_HEADERS } from "./constants"
 import { stringifyItem } from "./Item"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./parser"
@@ -62,15 +62,47 @@ export function parsePo(data: string): PoFile {
   return po
 }
 
+/** Appends file-level comments to lines array */
+function appendFileComments(lines: string[], po: Partial<PoFile>): void {
+  for (const comment of po.comments ?? []) {
+    lines.push(comment ? "# " + comment : "#")
+  }
+  for (const comment of po.extractedComments ?? []) {
+    lines.push(comment ? "#. " + comment : "#.")
+  }
+}
+
+/** Appends header section to lines array */
+function appendHeaders(lines: string[], po: Partial<PoFile>): void {
+  lines.push('msgid ""')
+  lines.push('msgstr ""')
+
+  const headers = po.headers ?? {}
+  const orderedKeys = getOrderedHeaderKeys({
+    headers,
+    headerOrder: po.headerOrder ?? []
+  })
+  for (const key of orderedKeys) {
+    lines.push(`"${key}: ${headers[key] ?? ""}\\n"`)
+  }
+  lines.push("")
+}
+
 /**
  * Serializes a PoFile structure to a string.
  *
- * @param po - The PO file structure to serialize
+ * Accepts partial input - missing fields default to empty arrays/objects.
+ *
+ * @param po - The PO file structure to serialize (can be partial)
  * @param options - Serialization options for controlling output format
  *
  * @example
  * // Default: compact format, 80 char fold length (Crowdin-compatible)
  * const output = stringifyPo(po)
+ *
+ * @example
+ * // Partial input - only headers and items required
+ * const output = stringifyPo({ headers: myHeaders, items: myItems })
  *
  * @example
  * // GNU gettext traditional format
@@ -80,31 +112,13 @@ export function parsePo(data: string): PoFile {
  * // No line folding
  * const output = stringifyPo(po, { foldLength: 0 })
  */
-export function stringifyPo(po: PoFile, options?: SerializeOptions): string {
+export function stringifyPo(po: Partial<PoFile>, options?: SerializeOptions): string {
   const lines: string[] = []
 
-  // File-level comments
-  for (const comment of po.comments) {
-    lines.push(comment ? "# " + comment : "#")
-  }
-  for (const comment of po.extractedComments) {
-    lines.push(comment ? "#. " + comment : "#.")
-  }
+  appendFileComments(lines, po)
+  appendHeaders(lines, po)
 
-  // Empty msgid/msgstr for headers
-  lines.push('msgid ""')
-  lines.push('msgstr ""')
-
-  // Headers (preserve order, then add any new ones)
-  const orderedKeys = getOrderedHeaderKeys(po)
-  for (const key of orderedKeys) {
-    lines.push(`"${key}: ${po.headers[key] ?? ""}\\n"`)
-  }
-
-  lines.push("")
-
-  // Items
-  for (const item of po.items) {
+  for (const item of po.items ?? []) {
     lines.push(stringifyItem(item, options))
     lines.push("")
   }
@@ -113,7 +127,7 @@ export function stringifyPo(po: PoFile, options?: SerializeOptions): string {
 }
 
 /** Returns header keys in the correct order */
-function getOrderedHeaderKeys(po: PoFile): string[] {
+function getOrderedHeaderKeys(po: { headers: Partial<Headers>; headerOrder: string[] }): string[] {
   const result: string[] = []
   const seen = new Set<string>()
 

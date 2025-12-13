@@ -154,6 +154,31 @@ describe("catalogToItems", () => {
 
     expect(item?.nplurals).toBe(3)
   })
+
+  it("handles missing translation (extraction workflow)", () => {
+    const catalog: Catalog = {
+      Hello: { message: "Hello" }
+    }
+
+    const [item] = catalogToItems(catalog)
+
+    expect(item?.msgid).toBe("Hello")
+    expect(item?.msgstr).toEqual([""])
+  })
+
+  it("handles missing plural translation with pluralSource", () => {
+    const catalog: Catalog = {
+      "{count} item": {
+        pluralSource: "{count} items"
+      }
+    }
+
+    const [item] = catalogToItems(catalog)
+
+    expect(item?.msgid).toBe("{count} item")
+    expect(item?.msgid_plural).toBe("{count} items")
+    expect(item?.msgstr).toEqual(["", ""])
+  })
 })
 
 describe("itemsToCatalog", () => {
@@ -307,6 +332,20 @@ describe("itemsToCatalog", () => {
     // Falls back to msgid as key
     expect(catalog["Hello World"]).toBeDefined()
     expect(catalog["Hello World"]?.translation).toBe("Hallo Welt")
+  })
+
+  it("handles incomplete items gracefully (null-safety)", () => {
+    // Simulate manually created items that may be missing some fields
+    const incompleteItem = {
+      msgid: "Hello",
+      msgstr: ["Hallo"]
+    } as unknown as import("./types").PoItem
+
+    const catalog = itemsToCatalog([incompleteItem])
+
+    expect(catalog.Hello).toBeDefined()
+    expect(catalog.Hello?.translation).toBe("Hallo")
+    expect(catalog.Hello?.comments).toBeUndefined()
   })
 })
 
