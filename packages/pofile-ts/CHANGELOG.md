@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.4.0](///compare/v3.3.1...v3.4.0) (2025-12-13)
+
+### Features
+
+- improve robustness for partial/incomplete input 328af72
+
 ## [3.3.1](///compare/v3.3.0...v3.3.1) (2025-12-12)
 
 ### Bug Fixes
