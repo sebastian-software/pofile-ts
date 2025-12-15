@@ -132,7 +132,7 @@ export default function Home() {
             <FeatureCard
               icon={<GlobeIcon />}
               title="Complete i18n Toolkit"
-              description="Not just a parser: includes CLDR 48 plural rules, ICU MessageFormat conversion, and workflow helpers."
+              description="CLDR 48 plural rules, ICU MessageFormat parser (2.5× faster than FormatJS), and format conversion helpers."
               gradient="from-purple-500 to-fuchsia-500"
             />
             <FeatureCard
@@ -159,6 +159,42 @@ export default function Home() {
               description="Zero dependencies. Full library is ~11KB gzipped, tree-shakes down to ~5KB for basic usage."
               gradient="from-rose-500 to-pink-500"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Performance */}
+      <section className="border-t border-fd-border bg-fd-muted/20 px-6 py-20">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Performance</h2>
+          <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-fd-muted-foreground">
+            Hand-optimized for speed — no regex soup, no unnecessary allocations
+          </p>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* PO Parsing */}
+            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 className="mb-4 text-lg font-semibold">PO File Parsing</h3>
+              <div className="space-y-3">
+                <BenchmarkBar label="pofile-ts" value={100} ops="211" fastest />
+                <BenchmarkBar label="gettext-parser" value={13} ops="27" />
+                <BenchmarkBar label="pofile" value={3} ops="7" />
+              </div>
+              <p className="mt-4 text-sm text-fd-muted-foreground">8× faster than alternatives</p>
+            </div>
+
+            {/* ICU Parsing */}
+            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 className="mb-4 text-lg font-semibold">ICU MessageFormat</h3>
+              <div className="space-y-3">
+                <BenchmarkBar label="pofile-ts" value={100} ops="2.5×" fastest />
+                <BenchmarkBar label="@formatjs" value={40} ops="1×" />
+              </div>
+              <div className="mt-4 flex justify-between text-sm text-fd-muted-foreground">
+                <span>2.5× faster parsing</span>
+                <span>4× smaller bundle</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -296,6 +332,39 @@ function UseCase({ title, children }: { title: string; children: React.ReactNode
     <div className="rounded-lg border border-fd-border bg-fd-card p-4">
       <h3 className="mb-1 font-semibold">{title}</h3>
       <p className="text-sm text-fd-muted-foreground">{children}</p>
+    </div>
+  )
+}
+
+function BenchmarkBar({
+  label,
+  value,
+  ops,
+  fastest
+}: {
+  label: string
+  value: number
+  ops: string
+  fastest?: boolean
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-28 text-sm font-medium">{label}</span>
+      <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-fd-muted">
+        <div
+          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+            fastest
+              ? "bg-gradient-to-r from-purple-500 to-fuchsia-500"
+              : "bg-fd-muted-foreground/30"
+          }`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span
+        className={`w-12 text-right text-sm ${fastest ? "font-semibold text-purple-600 dark:text-purple-400" : "text-fd-muted-foreground"}`}
+      >
+        {ops}
+      </span>
     </div>
   )
 }

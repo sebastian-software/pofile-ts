@@ -25,6 +25,7 @@ description: The fast, modern PO file toolkit for JavaScript
 
 - **CLDR 48 Plural Rules** — 100% compliant for all major languages (140+ locales)
 - **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
+- **ICU Parser** — Parse ICU messages, 2.5× faster and 4× smaller than FormatJS
 - **Plural Helpers** — Get categories, sample numbers, and Plural-Forms headers
 
 ### Developer Experience
@@ -60,6 +61,8 @@ console.log(stringifyPo(po))
 
 ## Performance
 
+### PO File Parsing
+
 Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 
 | Library        |       Parsing | Serialization |
@@ -68,7 +71,14 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | gettext-parser |      27 ops/s |      53 ops/s |
 | pofile         |       8 ops/s |     100 ops/s |
 
-_Relative performance (×faster) is consistent across different hardware._
+### ICU MessageFormat Parsing
+
+The built-in ICU parser vs FormatJS:
+
+| Library                            |           Speed | Bundle (gzip) |
+| ---------------------------------- | --------------: | ------------: |
+| **pofile-ts**                      | **2.5× faster** |    **2.3 KB** |
+| @formatjs/icu-messageformat-parser |        baseline |        9.3 KB |
 
 ## Bundle Size
 
@@ -76,9 +86,10 @@ The library is fully **tree-shakeable**. Import only what you need:
 
 | Import                         | Gzipped |
 | ------------------------------ | ------: |
-| Full library                   |   ~11KB |
+| Full library                   |   ~14KB |
 | `parsePo` + `stringifyPo` only |    ~5KB |
 | Add CLDR plural helpers        |    +3KB |
 | Add ICU conversion             |    +2KB |
+| Add ICU parser                 |  +2.3KB |
 
 All exports are named exports — modern bundlers automatically eliminate unused code.

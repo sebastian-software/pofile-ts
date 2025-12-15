@@ -82,21 +82,31 @@ console.log(stringifyPo(po))
 
 ### ICU MessageFormat
 
+A fast, lightweight ICU MessageFormat parser — 2.5× faster and 4× smaller than FormatJS:
+
 ```typescript
-import { parseIcu, extractVariables, validateIcu } from "pofile-ts"
+import { parseIcu, extractVariables, validateIcu, hasPlural } from "pofile-ts"
 
-// Parse ICU messages
+// Parse ICU messages into an AST
 const result = parseIcu("{count, plural, one {# item} other {# items}}")
-console.log(result.ast) // AST with plural node
+if (result.success) {
+  console.log(result.ast) // AST with plural node
+}
 
-// Extract variables
+// Extract variables from messages
 extractVariables("{name} has {count} messages")
 // → ["name", "count"]
 
-// Validate syntax
-validateIcu("{broken, plural, one {x}}")
-// → { valid: false, errors: [...] }
+// Validate syntax before use
+const validation = validateIcu("{gender, select, male {He} other {They}}")
+console.log(validation.valid) // true
+
+// Check message structure
+hasPlural("{n, plural, one {#} other {#}}") // true
+hasPlural("Hello {name}") // false
 ```
+
+Supports all ICU MessageFormat v1 features: arguments, plurals, selects, selectordinals, number/date/time formatting, tags, and escaping.
 
 ## Documentation
 
@@ -108,6 +118,8 @@ For full documentation including API reference, i18n helpers, and migration guid
 
 Speed matters for build tools and CI pipelines. pofile-ts is hand-optimized for performance — no regex soup, no unnecessary allocations, just fast parsing.
 
+### PO File Parsing
+
 Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 
 | Library        |       Parsing | Serialization |
@@ -116,7 +128,18 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | gettext-parser |      27 ops/s |      55 ops/s |
 | pofile         |       7 ops/s |     103 ops/s |
 
-That's **8× faster parsing** and **5× faster serialization** than the next best alternative. The performance advantage is consistent across different hardware and file sizes.
+That's **8× faster parsing** and **5× faster serialization** than the next best alternative.
+
+### ICU MessageFormat Parsing
+
+The built-in ICU parser is **2.5× faster** than FormatJS while being **4× smaller**:
+
+| Library                            |           Speed | Bundle (gzip) |
+| ---------------------------------- | --------------: | ------------: |
+| **pofile-ts**                      | **2.5× faster** |    **2.3 KB** |
+| @formatjs/icu-messageformat-parser |        baseline |        9.3 KB |
+
+Tested with realistic ICU messages including plurals, selects, nested structures, and tags.
 
 ## Bundle Size
 
@@ -128,7 +151,7 @@ The full library is **~14KB gzipped**. Tree-shaking reduces this further:
 | `parsePo` + `stringifyPo` only |    ~5KB |
 | Add CLDR plural helpers        |    +3KB |
 | Add ICU conversion             |    +2KB |
-| Add ICU parser                 |    +3KB |
+| Add ICU parser                 |  +2.3KB |
 
 All exports are **named exports** — modern bundlers (Vite, esbuild, Rollup, webpack) automatically tree-shake unused code.
 
