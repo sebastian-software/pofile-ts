@@ -8,6 +8,7 @@
     "generate-fixture": "tsx generate-fixture.ts"
   },
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "^2.9.8",
     "gettext-parser": "^8.0.0",
     "pofile": "^1.1.4",
     "pofile-ts": "workspace:*",
