@@ -1,20 +1,38 @@
 ---
 title: Introduction
-description: A modern, focused library for GNU gettext PO files
+description: The fast, modern PO file toolkit for JavaScript
 ---
 
-**pofile-ts** is a robust TypeScript library for reading and writing GNU gettext PO files. Zero dependencies, full type safety, runs everywhere.
+**pofile-ts** is a complete solution for working with GNU gettext PO files in modern JavaScript and TypeScript projects. Whether you're building translation pipelines, integrating with i18n frameworks like Lingui or FormatJS, or creating custom localization tooling — pofile-ts gives you everything you need.
+
+## Why pofile-ts?
+
+- **Battle-tested parsing** — Handles edge cases, malformed files, and complex escape sequences
+- **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU conversion, and workflow helpers
+- **Production-ready** — Fully tested against CLDR 48 specification
+- **Runs everywhere** — Node.js, browsers, edge runtimes, and build tools
+- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB
 
 ## Features
+
+### Core
 
 - **Parse PO Files** — Read PO files from strings, 8× faster than alternatives
 - **Serialize PO Files** — Convert PO data back to strings, 5× faster than alternatives
 - **Full PO Support** — Headers, comments, flags, plurals, and message context
-- **CLDR 48 Plural Data** — 100% compliant for all major languages
-- **ICU Conversion** — Convert between Gettext and ICU MessageFormat
-- **Zero Dependencies** — No Node.js APIs required, works in browsers too
-- **Tree-Shakeable** — Only bundle what you use (~11KB full, ~5KB core)
-- **TypeScript First** — Full type definitions for excellent IDE support
+
+### i18n Toolkit
+
+- **CLDR 48 Plural Rules** — 100% compliant for all major languages (140+ locales)
+- **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
+- **Plural Helpers** — Get categories, sample numbers, and Plural-Forms headers
+
+### Developer Experience
+
+- **Zero Dependencies** — No bloat, works in browsers and edge runtimes
+- **Tree-Shakeable** — Only bundle what you use (~5KB for parsing only)
+- **TypeScript-First** — Full type definitions, excellent IDE support
+- **CSP-Safe** — No `eval()` or `new Function()`
 
 ## Installation
 

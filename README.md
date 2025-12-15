@@ -7,7 +7,7 @@
 <h1 align="center">pofile-ts</h1>
 
 <p align="center">
-  <strong>Parse and serialize GNU gettext PO files</strong>
+  <strong>The fast, modern PO file toolkit for JavaScript</strong>
 </p>
 
 [![CI](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml)
@@ -17,18 +17,45 @@
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/pofile-ts)](https://bundlephobia.com/package/pofile-ts)
 [![Tree Shakeable](https://img.shields.io/badge/tree--shakeable-yes-brightgreen)](https://bundlephobia.com/package/pofile-ts)
 
-A modern, focused library for reading and writing [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Hand-optimized for speed, runs everywhere.
+**pofile-ts** is a complete solution for working with [GNU gettext](https://www.gnu.org/software/gettext/) PO files in modern JavaScript and TypeScript projects. Whether you're building translation pipelines, integrating with i18n frameworks like [Lingui](https://lingui.dev/) or [FormatJS](https://formatjs.io/), or creating custom localization tooling — pofile-ts gives you everything you need.
+
+## Why pofile-ts?
+
+- **Battle-tested parsing** — Handles edge cases, malformed files, and complex escape sequences that break other parsers
+- **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU MessageFormat conversion, and workflow helpers
+- **Production-ready** — Used in real-world applications, fully tested against CLDR 48 specification
+- **Runs everywhere** — Works in Node.js, browsers, edge runtimes, and build tools like Vite or webpack
+- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB for basic usage
 
 ## Features
 
+### Core
+
 - 📖 **Parse** PO files from strings — 8× faster than alternatives
 - ✏️ **Serialize** PO files back to strings — 5× faster than alternatives
-- 🎯 **Full PO support** — headers, comments, flags, plurals, context
-- 🌍 **CLDR 48 plural data** — 100% compliant for all major languages
-- 🔄 **ICU conversion** — Gettext ↔ ICU MessageFormat
-- 📦 **Zero dependencies** — browser-compatible
-- 🌳 **Tree-shakeable** — only bundle what you use
-- 💎 **TypeScript-first** — full type definitions
+- 🎯 **Full PO support** — headers, comments, flags, plurals, message context
+
+### i18n Toolkit
+
+- 🌍 **CLDR 48 plural rules** — 100% compliant for all major languages (140+ locales)
+- 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
+- 🔢 **Plural helpers** — Get categories, sample numbers, and Plural-Forms headers for any locale
+
+### Developer Experience
+
+- 📦 **Zero dependencies** — No bloat, works in browsers and edge runtimes
+- 🌳 **Tree-shakeable** — Only bundle what you use (~5KB for parsing only)
+- 💎 **TypeScript-first** — Full type definitions, excellent IDE support
+- 🛡️ **CSP-safe** — No `eval()` or `new Function()`, works in strict environments
+
+## Use Cases
+
+- **Translation pipelines** — Read PO files from translators, merge with source strings, write back
+- **Build tool plugins** — Parse PO files in Vite, webpack, or Rollup plugins
+- **Message extraction** — Generate PO files from source code for translation
+- **Format conversion** — Convert legacy Gettext projects to modern ICU MessageFormat
+- **Translation management** — Build custom TMS integrations or translation workflows
+- **Plural validation** — Verify translations have correct plural forms for target locales
 
 ## Installation
 
@@ -60,6 +87,8 @@ For full documentation including API reference, i18n helpers, and migration guid
 
 ## Performance
 
+Speed matters for build tools and CI pipelines. pofile-ts is hand-optimized for performance — no regex soup, no unnecessary allocations, just fast parsing.
+
 Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 
 | Library        |       Parsing | Serialization |
@@ -68,7 +97,7 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | gettext-parser |      27 ops/s |      55 ops/s |
 | pofile         |       7 ops/s |     103 ops/s |
 
-_Relative performance (×faster) is consistent across different hardware._
+That's **8× faster parsing** and **5× faster serialization** than the next best alternative. The performance advantage is consistent across different hardware and file sizes.
 
 ## Bundle Size
 
@@ -102,8 +131,10 @@ pnpm docs:dev       # Start docs dev server
 
 ## Credits
 
-Modernized fork of [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch. Maintained by [Sebastian Software](https://sebastian-software.de/).
+Originally forked from [pofile](https://github.com/rubenv/pofile) by Ruben Vermeersch. Completely rewritten with modern TypeScript, expanded with CLDR plural support, ICU conversion, and comprehensive i18n helpers.
+
+Maintained by [Sebastian Software](https://sebastian-software.de/).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — Use it freely in personal and commercial projects.
