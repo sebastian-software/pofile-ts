@@ -19,6 +19,9 @@ export {
 // Catalog utilities
 export { catalogToItems, itemsToCatalog, mergeCatalogs } from "./catalog"
 
+// Compilation
+export { compileCatalog, generateCompiledCode } from "./compile"
+
 // Message ID generation
 export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
 
@@ -56,7 +59,9 @@ export {
   isPluralItem,
   normalizeItemToIcu,
   normalizeToIcu,
-  icuToGettextSource
+  icuToGettextSource,
+  // Compilation
+  compileIcu
 } from "./icu/index"
 
 // Serialization utilities
@@ -75,6 +80,7 @@ export type {
 export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
+export type { CompileCatalogOptions, CompiledCatalog, GenerateCodeOptions } from "./compile"
 export type { GenerateIdsOptions } from "./messageId"
 export type { ParsedPluralFormsResult } from "./plurals"
 
@@ -104,5 +110,10 @@ export type {
   IcuParseResult,
   IcuVariable,
   IcuValidationResult,
-  IcuVariableComparison
+  IcuVariableComparison,
+  // Compile types
+  CompileIcuOptions,
+  CompiledMessageFunction,
+  MessageValues,
+  MessageResult
 } from "./icu/index"
