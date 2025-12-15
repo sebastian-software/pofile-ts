@@ -5,10 +5,11 @@ import { baseOptions } from "@/lib/layout.shared"
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "pofile-ts — Modern PO File Parser" },
+    { title: "pofile-ts — Fast PO File Toolkit for JavaScript" },
     {
       name: "description",
-      content: "A robust TypeScript library for reading and writing GNU gettext PO files"
+      content:
+        "The fast, modern PO file toolkit for JavaScript. Parse, serialize, and transform GNU gettext files with CLDR plural rules and ICU conversion."
     }
   ]
 }
@@ -16,14 +17,13 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   return (
     <HomeLayout {...baseOptions()}>
-      {/* Hero Section with gradient background */}
+      {/* Hero Section */}
       <div className="relative overflow-hidden">
-        {/* Animated background gradient */}
+        {/* Background */}
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-fuchsia-500/5" />
           <div className="absolute -left-1/4 -top-1/4 h-[600px] w-[600px] animate-pulse rounded-full bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-3xl" />
           <div className="absolute -bottom-1/4 -right-1/4 h-[500px] w-[500px] animate-pulse rounded-full bg-gradient-to-br from-purple-500/10 to-fuchsia-500/10 blur-3xl [animation-delay:1s]" />
-          {/* Grid pattern overlay */}
           <div
             className="absolute inset-0 opacity-[0.015]"
             style={{
@@ -32,8 +32,8 @@ export default function Home() {
           />
         </div>
 
-        <main className="flex flex-1 flex-col items-center justify-center gap-10 px-6 py-20 text-center md:py-28">
-          {/* Logo with animation */}
+        <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-20 text-center md:py-24">
+          {/* Logo */}
           <div
             className="animate-fade-in-up"
             style={{ animationDelay: "0ms", animationFillMode: "backwards" }}
@@ -41,41 +41,27 @@ export default function Home() {
             <img
               src="/pofile-ts/logo.svg"
               alt="pofile-ts logo"
-              className="h-28 w-28 drop-shadow-xl transition-transform duration-300 hover:scale-105 md:h-36 md:w-36"
+              className="h-28 w-28 drop-shadow-xl transition-transform duration-300 hover:scale-105 md:h-32 md:w-32"
             />
           </div>
 
-          {/* Title and description */}
+          {/* Title and tagline */}
           <div
-            className="flex max-w-2xl flex-col items-center gap-5 animate-fade-in-up"
+            className="flex max-w-3xl flex-col items-center gap-4 animate-fade-in-up"
             style={{ animationDelay: "100ms", animationFillMode: "backwards" }}
           >
             <h1 className="bg-gradient-to-r from-blue-600 via-purple-600 to-fuchsia-600 bg-clip-text text-5xl font-bold tracking-tight text-transparent md:text-7xl">
               pofile-ts
             </h1>
             <p className="text-xl leading-relaxed text-fd-muted-foreground md:text-2xl">
-              A modern, focused library for GNU gettext PO files.
-              <br className="hidden sm:block" />
-              <span className="text-fd-foreground/80">Hand-optimized for speed</span>, runs
-              everywhere.
+              The fast, modern PO file toolkit for JavaScript
             </p>
-          </div>
-
-          {/* Feature badges */}
-          <div
-            className="flex flex-wrap justify-center gap-3 animate-fade-in-up"
-            style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
-          >
-            <Badge color="blue">TypeScript 5.x</Badge>
-            <Badge color="green">Browser Ready</Badge>
-            <Badge color="amber">Zero Dependencies</Badge>
-            <Badge color="purple">ESM + CJS</Badge>
           </div>
 
           {/* CTA buttons */}
           <div
             className="flex flex-wrap justify-center gap-4 animate-fade-in-up"
-            style={{ animationDelay: "300ms", animationFillMode: "backwards" }}
+            style={{ animationDelay: "200ms", animationFillMode: "backwards" }}
           >
             <Link
               to="/docs"
@@ -92,113 +78,131 @@ export default function Home() {
               className="inline-flex items-center gap-2 rounded-xl border-2 border-fd-border bg-fd-background/50 px-8 py-4 font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-purple-500/50 hover:bg-fd-card"
             >
               <GitHubIcon />
-              View on GitHub
+              GitHub
             </a>
           </div>
+        </main>
+      </div>
 
-          {/* Install command */}
-          <div
-            className="animate-fade-in-up"
-            style={{ animationDelay: "400ms", animationFillMode: "backwards" }}
-          >
-            <div className="group relative rounded-xl border border-fd-border bg-fd-card/80 px-6 py-4 font-mono text-sm backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30">
-              <span className="text-fd-muted-foreground">$</span>{" "}
-              <span className="text-purple-600 dark:text-purple-400">npm</span> install pofile-ts
+      {/* Install Section */}
+      <section className="border-t border-fd-border bg-fd-muted/30 px-6 py-12">
+        <div className="mx-auto max-w-xl">
+          <div className="group relative overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-sm transition-all duration-300 hover:border-purple-500/30 hover:shadow-lg">
+            <div className="flex items-center justify-between border-b border-fd-border bg-fd-muted/50 px-4 py-2">
+              <span className="text-sm font-medium text-fd-muted-foreground">Installation</span>
               <button
                 onClick={() => navigator.clipboard.writeText("npm install pofile-ts")}
-                className="ml-4 rounded-md p-1.5 text-fd-muted-foreground opacity-0 transition-all hover:bg-fd-muted hover:text-fd-foreground group-hover:opacity-100"
+                className="rounded-md p-1.5 text-fd-muted-foreground transition-all hover:bg-fd-muted hover:text-fd-foreground"
                 title="Copy to clipboard"
               >
                 <CopyIcon />
               </button>
             </div>
+            <div className="px-5 py-4 font-mono text-sm">
+              <span className="text-fd-muted-foreground select-none">$ </span>
+              <span className="text-purple-600 dark:text-purple-400">npm</span> install pofile-ts
+            </div>
           </div>
-        </main>
-      </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm text-fd-muted-foreground">
+            <span>Zero dependencies</span>
+            <span className="text-fd-border">•</span>
+            <span>~11KB gzipped</span>
+            <span className="text-fd-border">•</span>
+            <span>Tree-shakeable</span>
+          </div>
+        </div>
+      </section>
 
-      {/* Features Section */}
-      <section className="border-t border-fd-border bg-gradient-to-b from-fd-background to-fd-muted/30 px-6 py-20">
+      {/* Why Section */}
+      <section className="border-t border-fd-border px-6 py-20">
         <div className="mx-auto max-w-6xl">
-          <h2
-            className="mb-4 text-center text-3xl font-bold animate-fade-in-up md:text-4xl"
-            style={{ animationDelay: "500ms", animationFillMode: "backwards" }}
-          >
-            Why pofile-ts?
-          </h2>
-          <p
-            className="mx-auto mb-14 max-w-2xl text-center text-lg text-fd-muted-foreground animate-fade-in-up"
-            style={{ animationDelay: "550ms", animationFillMode: "backwards" }}
-          >
-            Built from the ground up for modern JavaScript/TypeScript projects
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Why pofile-ts?</h2>
+          <p className="mx-auto mb-14 max-w-2xl text-center text-lg text-fd-muted-foreground">
+            A complete solution for working with GNU gettext PO files in modern JavaScript and
+            TypeScript projects
           </p>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<SpeedIcon />}
-              title="23× Faster"
-              description="Hand-optimized parsing and blazing fast serialization. No regex-heavy parsing."
-              delay={600}
+              title="8× Faster Parsing"
+              description="Hand-optimized for performance. No regex soup, no unnecessary allocations — just fast parsing and serialization."
               gradient="from-blue-500 to-cyan-500"
             />
             <FeatureCard
-              icon={<CheckIcon />}
-              title="Full PO Support"
-              description="Headers, comments, flags, plurals, context, and references. The complete spec."
-              delay={650}
+              icon={<GlobeIcon />}
+              title="Complete i18n Toolkit"
+              description="Not just a parser: includes CLDR 48 plural rules, ICU MessageFormat conversion, and workflow helpers."
+              gradient="from-purple-500 to-fuchsia-500"
+            />
+            <FeatureCard
+              icon={<ShieldIcon />}
+              title="Battle-tested"
+              description="Handles edge cases, malformed files, and complex escape sequences that break other parsers."
               gradient="from-green-500 to-emerald-500"
             />
             <FeatureCard
-              icon={<GlobeIcon />}
-              title="Universal"
-              description="Works seamlessly in Node.js and browsers without polyfills or bundler config."
-              delay={700}
-              gradient="from-purple-500 to-fuchsia-500"
+              icon={<BoxIcon />}
+              title="Runs Everywhere"
+              description="Works in Node.js, browsers, edge runtimes, and build tools like Vite or webpack. CSP-safe."
+              gradient="from-amber-500 to-orange-500"
             />
             <FeatureCard
               icon={<TypeScriptIcon />}
               title="TypeScript First"
-              description="Written in TypeScript with full type definitions for excellent IDE support."
-              delay={750}
+              description="Written in TypeScript with full type definitions for excellent IDE support and type safety."
               gradient="from-blue-500 to-indigo-500"
             />
             <FeatureCard
-              icon={<WrenchIcon />}
-              title="i18n Helpers"
-              description="Catalog conversion, message ID generation, reference handling built-in."
-              delay={800}
-              gradient="from-amber-500 to-orange-500"
-            />
-            <FeatureCard
-              icon={<BoxIcon />}
-              title="Zero Dependencies"
-              description="No runtime dependencies means minimal bundle size and no supply chain risk."
-              delay={850}
+              icon={<FeatherIcon />}
+              title="Lightweight"
+              description="Zero dependencies. Full library is ~11KB gzipped, tree-shakes down to ~5KB for basic usage."
               gradient="from-rose-500 to-pink-500"
             />
           </div>
         </div>
       </section>
 
-      {/* Code example section */}
+      {/* Use Cases */}
+      <section className="border-t border-fd-border bg-fd-muted/20 px-6 py-20">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Use Cases</h2>
+          <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-fd-muted-foreground">
+            From build tools to translation management
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <UseCase title="Translation pipelines">
+              Read PO files from translators, merge with source strings, write back
+            </UseCase>
+            <UseCase title="Build tool plugins">
+              Parse PO files in Vite, webpack, or Rollup plugins
+            </UseCase>
+            <UseCase title="Message extraction">
+              Generate PO files from source code for translation
+            </UseCase>
+            <UseCase title="Format conversion">
+              Convert legacy Gettext projects to modern ICU MessageFormat
+            </UseCase>
+            <UseCase title="Translation management">
+              Build custom TMS integrations or translation workflows
+            </UseCase>
+            <UseCase title="Plural validation">
+              Verify translations have correct plural forms for target locales
+            </UseCase>
+          </div>
+        </div>
+      </section>
+
+      {/* Code example */}
       <section className="border-t border-fd-border px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <h2
-            className="mb-4 text-center text-3xl font-bold animate-fade-in-up md:text-4xl"
-            style={{ animationDelay: "900ms", animationFillMode: "backwards" }}
-          >
-            Simple API
-          </h2>
-          <p
-            className="mx-auto mb-10 max-w-2xl text-center text-lg text-fd-muted-foreground animate-fade-in-up"
-            style={{ animationDelay: "950ms", animationFillMode: "backwards" }}
-          >
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Simple API</h2>
+          <p className="mx-auto mb-10 max-w-2xl text-center text-lg text-fd-muted-foreground">
             Parse, modify, and serialize PO files in just a few lines
           </p>
 
-          <div
-            className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl animate-fade-in-up"
-            style={{ animationDelay: "1000ms", animationFillMode: "backwards" }}
-          >
+          <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
             <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
               <div className="h-3 w-3 rounded-full bg-red-500/60" />
               <div className="h-3 w-3 rounded-full bg-amber-500/60" />
@@ -208,35 +212,33 @@ export default function Home() {
             <pre className="overflow-x-auto p-6 font-mono text-sm leading-relaxed">
               <code>
                 <span className="text-purple-600 dark:text-purple-400">import</span>
-                {" { PO } "}
+                {" { parsePo, stringifyPo } "}
                 <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
                 <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
                 {"\n\n"}
-                <span className="text-fd-muted-foreground">{"// Parse a PO file"}</span>
-                {"\n"}
                 <span className="text-purple-600 dark:text-purple-400">const</span>
-                {" po = PO."}
-                <span className="text-blue-600 dark:text-blue-400">parse</span>
-                {"(poFileContent)\n\n"}
-                <span className="text-fd-muted-foreground">{"// Access translations"}</span>
+                {" po = "}
+                <span className="text-blue-600 dark:text-blue-400">parsePo</span>
+                {"(`\n"}
+                <span className="text-emerald-600 dark:text-emerald-400">{'msgid "Hello"'}</span>
                 {"\n"}
-                <span className="text-purple-600 dark:text-purple-400">for</span>
-                {" ("}
-                <span className="text-purple-600 dark:text-purple-400">const</span>
-                {" item "}
-                <span className="text-purple-600 dark:text-purple-400">of</span>
-                {" po.items) {\n"}
-                {"  console."}
+                <span className="text-emerald-600 dark:text-emerald-400">{'msgstr "Hallo"'}</span>
+                {"\n`)\n\n"}
+                {"console."}
                 <span className="text-blue-600 dark:text-blue-400">log</span>
-                {"(item.msgid, "}
-                <span className="text-emerald-600 dark:text-emerald-400">"→"</span>
-                {", item.msgstr)\n}\n\n"}
-                <span className="text-fd-muted-foreground">{"// Serialize back to string"}</span>
+                {"(po.items[0].msgid)   "}
+                <span className="text-fd-muted-foreground">{'// "Hello"'}</span>
                 {"\n"}
-                <span className="text-purple-600 dark:text-purple-400">const</span>
-                {" output = po."}
-                <span className="text-blue-600 dark:text-blue-400">toString</span>
-                {"()"}
+                {"console."}
+                <span className="text-blue-600 dark:text-blue-400">log</span>
+                {"(po.items[0].msgstr)  "}
+                <span className="text-fd-muted-foreground">{'// ["Hallo"]'}</span>
+                {"\n\n"}
+                {"console."}
+                <span className="text-blue-600 dark:text-blue-400">log</span>
+                {"("}
+                <span className="text-blue-600 dark:text-blue-400">stringifyPo</span>
+                {"(po))"}
               </code>
             </pre>
           </div>
@@ -248,7 +250,8 @@ export default function Home() {
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
           <h2 className="text-2xl font-bold md:text-3xl">Ready to get started?</h2>
           <p className="text-fd-muted-foreground">
-            Check out the documentation to learn more about pofile-ts
+            Check out the documentation for the full API reference, i18n helpers, and migration
+            guide
           </p>
           <Link
             to="/docs"
@@ -263,43 +266,19 @@ export default function Home() {
   )
 }
 
-// Badge component
-function Badge({ children, color }: { children: React.ReactNode; color: string }) {
-  const colorClasses: Record<string, string> = {
-    blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    green: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    purple: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
-  }
-
-  return (
-    <span
-      className={`rounded-full border px-4 py-1.5 text-sm font-medium ${colorClasses[color] || colorClasses.blue}`}
-    >
-      {children}
-    </span>
-  )
-}
-
-// Feature Card component
 function FeatureCard({
   icon,
   title,
   description,
-  delay,
   gradient
 }: {
   icon: React.ReactNode
   title: string
   description: string
-  delay: number
   gradient: string
 }) {
   return (
-    <div
-      className="group relative overflow-hidden rounded-xl border border-fd-border bg-fd-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/30 hover:shadow-xl animate-fade-in-up"
-      style={{ animationDelay: `${delay}ms`, animationFillMode: "backwards" }}
-    >
+    <div className="group relative overflow-hidden rounded-xl border border-fd-border bg-fd-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/30 hover:shadow-xl">
       <div
         className={`mb-4 inline-flex rounded-xl bg-gradient-to-br ${gradient} p-3 text-white shadow-lg`}
       >
@@ -307,8 +286,16 @@ function FeatureCard({
       </div>
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
       <p className="text-sm leading-relaxed text-fd-muted-foreground">{description}</p>
-      {/* Hover glow effect */}
       <div className="pointer-events-none absolute -bottom-1/2 -right-1/2 h-40 w-40 rounded-full bg-purple-500/10 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100" />
+    </div>
+  )
+}
+
+function UseCase({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-fd-border bg-fd-card p-4">
+      <h3 className="mb-1 font-semibold">{title}</h3>
+      <p className="text-sm text-fd-muted-foreground">{children}</p>
     </div>
   )
 }
@@ -354,18 +341,6 @@ function SpeedIcon() {
   )
 }
 
-function CheckIcon() {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  )
-}
-
 function GlobeIcon() {
   return (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -373,6 +348,18 @@ function GlobeIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  )
+}
+
+function ShieldIcon() {
+  return (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
       />
     </svg>
   )
@@ -386,27 +373,27 @@ function TypeScriptIcon() {
   )
 }
 
-function WrenchIcon() {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-      />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  )
-}
-
 function BoxIcon() {
   return (
     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
       />
+    </svg>
+  )
+}
+
+function FeatherIcon() {
+  return (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5z"
+      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 8L2 22M17.5 15H9" />
     </svg>
   )
 }
