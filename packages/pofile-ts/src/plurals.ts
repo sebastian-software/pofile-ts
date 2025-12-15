@@ -3,6 +3,29 @@
  *
  * Provides utilities to get plural categories for any locale.
  * Data is stored in a compact format and lazily expanded at runtime.
+ *
+ * ## Data Sources
+ *
+ * The plural rules and categories are derived from CLDR (Common Locale Data Repository):
+ * - CLDR Plural Rules: https://cldr.unicode.org/index/cldr-spec/plural-rules
+ * - Plural Rules Chart: https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
+ *
+ * ## Variant System
+ *
+ * Instead of storing data per-locale (~500+ locales), we use a variant system:
+ * - There are only 8 distinct plural rule patterns worldwide (variants A-H)
+ * - Each locale maps to one variant
+ * - This reduces data from ~50KB to ~2KB
+ *
+ * The variants are named A-H for compactness, corresponding to:
+ * - A: East Asian (1 form) - zh, ja, ko, vi, th, etc.
+ * - B: Germanic/Romance (2 forms) - en, de, es, fr, it, pt, etc.
+ * - C: Slavic-3 (3 forms) - ru, uk, hr, sr, etc.
+ * - D: Dual (3 forms with "two") - sl, dsb, hsb, etc.
+ * - E: Slavic-4 (4 forms) - pl, be, etc.
+ * - F: Celtic-4 (4 forms with "two") - gd, kw
+ * - G: Celtic-5 (5 forms) - br, ga, gv, mt
+ * - H: Arabic (6 forms) - ar, cy
  */
 
 /**
@@ -68,8 +91,11 @@ const LOCALES: Record<VariantKey, string> = {
 } as const
 
 /**
- * Sample numbers for each plural category.
- * Used to map gettext msgstr indices to CLDR categories.
+ * Default sample numbers for each plural category.
+ * Used internally to map gettext msgstr indices to CLDR categories.
+ *
+ * These are representative values that trigger each category in most languages.
+ * For locale-specific samples, use `getPluralSamples(locale)`.
  */
 export const PLURAL_SAMPLES: Record<string, number> = {
   zero: 0,
@@ -78,6 +104,141 @@ export const PLURAL_SAMPLES: Record<string, number> = {
   few: 3,
   many: 11,
   other: 100
+}
+
+/**
+ * Plural samples per variant.
+ *
+ * Each variant has a set of representative sample numbers for each plural category.
+ * These samples are chosen to:
+ * 1. Correctly trigger each plural category via the variant's plural function
+ * 2. Include edge cases (boundaries, typical values)
+ * 3. Be useful for testing and TMS preview
+ *
+ * ## How samples were derived
+ *
+ * For each variant, we use the CLDR plural rules to find numbers that fall into
+ * each category. The samples are verified against the PLURAL_FUNCTIONS.
+ *
+ * Example for variant C (Slavic-3, e.g. Russian):
+ * - Rule: one = n%10==1 && n%100!=11
+ * - Rule: few = n%10 in 2..4 && n%100 not in 12..14
+ * - Rule: other = everything else
+ * - Samples: one=[1,21,31], few=[2,3,4,22], other=[0,5,11,12,20,100]
+ *
+ * @see https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
+ */
+const VARIANT_SAMPLES: Record<VariantKey, Record<string, readonly number[]>> = {
+  /**
+   * Variant A: East Asian languages (Chinese, Japanese, Korean, Vietnamese, Thai, etc.)
+   * Only one form - no plural distinction.
+   * All integers map to "other".
+   */
+  A: {
+    other: [0, 1, 2, 5, 10, 100, 1000]
+  },
+
+  /**
+   * Variant B: Germanic, Romance, and many other languages (English, German, Spanish, etc.)
+   * Two forms: one (n=1), other (n≠1).
+   * This is the most common pattern worldwide.
+   */
+  B: {
+    one: [1],
+    other: [0, 2, 3, 5, 10, 100, 1000]
+  },
+
+  /**
+   * Variant C: Slavic languages with 3 forms (Russian, Ukrainian, Croatian, Serbian, etc.)
+   * Pattern:
+   * - one: n%10=1 && n%100≠11 (1, 21, 31, 41... but not 11, 111, 211...)
+   * - few: n%10 in 2..4 && n%100 not in 12..14 (2-4, 22-24, 32-34... but not 12-14)
+   * - other: everything else (0, 5-20, 25-30, 100...)
+   */
+  C: {
+    one: [1, 21, 31, 41, 51, 101],
+    few: [2, 3, 4, 22, 23, 24, 32],
+    other: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 100]
+  },
+
+  /**
+   * Variant D: Languages with dual form (Slovenian, Sorbian, Sami, etc.)
+   * Three forms: one (n=1), two (n=2), other (n≥3 or n=0).
+   */
+  D: {
+    one: [1],
+    two: [2],
+    other: [0, 3, 4, 5, 10, 100, 1000]
+  },
+
+  /**
+   * Variant E: Slavic languages with 4 forms (Polish, Belarusian, etc.)
+   * Pattern:
+   * - one: n=1 exactly
+   * - few: n%10 in 2..4 && n%100 not in 12..14
+   * - many: n≠1 && (n%10 in 0..1 || n%10 in 5..9 || n%100 in 12..14)
+   * - other: non-integers (1.5, 2.5, etc.) - rarely used in gettext
+   *
+   * Note: The "other" category in Polish is for fractions, which gettext
+   * typically doesn't handle. In practice, only one/few/many are used.
+   */
+  E: {
+    one: [1],
+    few: [2, 3, 4, 22, 23, 24, 32, 33, 34],
+    many: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 25, 100],
+    other: [1.5, 2.5, 0.5] // Fractions - rare in gettext context
+  },
+
+  /**
+   * Variant F: Celtic languages with 4 forms (Scottish Gaelic, Cornish)
+   * Pattern:
+   * - one: n=1
+   * - two: n=2
+   * - few: n in 3..10
+   * - other: n=0 or n>10
+   */
+  F: {
+    one: [1],
+    two: [2],
+    few: [3, 4, 5, 6, 7, 8, 9, 10],
+    other: [0, 11, 12, 20, 100, 1000]
+  },
+
+  /**
+   * Variant G: Celtic languages with 5 forms (Breton, Irish, Manx, Maltese)
+   * Pattern:
+   * - one: n=1
+   * - two: n=2
+   * - few: n in 3..10
+   * - many: n in 11..99
+   * - other: n=0 or n≥100
+   */
+  G: {
+    one: [1],
+    two: [2],
+    few: [3, 4, 5, 6, 7, 8, 9, 10],
+    many: [11, 12, 20, 50, 99],
+    other: [0, 100, 101, 1000]
+  },
+
+  /**
+   * Variant H: Arabic and Welsh (6 forms)
+   * Pattern:
+   * - zero: n=0
+   * - one: n=1
+   * - two: n=2
+   * - few: n%100 in 3..10
+   * - many: n%100 in 11..99
+   * - other: n≥100 where n%100 in 0..2
+   */
+  H: {
+    zero: [0],
+    one: [1],
+    two: [2],
+    few: [3, 4, 5, 6, 7, 8, 9, 10, 103, 104],
+    many: [11, 12, 13, 50, 99, 111, 112],
+    other: [100, 101, 102, 200, 1000]
+  }
 }
 
 /**
@@ -253,4 +414,163 @@ export function getPluralFormsHeader(locale: string): string {
   const plural = PLURAL_EXPRESSIONS[variant]
 
   return `nplurals=${nplurals}; plural=${plural};`
+}
+
+/**
+ * Returns sample numbers for each plural category of a locale.
+ *
+ * These samples are useful for:
+ * - Testing plural rules
+ * - Previewing translations in TMS tools
+ * - Mapping between ICU plural categories and gettext msgstr indices
+ *
+ * @example
+ * getPluralSamples("de")
+ * // → { one: [1], other: [0, 2, 3, 5, 10, 100, 1000] }
+ *
+ * getPluralSamples("pl")
+ * // → { one: [1], few: [2, 3, 4, 22...], many: [0, 5, 6...], other: [1.5, 2.5...] }
+ *
+ * getPluralSamples("ar")
+ * // → { zero: [0], one: [1], two: [2], few: [...], many: [...], other: [...] }
+ *
+ * @see https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
+ */
+export function getPluralSamples(locale: string): Record<string, readonly number[]> {
+  return VARIANT_SAMPLES[getVariantForLocale(locale)]
+}
+
+/**
+ * Result of parsing and resolving a Plural-Forms header.
+ */
+export interface ParsedPluralFormsResult {
+  /** Number of plural forms */
+  nplurals: number
+
+  /** The plural expression string (e.g., "(n != 1)") */
+  expression: string
+
+  /**
+   * Function that returns the msgstr index for a given n.
+   * This is a CSP-safe implementation that matches against known expressions.
+   * Returns null if the expression couldn't be matched to a known pattern.
+   */
+  pluralFunc: ((n: number) => number) | null
+
+  /**
+   * The matched variant key (A-H) if expression was recognized, null otherwise.
+   * Useful for debugging and understanding which rule pattern was matched.
+   */
+  matchedVariant: VariantKey | null
+}
+
+/**
+ * Normalizes a plural expression for comparison.
+ * Removes whitespace and standardizes syntax variations.
+ */
+function normalizeExpression(expr: string): string {
+  return expr
+    .replace(/\s+/g, "") // Remove all whitespace
+    .replace(/\((\d+)\)/g, "$1") // Remove unnecessary parentheses around numbers
+    .replace(/;$/, "") // Remove trailing semicolon
+}
+
+/**
+ * Attempts to match a plural expression against known CLDR-based expressions.
+ * Returns the variant key if matched, null otherwise.
+ *
+ * This approach is CSP-safe (no eval/new Function) and covers 99%+ of real-world cases.
+ */
+function matchExpressionToVariant(expression: string): VariantKey | null {
+  const normalized = normalizeExpression(expression)
+
+  for (const [variant, knownExpr] of Object.entries(PLURAL_EXPRESSIONS)) {
+    if (normalizeExpression(knownExpr) === normalized) {
+      return variant as VariantKey
+    }
+  }
+
+  // Also check some common alternative formulations
+  const alternatives: Record<string, VariantKey> = {
+    // Alternative ways to write "n != 1"
+    "n!=1": "B",
+    "(n!=1)": "B",
+    "n==1?0:1": "B",
+    "(n==1?0:1)": "B",
+    "(n==1)?0:1": "B",
+    // Alternative for "0" (no plural)
+    "0": "A"
+  }
+
+  const altVariant = alternatives[normalized]
+  if (altVariant) {
+    return altVariant
+  }
+
+  return null
+}
+
+/**
+ * Parses a Plural-Forms header and returns a resolved result with a plural function.
+ *
+ * This function is CSP-safe: it matches the expression against known CLDR patterns
+ * instead of using eval() or new Function(). This covers virtually all real-world
+ * PO files since they use standard gettext expressions.
+ *
+ * @example
+ * const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
+ * // → {
+ * //     nplurals: 2,
+ * //     expression: "(n != 1)",
+ * //     pluralFunc: (n) => n !== 1 ? 1 : 0,
+ * //     matchedVariant: "B"
+ * //   }
+ *
+ * result.pluralFunc(0)  // → 1 (other)
+ * result.pluralFunc(1)  // → 0 (one)
+ * result.pluralFunc(5)  // → 1 (other)
+ *
+ * @example
+ * // Unknown/custom expression
+ * const custom = parsePluralFormsHeader("nplurals=3; plural=n%10;")
+ * custom.pluralFunc  // → null (unknown expression)
+ * custom.matchedVariant  // → null
+ *
+ * @returns ParsedPluralFormsResult with nplurals, expression, and optionally pluralFunc
+ */
+export function parsePluralFormsHeader(header: string): ParsedPluralFormsResult | null {
+  // Parse the header string
+  const parts = header.split(";")
+  let nplurals: number | null = null
+  let expression: string | null = null
+
+  for (const part of parts) {
+    const trimmed = part.trim()
+    const eqIndex = trimmed.indexOf("=")
+    if (eqIndex > 0) {
+      const key = trimmed.substring(0, eqIndex).trim().toLowerCase()
+      const value = trimmed.substring(eqIndex + 1).trim()
+
+      if (key === "nplurals") {
+        nplurals = parseInt(value, 10)
+      } else if (key === "plural") {
+        expression = value
+      }
+    }
+  }
+
+  // Validate we have the required parts
+  if (nplurals === null || !expression || isNaN(nplurals)) {
+    return null
+  }
+
+  // Try to match the expression to a known variant
+  const matchedVariant = matchExpressionToVariant(expression)
+
+  return {
+    nplurals,
+    expression,
+    pluralFunc: matchedVariant ? PLURAL_FUNCTIONS[matchedVariant] : null,
+    matchedVariant
+  }
 }

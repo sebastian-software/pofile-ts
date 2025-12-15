@@ -3,7 +3,9 @@ import {
   getPluralCategories,
   getPluralCount,
   getPluralFormsHeader,
-  getPluralFunction
+  getPluralFunction,
+  getPluralSamples,
+  parsePluralFormsHeader
 } from "./plurals"
 
 describe("getPluralCategories", () => {
@@ -175,5 +177,158 @@ describe("getPluralFunction", () => {
     expect(fn(2)).toBe(1) // two
     expect(fn(3)).toBe(2) // other
     expect(fn(5)).toBe(2) // other
+  })
+})
+
+describe("getPluralSamples", () => {
+  it("returns samples for German (2 forms)", () => {
+    const samples = getPluralSamples("de")
+    expect(samples.one).toContain(1)
+    expect(samples.other).toContain(0)
+    expect(samples.other).toContain(2)
+    expect(Object.keys(samples)).toEqual(["one", "other"])
+  })
+
+  it("returns samples for Polish (4 forms)", () => {
+    const samples = getPluralSamples("pl")
+    expect(samples.one).toContain(1)
+    expect(samples.few).toContain(2)
+    expect(samples.few).toContain(3)
+    expect(samples.many).toContain(5)
+    expect(samples.many).toContain(11)
+    expect(Object.keys(samples).sort()).toEqual(["few", "many", "one", "other"])
+  })
+
+  it("returns samples for Arabic (6 forms)", () => {
+    const samples = getPluralSamples("ar")
+    expect(samples.zero).toContain(0)
+    expect(samples.one).toContain(1)
+    expect(samples.two).toContain(2)
+    expect(samples.few).toContain(3)
+    expect(samples.many).toContain(11)
+    expect(samples.other).toContain(100)
+    expect(Object.keys(samples).sort()).toEqual(["few", "many", "one", "other", "two", "zero"])
+  })
+
+  it("returns samples for Chinese (1 form)", () => {
+    const samples = getPluralSamples("zh")
+    expect(samples.other).toBeDefined()
+    expect(Object.keys(samples)).toEqual(["other"])
+  })
+
+  it("samples trigger correct plural categories", () => {
+    // Verify that each sample actually triggers its category
+    const locales = ["de", "pl", "ar", "ru", "gd", "ga"]
+
+    for (const locale of locales) {
+      const samples = getPluralSamples(locale)
+      const fn = getPluralFunction(locale)
+      const categories = getPluralCategories(locale)
+
+      for (const [category, sampleNumbers] of Object.entries(samples)) {
+        const categoryIndex = categories.indexOf(category)
+        // Skip "other" for fractions in Polish - they don't map to integer indices
+        if (category === "other" && sampleNumbers.some((n) => !Number.isInteger(n))) {
+          continue
+        }
+        for (const n of sampleNumbers) {
+          if (Number.isInteger(n)) {
+            expect(fn(n)).toBe(categoryIndex)
+          }
+        }
+      }
+    }
+  })
+})
+
+describe("parsePluralFormsHeader", () => {
+  it("parses German plural forms header", () => {
+    const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(2)
+    expect(result!.expression).toBe("(n != 1)")
+    expect(result!.matchedVariant).toBe("B")
+    expect(result!.pluralFunc).not.toBeNull()
+    expect(result!.pluralFunc!(1)).toBe(0)
+    expect(result!.pluralFunc!(0)).toBe(1)
+    expect(result!.pluralFunc!(5)).toBe(1)
+  })
+
+  it("parses Polish plural forms header", () => {
+    const header = getPluralFormsHeader("pl")
+    const result = parsePluralFormsHeader(header)
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(4)
+    expect(result!.matchedVariant).toBe("E")
+    expect(result!.pluralFunc).not.toBeNull()
+    expect(result!.pluralFunc!(1)).toBe(0) // one
+    expect(result!.pluralFunc!(2)).toBe(1) // few
+    expect(result!.pluralFunc!(5)).toBe(2) // many
+  })
+
+  it("parses Arabic plural forms header", () => {
+    const header = getPluralFormsHeader("ar")
+    const result = parsePluralFormsHeader(header)
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(6)
+    expect(result!.matchedVariant).toBe("H")
+    expect(result!.pluralFunc!(0)).toBe(0) // zero
+    expect(result!.pluralFunc!(1)).toBe(1) // one
+    expect(result!.pluralFunc!(2)).toBe(2) // two
+  })
+
+  it("parses Chinese plural forms header (nplurals=1)", () => {
+    const result = parsePluralFormsHeader("nplurals=1; plural=0;")
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(1)
+    expect(result!.matchedVariant).toBe("A")
+    expect(result!.pluralFunc!(0)).toBe(0)
+    expect(result!.pluralFunc!(100)).toBe(0)
+  })
+
+  it("handles whitespace variations", () => {
+    const result = parsePluralFormsHeader("nplurals = 2 ; plural = ( n != 1 ) ;")
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(2)
+  })
+
+  it("handles alternative formulations of n != 1", () => {
+    const result = parsePluralFormsHeader("nplurals=2; plural=n!=1;")
+    expect(result).not.toBeNull()
+    expect(result!.matchedVariant).toBe("B")
+    expect(result!.pluralFunc).not.toBeNull()
+  })
+
+  it("returns null for invalid headers", () => {
+    expect(parsePluralFormsHeader("")).toBeNull()
+    expect(parsePluralFormsHeader("invalid")).toBeNull()
+    expect(parsePluralFormsHeader("nplurals=abc;")).toBeNull()
+    expect(parsePluralFormsHeader("plural=(n != 1);")).toBeNull() // missing nplurals
+  })
+
+  it("returns null pluralFunc for unknown expressions", () => {
+    const result = parsePluralFormsHeader("nplurals=3; plural=n%10;")
+    expect(result).not.toBeNull()
+    expect(result!.nplurals).toBe(3)
+    expect(result!.expression).toBe("n%10")
+    expect(result!.pluralFunc).toBeNull()
+    expect(result!.matchedVariant).toBeNull()
+  })
+
+  it("roundtrips with getPluralFormsHeader for all variants", () => {
+    const locales = ["zh", "de", "ru", "sl", "pl", "gd", "ga", "ar"]
+
+    for (const locale of locales) {
+      const header = getPluralFormsHeader(locale)
+      const result = parsePluralFormsHeader(header)
+      expect(result).not.toBeNull()
+      expect(result!.pluralFunc).not.toBeNull()
+
+      // Verify the parsed function matches the original
+      const originalFn = getPluralFunction(locale)
+      for (let n = 0; n <= 100; n++) {
+        expect(result!.pluralFunc!(n)).toBe(originalFn(n))
+      }
+    }
   })
 })
