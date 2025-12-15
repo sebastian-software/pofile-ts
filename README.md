@@ -39,7 +39,7 @@
 
 - 🌍 **CLDR 48 plural rules** — 100% compliant for all major languages (140+ locales)
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
-- 🧩 **ICU Parser** — Parse and analyze ICU messages (2.3KB gzipped, 2.5× faster than FormatJS)
+- 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 2.5× faster than FormatJS)
 - 🔢 **Plural helpers** — Get categories, sample numbers, and Plural-Forms headers for any locale
 
 ### Developer Experience
@@ -138,8 +138,8 @@ Realistic messages with plurals, selects, nested structures, and tags:
 
 | Library                            |           Speed | Bundle (gzip) |
 | ---------------------------------- | --------------: | ------------: |
-| **pofile-ts**                      | **2.5× faster** |     **2.3KB** |
-| @formatjs/icu-messageformat-parser |        baseline |         9.3KB |
+| **pofile-ts**                      | **2.5× faster** |      **<3KB** |
+| @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
 
 → **2.5× faster**, **4× smaller bundle**
 
@@ -153,7 +153,7 @@ The full library is **~14KB gzipped**. Tree-shaking reduces this further:
 | `parsePo` + `stringifyPo` only |    ~5KB |
 | + CLDR plural helpers          |    +3KB |
 | + ICU conversion               |    +2KB |
-| + ICU parser                   |  +2.3KB |
+| + ICU parser                   |    +3KB |
 
 All exports are **named exports** — modern bundlers (Vite, esbuild, Rollup, webpack) automatically tree-shake unused code.
 
