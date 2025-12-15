@@ -187,12 +187,12 @@ export default function Home() {
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
               <h3 className="mb-4 text-lg font-semibold">ICU Runtime</h3>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="1.2M/s" fastest />
-                <BenchmarkBar label="intl-messageformat" value={17} ops="200k/s" />
-                <BenchmarkBar label="@lingui" value={14} ops="170k/s" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
+                <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
+                <BenchmarkBar label="@lingui" value={25} ops="200k/s" />
               </div>
               <p className="mt-4 text-sm text-fd-muted-foreground">
-                Compiled functions • 6× faster
+                Compiled functions • 3-4× faster
               </p>
             </div>
           </div>

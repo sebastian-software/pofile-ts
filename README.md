@@ -40,7 +40,7 @@
 - 🌍 **CLDR plural rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 2.5× faster than FormatJS)
-- ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (6× faster than Lingui)
+- ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (3-4× faster at runtime)
 - 🔢 **Plural helpers** — Get categories, counts, and selector functions for any locale
 
 ### Developer Experience
@@ -111,7 +111,7 @@ Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, numb
 
 ### ICU Compiler
 
-Compile ICU messages to fast JavaScript functions — 6× faster than Lingui, 5× faster than FormatJS at runtime:
+Compile ICU messages to fast JavaScript functions — 3-4× faster than Lingui and FormatJS at runtime:
 
 ```typescript
 import { compileIcu, compileCatalog, generateCompiledCode } from "pofile-ts"
@@ -179,11 +179,11 @@ Compiling ICU messages to functions and executing them:
 
 | Metric            | pofile-ts | vs intl-messageformat | vs @lingui (compiled) |
 | ----------------- | --------: | --------------------: | --------------------: |
-| **Compilation**   | 470k op/s |         **8× faster** |                     — |
-| **Runtime**       | 1.2M op/s |         **5× faster** |         **6× faster** |
-| **Catalog (200)** |   ~1.5M/s |         **8× faster** |                     — |
+| **Compilation**   |  72k op/s |           **1× same** |                     — |
+| **Runtime**       | 810k op/s |         **3× faster** |         **4× faster** |
+| **Catalog (200)** |   ~210k/s |           **1× same** |                     — |
 
-→ **6× faster than Lingui** even with pre-compiled AST format
+→ **3-4× faster** at runtime vs Lingui and FormatJS
 
 ## Bundle Size
 
