@@ -58,13 +58,15 @@ For full documentation including API reference, i18n helpers, and migration guid
 
 ## Performance
 
-Benchmarked with 10,000 entries (~10% plurals):
+Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 
 | Library        |       Parsing | Serialization |
 | -------------- | ------------: | ------------: |
 | **pofile-ts**  | **211 ops/s** | **255 ops/s** |
 | gettext-parser |      27 ops/s |      55 ops/s |
 | pofile         |       7 ops/s |     103 ops/s |
+
+_Relative performance (×faster) is consistent across different hardware._
 
 ## Credits
 
