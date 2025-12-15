@@ -106,7 +106,7 @@ export default function Home() {
           <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm text-fd-muted-foreground">
             <span>Zero dependencies</span>
             <span className="text-fd-border">•</span>
-            <span>~11KB gzipped</span>
+            <span>~14KB gzipped</span>
             <span className="text-fd-border">•</span>
             <span>Tree-shakeable</span>
           </div>
@@ -156,7 +156,7 @@ export default function Home() {
             <FeatureCard
               icon={<FeatherIcon />}
               title="Lightweight"
-              description="Zero dependencies. Full library is ~11KB gzipped, tree-shakes down to ~5KB for basic usage."
+              description="Zero dependencies. Full library is ~14KB gzipped, tree-shakes down to ~5KB for basic usage."
               gradient="from-rose-500 to-pink-500"
             />
           </div>

@@ -11,7 +11,7 @@ description: The fast, modern PO file toolkit for JavaScript
 - **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU conversion, and workflow helpers
 - **Production-ready** — Fully tested against CLDR 48 specification
 - **Runs everywhere** — Node.js, browsers, edge runtimes, and build tools
-- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB
+- **Lightweight** — Zero dependencies, ~14KB gzipped, tree-shakeable to ~5KB
 
 ## Features
 
@@ -61,9 +61,11 @@ console.log(stringifyPo(po))
 
 ## Performance
 
+_Benchmarked on Apple M1 Ultra, Node.js 22. Relative performance is consistent across different hardware._
+
 ### PO File Parsing
 
-Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
+10,000 entries (~10% plurals):
 
 | Library        |       Parsing | Serialization |
 | -------------- | ------------: | ------------: |
@@ -71,14 +73,18 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | gettext-parser |      27 ops/s |      53 ops/s |
 | pofile         |       8 ops/s |     100 ops/s |
 
+→ **8× faster parsing**, **5× faster serialization**
+
 ### ICU MessageFormat Parsing
 
-The built-in ICU parser vs FormatJS:
+Realistic messages with plurals, selects, nested structures, and tags:
 
 | Library                            |           Speed | Bundle (gzip) |
 | ---------------------------------- | --------------: | ------------: |
-| **pofile-ts**                      | **2.5× faster** |    **2.3 KB** |
-| @formatjs/icu-messageformat-parser |        baseline |        9.3 KB |
+| **pofile-ts**                      | **2.5× faster** |     **2.3KB** |
+| @formatjs/icu-messageformat-parser |        baseline |         9.3KB |
+
+→ **2.5× faster**, **4× smaller bundle**
 
 ## Bundle Size
 
@@ -88,8 +94,8 @@ The library is fully **tree-shakeable**. Import only what you need:
 | ------------------------------ | ------: |
 | Full library                   |   ~14KB |
 | `parsePo` + `stringifyPo` only |    ~5KB |
-| Add CLDR plural helpers        |    +3KB |
-| Add ICU conversion             |    +2KB |
-| Add ICU parser                 |  +2.3KB |
+| + CLDR plural helpers          |    +3KB |
+| + ICU conversion               |    +2KB |
+| + ICU parser                   |  +2.3KB |
 
 All exports are named exports — modern bundlers automatically eliminate unused code.
