@@ -117,14 +117,14 @@ describe("validateIcu", () => {
     const result = validateIcu("{unclosed")
     expect(result.valid).toBe(false)
     expect(result.errors).toHaveLength(1)
-    expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+    expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
   })
 
   it("reports missing other clause", () => {
     const result = validateIcu("{n, plural, one {one}}")
     expect(result.valid).toBe(false)
-    expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
-    expect(result.errors[0].message).toContain("other")
+    expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
+    expect(result.errors[0]!.message).toContain("other")
   })
 
   it("respects requiresOtherClause option", () => {

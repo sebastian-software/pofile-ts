@@ -214,7 +214,7 @@ describe("parseIcu", () => {
         type: typeof IcuNodeType.plural
         options: Record<string, { value: Array<{ type: number }> }>
       }
-      const oneOption = plural.options["one"]
+      const oneOption = plural.options["one"]!
       expect(oneOption.value[0]).toMatchObject({ type: IcuNodeType.pound })
     })
 
@@ -361,25 +361,25 @@ describe("parseIcu", () => {
     it("reports empty argument error", () => {
       const result = parseIcu("{}")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports unclosed argument error", () => {
       const result = parseIcu("{name")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports invalid argument type error", () => {
       const result = parseIcu("{name, invalid}")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports missing other clause", () => {
       const result = parseIcu("{count, plural, one {one}}")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("does not require other clause when disabled", () => {
@@ -390,31 +390,31 @@ describe("parseIcu", () => {
     it("reports unmatched closing tag", () => {
       const result = parseIcu("hello </b>")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports mismatched tag names", () => {
       const result = parseIcu("<a>text</b>")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports unclosed tag", () => {
       const result = parseIcu("<a>text")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("reports duplicate selector", () => {
       const result = parseIcu("{count, plural, one {one} one {uno} other {other}}")
       expect(result.success).toBe(false)
-      expect(result.errors[0].kind).toBe("SYNTAX_ERROR")
+      expect(result.errors[0]!.kind).toBe("SYNTAX_ERROR")
     })
 
     it("includes error message with details", () => {
       const result = parseIcu("{name, invalid}")
       expect(result.success).toBe(false)
-      expect(result.errors[0].message).toContain("Invalid argument type")
+      expect(result.errors[0]!.message).toContain("Invalid argument type")
     })
   })
 })

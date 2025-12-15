@@ -1,4 +1,4 @@
-import type { Headers } from "./types"
+import type { Headers } from "../types"
 
 // =============================================================================
 // Pre-compiled regex patterns for parser performance

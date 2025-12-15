@@ -42,21 +42,23 @@ import type {
 import { IcuNodeType } from "./types"
 
 // Character classification helpers (clearer than inline regex)
-function isWhitespace(ch: string): boolean {
+// Accept undefined for safe indexed access (returns false for undefined)
+function isWhitespace(ch: string | undefined): ch is string {
   return ch === " " || ch === "\t" || ch === "\n" || ch === "\r"
 }
 
-function isAlpha(ch: string): boolean {
-  return (ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z")
+function isAlpha(ch: string | undefined): ch is string {
+  return ch != null && ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z"))
 }
 
-function isDigit(ch: string): boolean {
-  return ch >= "0" && ch <= "9"
+function isDigit(ch: string | undefined): ch is string {
+  return ch != null && ch >= "0" && ch <= "9"
 }
 
-function isIdentifierChar(ch: string): boolean {
+function isIdentifierChar(ch: string | undefined): ch is string {
   // Everything except: whitespace, {, }, #, <, >, comma, :
   return (
+    ch != null &&
     ch > " " &&
     ch !== "{" &&
     ch !== "}" &&
@@ -68,7 +70,7 @@ function isIdentifierChar(ch: string): boolean {
   )
 }
 
-function isTagChar(ch: string): boolean {
+function isTagChar(ch: string | undefined): ch is string {
   return isAlpha(ch) || isDigit(ch) || ch === "-" || ch === "." || ch === ":" || ch === "_"
 }
 
