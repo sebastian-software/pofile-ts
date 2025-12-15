@@ -11,7 +11,7 @@ description: The fast, modern PO file toolkit for JavaScript
 - **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU conversion, and workflow helpers
 - **Production-ready** — Fully tested against CLDR 48 specification
 - **Runs everywhere** — Node.js, browsers, edge runtimes, and build tools
-- **Lightweight** — Zero dependencies, ~14KB gzipped, tree-shakeable to ~5KB
+- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB
 
 ## Features
 
@@ -23,11 +23,11 @@ description: The fast, modern PO file toolkit for JavaScript
 
 ### i18n Toolkit
 
-- **CLDR 48 Plural Rules** — 100% compliant for all major languages (140+ locales)
+- **CLDR Plural Rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - **ICU Parser** — Parse ICU v1 messages, 2.5× faster and 4× smaller than FormatJS
 - **ICU Compiler** — Compile ICU to JavaScript functions, 6× faster than Lingui at runtime
-- **Plural Helpers** — Get categories, sample numbers, and Plural-Forms headers
+- **Plural Helpers** — Get categories, counts, and selector functions for any locale
 
 ### Developer Experience
 
@@ -102,10 +102,10 @@ The library is fully **tree-shakeable**. Import only what you need:
 
 | Import                         | Gzipped |
 | ------------------------------ | ------: |
-| Full library                   |   ~14KB |
+| Full library                   |   ~11KB |
 | `parsePo` + `stringifyPo` only |    ~5KB |
-| + CLDR plural helpers          |    +3KB |
+| + Plural helpers               |    +1KB |
 | + ICU conversion               |    +2KB |
 | + ICU parser                   |    +3KB |
 
-All exports are named exports — modern bundlers automatically eliminate unused code.
+Plural helpers use native `Intl.PluralRules` — no CLDR data in the bundle.

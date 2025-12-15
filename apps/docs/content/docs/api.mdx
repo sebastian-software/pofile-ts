@@ -7,14 +7,15 @@ All exports are named functions — no classes, no default export.
 
 ## Core Functions
 
-| Function                        | Description                                   |
-| ------------------------------- | --------------------------------------------- |
-| `parsePo(content)`              | Parse a PO file string into a `PoFile` object |
-| `stringifyPo(po, options?)`     | Serialize a `PoFile` to string                |
-| `createPoFile()`                | Create a new empty `PoFile`                   |
-| `createItem(options?)`          | Create a new translation item                 |
-| `stringifyItem(item, options?)` | Serialize a single item to string             |
-| `parsePluralForms(header)`      | Parse the Plural-Forms header value           |
+| Function                        | Description                                             |
+| ------------------------------- | ------------------------------------------------------- |
+| `parsePo(content)`              | Parse a PO file string into a `PoFile` object           |
+| `stringifyPo(po, options?)`     | Serialize a `PoFile` to string                          |
+| `createPoFile()`                | Create a new empty `PoFile`                             |
+| `createItem(options?)`          | Create a new translation item                           |
+| `stringifyItem(item, options?)` | Serialize a single item to string                       |
+| `parsePluralForms(header)`      | Parse the Plural-Forms header value                     |
+| `createDefaultHeaders(options)` | Create default PO headers (auto-generates Plural-Forms) |
 
 ## Types
 
@@ -34,15 +35,28 @@ All exports are named functions — no classes, no default export.
 
 ### createDefaultHeaders
 
-Create default PO headers with sensible defaults.
+Create default PO headers with sensible defaults. When `language` is provided, `Plural-Forms` is automatically generated from CLDR data via `Intl.PluralRules`.
 
 ```typescript
 import { createDefaultHeaders } from "pofile-ts"
 
+// Plural-Forms auto-generated from CLDR
 const headers = createDefaultHeaders({
   language: "de",
-  generator: "my-tool",
-  pluralForms: "nplurals=2; plural=(n != 1);"
+  generator: "my-tool"
+})
+// → includes "Plural-Forms: nplurals=2; plural=(n != 1);"
+
+// Custom Plural-Forms
+const custom = createDefaultHeaders({
+  language: "de",
+  pluralForms: "nplurals=2; plural=(n > 1);"
+})
+
+// Omit Plural-Forms
+const noPluralForms = createDefaultHeaders({
+  language: "de",
+  pluralForms: false
 })
 ```
 
@@ -113,19 +127,12 @@ Uses SHA-256 with Base64URL encoding — 281 trillion possibilities, practically
 
 ## Plural Categories
 
-Get CLDR 48 plural categories and Gettext Plural-Forms headers for any locale. Validated against official CLDR test data — all major languages pass 100%.
+Get CLDR plural categories for any locale. Uses the browser's native `Intl.PluralRules` API — zero bundle size for CLDR data, always up-to-date, CSP-safe.
 
 ```typescript
-import {
-  getPluralCategories,
-  getPluralCount,
-  getPluralFormsHeader,
-  getPluralFunction,
-  getPluralSamples,
-  parsePluralFormsHeader
-} from "pofile-ts"
+import { getPluralCategories, getPluralCount, getPluralFunction } from "pofile-ts"
 
-// CLDR-compliant categories
+// CLDR-compliant categories via Intl.PluralRules
 getPluralCategories("de") // → ["one", "other"]
 getPluralCategories("ru") // → ["one", "few", "many", "other"]
 getPluralCategories("pl") // → ["one", "few", "many", "other"]
@@ -133,32 +140,31 @@ getPluralCategories("ar") // → ["zero", "one", "two", "few", "many", "other"]
 
 getPluralCount("ar") // → 6
 
-getPluralFormsHeader("de")
-// → "nplurals=2; plural=(n != 1);"
-
-// Plural selector function (CSP-safe, no eval)
+// Plural selector function (uses Intl.PluralRules internally)
 const fn = getPluralFunction("ru")
 fn(1) // → 0 (one)
 fn(2) // → 1 (few)
 fn(5) // → 2 (many)
-fn(21) // → 0 (one)
+fn(21) // → 0 (one) — CLDR-correct!
 
-// Sample numbers for each category
-getPluralSamples("ru")
-// → { one: [1, 21, 31...], few: [2, 3, 4, 22...], many: [0, 5, 6...], other: [0.5, 1.5...] }
-
-// Parse Plural-Forms header back to function (CSP-safe)
-const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
-result.pluralFunc(1) // → 0 (one)
-result.pluralFunc(5) // → 1 (other)
+// Locale normalization (underscore and hyphen both work)
+getPluralCategories("pt_BR") // → ["one", "many", "other"]
+getPluralCategories("pt-BR") // → ["one", "many", "other"]
 ```
 
-### ParsedPluralFormsResult
+### How It Works
 
-<auto-type-table
-  path="../../../../packages/pofile-ts/src/plurals.ts"
-  name="ParsedPluralFormsResult"
-/>
+pofile-ts delegates all plural logic to `Intl.PluralRules`:
+
+- **`getPluralCategories(locale)`** → `new Intl.PluralRules(locale).resolvedOptions().pluralCategories`
+- **`getPluralFunction(locale)`** → Returns index based on `pluralRules.select(n)`
+- **`createDefaultHeaders({ language })`** → Auto-generates `Plural-Forms` header from `getPluralCount()`
+
+This means:
+
+- No CLDR data in the bundle — the browser provides it
+- Always matches the browser's CLDR version
+- Works in all modern browsers and Node.js 14+
 
 ## ICU Conversion
 

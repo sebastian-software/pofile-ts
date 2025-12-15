@@ -165,6 +165,22 @@ getPluralCategories("pt_BR") // → ["one", "many", "other"]
 getPluralCategories("pt-BR") // → ["one", "many", "other"]
 ```
 
+### Limitations & Browser Support
+
+**Browser/Node.js Requirements:**
+
+- All modern browsers (Chrome 63+, Firefox 58+, Safari 13+, Edge 79+)
+- Node.js 14+ (full ICU build required for all locales)
+- Deno, Bun, and Cloudflare Workers all support `Intl.PluralRules`
+
+**Locale Fallback:**
+Unknown locales fall back to the default CLDR root rules (`["one", "other"]`). This matches `Intl.PluralRules` behavior.
+
+**Plural-Forms Header:**
+When using `createDefaultHeaders({ language })`, the generated `Plural-Forms` header uses a simplified expression `(n != 1)` for languages with 3+ forms. This is because the exact gettext expression cannot be derived from `Intl.PluralRules`. The `nplurals` count is always correct.
+
+For runtime plural selection, use `getPluralFunction()` — it uses `Intl.PluralRules` directly and is always CLDR-accurate.
+
 ## ICU Conversion
 
 Convert Gettext plurals to ICU MessageFormat — perfect for modern i18n libraries like Lingui or FormatJS:

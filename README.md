@@ -25,7 +25,7 @@
 - **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU MessageFormat conversion, and workflow helpers
 - **Production-ready** — Used in real-world applications, fully tested against CLDR 48 specification
 - **Runs everywhere** — Works in Node.js, browsers, edge runtimes, and build tools like Vite or webpack
-- **Lightweight** — Zero dependencies, ~14KB gzipped, tree-shakeable to ~5KB for basic usage
+- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB for basic usage
 
 ## Features
 
@@ -37,11 +37,11 @@
 
 ### i18n Toolkit
 
-- 🌍 **CLDR 48 plural rules** — 100% compliant for all major languages (140+ locales)
+- 🌍 **CLDR plural rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 2.5× faster than FormatJS)
 - ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (6× faster than Lingui)
-- 🔢 **Plural helpers** — Get categories, sample numbers, and Plural-Forms headers for any locale
+- 🔢 **Plural helpers** — Get categories, counts, and selector functions for any locale
 
 ### Developer Experience
 
@@ -187,15 +187,17 @@ Compiling ICU messages to functions and executing them:
 
 ## Bundle Size
 
-The full library is **~14KB gzipped**. Tree-shaking reduces this further:
+The full library is **~11KB gzipped**. Tree-shaking reduces this further:
 
 | Import                         | Gzipped |
 | ------------------------------ | ------: |
-| Full library                   |   ~14KB |
+| Full library                   |   ~11KB |
 | `parsePo` + `stringifyPo` only |    ~5KB |
-| + CLDR plural helpers          |    +3KB |
+| + Plural helpers               |    +1KB |
 | + ICU conversion               |    +2KB |
 | + ICU parser                   |    +3KB |
+
+Plural helpers use native `Intl.PluralRules` — no CLDR data in the bundle.
 
 All exports are **named exports** — modern bundlers (Vite, esbuild, Rollup, webpack) automatically tree-shake unused code.
 
