@@ -40,6 +40,7 @@
 - 🌍 **CLDR 48 plural rules** — 100% compliant for all major languages (140+ locales)
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 2.5× faster than FormatJS)
+- ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (6× faster than Lingui)
 - 🔢 **Plural helpers** — Get categories, sample numbers, and Plural-Forms headers for any locale
 
 ### Developer Experience
@@ -108,6 +109,35 @@ hasPlural("Hello {name}") // false
 
 Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, number/date/time formatting, tags, and escaping. Trade-offs for size: no AST location tracking, styles stored as opaque strings.
 
+### ICU Compiler
+
+Compile ICU messages to fast JavaScript functions — 6× faster than Lingui, 5× faster than FormatJS at runtime:
+
+```typescript
+import { compileIcu, compileCatalog, generateCompiledCode } from "pofile-ts"
+
+// Compile a single message
+const greet = compileIcu("Hello {name}!", { locale: "en" })
+greet({ name: "World" }) // → "Hello World!"
+
+// Full ICU support: plurals, select, number/date/time, tags
+const msg = compileIcu("{count, plural, one {# item} other {# items}} in <link>cart</link>", {
+  locale: "en"
+})
+msg({ count: 5, link: (text) => `<a>${text}</a>` })
+// → "5 items in <a>cart</a>"
+
+// Compile an entire catalog at runtime
+const compiled = compileCatalog(catalog, { locale: "de" })
+compiled.format("messageId", { name: "Sebastian" })
+
+// Or generate static code for build-time compilation
+const code = generateCompiledCode(catalog, { locale: "de" })
+// → TypeScript file with pre-compiled functions
+```
+
+Supports named tags (`<link>`), numeric tags (`<0>`, `<1>` — Lingui-style), and React components (returns array when tag functions return objects).
+
 ## Documentation
 
 For full documentation including API reference, i18n helpers, and migration guide:
@@ -142,6 +172,18 @@ Realistic messages with plurals, selects, nested structures, and tags:
 | @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
 
 → **2.5× faster**, **4× smaller bundle**
+
+### ICU Compilation & Runtime
+
+Compiling ICU messages to functions and executing them:
+
+| Metric            | pofile-ts | vs intl-messageformat | vs @lingui (compiled) |
+| ----------------- | --------: | --------------------: | --------------------: |
+| **Compilation**   | 470k op/s |         **8× faster** |                     — |
+| **Runtime**       | 1.2M op/s |         **5× faster** |         **6× faster** |
+| **Catalog (200)** |   ~1.5M/s |         **8× faster** |                     — |
+
+→ **6× faster than Lingui** even with pre-compiled AST format
 
 ## Bundle Size
 

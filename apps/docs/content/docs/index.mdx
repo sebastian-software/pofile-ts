@@ -26,6 +26,7 @@ description: The fast, modern PO file toolkit for JavaScript
 - **CLDR 48 Plural Rules** — 100% compliant for all major languages (140+ locales)
 - **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - **ICU Parser** — Parse ICU v1 messages, 2.5× faster and 4× smaller than FormatJS
+- **ICU Compiler** — Compile ICU to JavaScript functions, 6× faster than Lingui at runtime
 - **Plural Helpers** — Get categories, sample numbers, and Plural-Forms headers
 
 ### Developer Experience
@@ -85,6 +86,15 @@ Realistic messages with plurals, selects, nested structures, and tags:
 | @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
 
 → **2.5× faster**, **4× smaller bundle**
+
+### ICU Compilation & Runtime
+
+| Metric          |  pofile-ts | vs intl-messageformat |    vs @lingui |
+| --------------- | ---------: | --------------------: | ------------: |
+| **Compilation** | 470k ops/s |         **8× faster** |             — |
+| **Runtime**     | 1.2M ops/s |         **5× faster** | **6× faster** |
+
+→ **6× faster than Lingui** at runtime (even with pre-compiled AST)
 
 ## Bundle Size
 
