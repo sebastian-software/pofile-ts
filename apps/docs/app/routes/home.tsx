@@ -216,7 +216,7 @@ export default function Home() {
             hardware.
           </p>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
             {/* PO Parsing */}
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
               <h3 className="mb-1 text-lg font-semibold">PO Parsing</h3>
@@ -300,15 +300,9 @@ export default function Home() {
             Whether you're building tools or integrating with frameworks
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <UseCase title="Vite/webpack Plugins" icon="🔧">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+            <UseCase title="Vite/Webpack Plugins" icon="🔧">
               Parse and compile PO files at build time for zero runtime cost
-            </UseCase>
-            <UseCase title="Lingui Integration" icon="🦜">
-              Convert Lingui's Gettext output to compiled ICU runtime
-            </UseCase>
-            <UseCase title="FormatJS Migration" icon="🔄">
-              Move from FormatJS to smaller, faster ICU compiler
             </UseCase>
             <UseCase title="TMS Pipelines" icon="🌐">
               Crowdin, Lokalise, Phrase — sync and transform translations
