@@ -156,7 +156,7 @@ export default function Home() {
             <FeatureCard
               icon={<FeatherIcon />}
               title="Lightweight"
-              description="Zero dependencies. Full library is ~14KB gzipped, tree-shakes down to ~5KB for basic usage."
+              description="Zero dependencies. Full library is ~11KB gzipped, tree-shakes down to ~5KB for basic usage."
               gradient="from-rose-500 to-pink-500"
             />
           </div>
@@ -183,17 +183,17 @@ export default function Home() {
               <p className="mt-4 text-sm text-fd-muted-foreground">10K entries • 8× faster</p>
             </div>
 
-            {/* ICU Parsing */}
+            {/* ICU Runtime */}
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-4 text-lg font-semibold">ICU MessageFormat Parser</h3>
+              <h3 className="mb-4 text-lg font-semibold">ICU Runtime</h3>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="~2KB" fastest />
-                <BenchmarkBar label="@formatjs" value={40} ops="~9KB" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="1.2M/s" fastest />
+                <BenchmarkBar label="intl-messageformat" value={17} ops="200k/s" />
+                <BenchmarkBar label="@lingui" value={14} ops="170k/s" />
               </div>
-              <div className="mt-4 flex justify-between text-sm text-fd-muted-foreground">
-                <span>2.5× faster</span>
-                <span>4× smaller</span>
-              </div>
+              <p className="mt-4 text-sm text-fd-muted-foreground">
+                Compiled functions • 6× faster
+              </p>
             </div>
           </div>
         </div>
