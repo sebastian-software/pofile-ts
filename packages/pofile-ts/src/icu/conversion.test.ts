@@ -8,7 +8,7 @@ import {
 } from "./conversion"
 import type { PoItem, PoFile } from "../types"
 import { createItem } from "../Item"
-import { createPoFile } from "../PO"
+import { createPoFile } from "../parse"
 
 function createPluralItem(overrides: Partial<PoItem> = {}): PoItem {
   return {

@@ -1,7 +1,7 @@
-import type { ParserState, PoFile, PoItem } from "./types"
-import { createItem } from "./Item"
-import { extractString } from "./utils"
-import { RE_HEADER_MSGID, RE_HEADER_CONTINUATION, RE_HEADER_COMPLETE } from "./constants"
+import type { ParserState, PoFile, PoItem } from "../types"
+import { createItem } from "../Item"
+import { extractString } from "../utils"
+import { RE_HEADER_MSGID, RE_HEADER_CONTINUATION, RE_HEADER_COMPLETE } from "../constants"
 
 /**
  * Splits PO file content into header section and body lines.

@@ -40,6 +40,32 @@
  *   (few=3, many=6 only).
  */
 
+import type { ParsedPluralForms } from "./types"
+
+/**
+ * Parses the Plural-Forms header value.
+ * Example: "nplurals=2; plural=(n != 1);"
+ */
+export function parsePluralForms(pluralFormsString: string | undefined): ParsedPluralForms {
+  const parts = (pluralFormsString ?? "").split(";")
+  const results: Record<string, string> = {}
+
+  for (const part of parts) {
+    const trimmed = part.trim()
+    const eqIndex = trimmed.indexOf("=")
+    if (eqIndex > 0) {
+      const key = trimmed.substring(0, eqIndex).trim()
+      const value = trimmed.substring(eqIndex + 1).trim()
+      results[key] = value
+    }
+  }
+
+  return {
+    nplurals: results.nplurals,
+    plural: results.plural
+  }
+}
+
 /**
  * Plural category variants used across all languages.
  * Based on CLDR 45+ plural rules.

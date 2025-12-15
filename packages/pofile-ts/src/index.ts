@@ -1,5 +1,6 @@
-// Main functions
-export { parsePo, stringifyPo, createPoFile, parsePluralForms } from "./PO"
+// Core API
+export { parsePo, createPoFile } from "./parse"
+export { stringifyPo } from "./stringify"
 export { createItem, stringifyItem } from "./Item"
 
 // Header utilities
@@ -23,6 +24,7 @@ export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./
 
 // Plural utilities
 export {
+  parsePluralForms,
   getPluralCategories,
   getPluralCount,
   getPluralFormsHeader,
@@ -58,7 +60,7 @@ export {
 } from "./icu/index"
 
 // Serialization utilities
-export { DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
+export { DEFAULT_SERIALIZE_OPTIONS } from "./internal/serialization"
 
 // Types
 export type {

@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll } from "vitest"
 import * as fs from "node:fs"
 import * as path from "node:path"
-import { parsePo, stringifyPo, parsePluralForms } from "./PO"
+import { parsePo } from "./parse"
+import { stringifyPo } from "./stringify"
+import { parsePluralForms } from "./plurals"
 import type { PoFile } from "./types"
 
 const FIXTURES_DIR = path.join(__dirname, "fixtures")

@@ -1,5 +1,5 @@
 import type { CreateItemOptions, PoItem, SerializeOptions } from "./types"
-import { formatKeyword, DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
+import { formatKeyword, DEFAULT_SERIALIZE_OPTIONS } from "./internal/serialization"
 import { escapeString } from "./utils"
 
 /**
