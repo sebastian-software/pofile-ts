@@ -244,59 +244,61 @@ describe("getPluralSamples", () => {
 describe("parsePluralFormsHeader", () => {
   it("parses German plural forms header", () => {
     const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(2)
-    expect(result!.expression).toBe("(n != 1)")
-    expect(result!.matchedVariant).toBe("B")
-    expect(result!.pluralFunc).not.toBeNull()
-    expect(result!.pluralFunc!(1)).toBe(0)
-    expect(result!.pluralFunc!(0)).toBe(1)
-    expect(result!.pluralFunc!(5)).toBe(1)
+    expect(result).toMatchObject({
+      nplurals: 2,
+      expression: "(n != 1)",
+      matchedVariant: "B"
+    })
+    expect(result?.pluralFunc).toBeDefined()
+    expect(result?.pluralFunc?.(1)).toBe(0)
+    expect(result?.pluralFunc?.(0)).toBe(1)
+    expect(result?.pluralFunc?.(5)).toBe(1)
   })
 
   it("parses Polish plural forms header", () => {
     const header = getPluralFormsHeader("pl")
     const result = parsePluralFormsHeader(header)
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(4)
-    expect(result!.matchedVariant).toBe("E")
-    expect(result!.pluralFunc).not.toBeNull()
-    expect(result!.pluralFunc!(1)).toBe(0) // one
-    expect(result!.pluralFunc!(2)).toBe(1) // few
-    expect(result!.pluralFunc!(5)).toBe(2) // many
+    expect(result).toMatchObject({
+      nplurals: 4,
+      matchedVariant: "E"
+    })
+    expect(result?.pluralFunc).toBeDefined()
+    expect(result?.pluralFunc?.(1)).toBe(0) // one
+    expect(result?.pluralFunc?.(2)).toBe(1) // few
+    expect(result?.pluralFunc?.(5)).toBe(2) // many
   })
 
   it("parses Arabic plural forms header", () => {
     const header = getPluralFormsHeader("ar")
     const result = parsePluralFormsHeader(header)
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(6)
-    expect(result!.matchedVariant).toBe("H")
-    expect(result!.pluralFunc!(0)).toBe(0) // zero
-    expect(result!.pluralFunc!(1)).toBe(1) // one
-    expect(result!.pluralFunc!(2)).toBe(2) // two
+    expect(result).toMatchObject({
+      nplurals: 6,
+      matchedVariant: "H"
+    })
+    expect(result?.pluralFunc?.(0)).toBe(0) // zero
+    expect(result?.pluralFunc?.(1)).toBe(1) // one
+    expect(result?.pluralFunc?.(2)).toBe(2) // two
   })
 
   it("parses Chinese plural forms header (nplurals=1)", () => {
     const result = parsePluralFormsHeader("nplurals=1; plural=0;")
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(1)
-    expect(result!.matchedVariant).toBe("A")
-    expect(result!.pluralFunc!(0)).toBe(0)
-    expect(result!.pluralFunc!(100)).toBe(0)
+    expect(result).toMatchObject({
+      nplurals: 1,
+      matchedVariant: "A"
+    })
+    expect(result?.pluralFunc?.(0)).toBe(0)
+    expect(result?.pluralFunc?.(100)).toBe(0)
   })
 
   it("handles whitespace variations", () => {
     const result = parsePluralFormsHeader("nplurals = 2 ; plural = ( n != 1 ) ;")
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(2)
+    expect(result).toMatchObject({ nplurals: 2 })
   })
 
   it("handles alternative formulations of n != 1", () => {
     const result = parsePluralFormsHeader("nplurals=2; plural=n!=1;")
-    expect(result).not.toBeNull()
-    expect(result!.matchedVariant).toBe("B")
-    expect(result!.pluralFunc).not.toBeNull()
+    expect(result).toMatchObject({ matchedVariant: "B" })
+    expect(result?.pluralFunc).toBeDefined()
   })
 
   it("returns null for invalid headers", () => {
@@ -308,11 +310,12 @@ describe("parsePluralFormsHeader", () => {
 
   it("returns null pluralFunc for unknown expressions", () => {
     const result = parsePluralFormsHeader("nplurals=3; plural=n%10;")
-    expect(result).not.toBeNull()
-    expect(result!.nplurals).toBe(3)
-    expect(result!.expression).toBe("n%10")
-    expect(result!.pluralFunc).toBeNull()
-    expect(result!.matchedVariant).toBeNull()
+    expect(result).toMatchObject({
+      nplurals: 3,
+      expression: "n%10",
+      pluralFunc: null,
+      matchedVariant: null
+    })
   })
 
   it("roundtrips with getPluralFormsHeader for all variants", () => {
@@ -322,12 +325,15 @@ describe("parsePluralFormsHeader", () => {
       const header = getPluralFormsHeader(locale)
       const result = parsePluralFormsHeader(header)
       expect(result).not.toBeNull()
-      expect(result!.pluralFunc).not.toBeNull()
+      expect(result?.pluralFunc).toBeDefined()
 
       // Verify the parsed function matches the original
       const originalFn = getPluralFunction(locale)
-      for (let n = 0; n <= 100; n++) {
-        expect(result!.pluralFunc!(n)).toBe(originalFn(n))
+      const pluralFunc = result?.pluralFunc
+      if (pluralFunc) {
+        for (let n = 0; n <= 100; n++) {
+          expect(pluralFunc(n)).toBe(originalFn(n))
+        }
       }
     }
   })
