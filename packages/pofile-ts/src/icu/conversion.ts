@@ -4,8 +4,8 @@
  * Converts between Gettext plural format and ICU MessageFormat.
  */
 
-import type { PoItem, PoFile } from "./types"
-import { getPluralCategories, getPluralFunction, PLURAL_SAMPLES } from "./plurals"
+import type { PoItem, PoFile } from "../types"
+import { getPluralCategories, getPluralFunction, PLURAL_SAMPLES } from "../plurals"
 
 /**
  * Options for Gettext to ICU conversion.

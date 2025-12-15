@@ -1,8 +1,22 @@
 /**
- * ICU MessageFormat parsing utilities.
+ * ICU MessageFormat utilities.
+ *
+ * - Parsing: parseIcu, validateIcu, extractVariables
+ * - Conversion: gettextToIcu, icuToGettextSource, normalizeToIcu
  */
 
 export { parseIcu, IcuParser, IcuSyntaxError } from "./parser"
+
+export {
+  gettextToIcu,
+  isPluralItem,
+  normalizeItemToIcu,
+  normalizeToIcu,
+  icuToGettextSource,
+  type GettextToIcuOptions,
+  type NormalizeToIcuOptions,
+  type IcuToGettextOptions
+} from "./conversion"
 
 export {
   extractVariables,

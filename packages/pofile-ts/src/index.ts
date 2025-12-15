@@ -34,17 +34,9 @@ export {
 // Comment utilities
 export { splitMultilineComments } from "./comments"
 
-// ICU conversion (Gettext ↔ ICU)
+// ICU MessageFormat utilities
 export {
-  gettextToIcu,
-  isPluralItem,
-  normalizeItemToIcu,
-  normalizeToIcu,
-  icuToGettextSource
-} from "./icu"
-
-// ICU MessageFormat parsing
-export {
+  // Parsing
   parseIcu,
   IcuParser,
   IcuSyntaxError,
@@ -56,7 +48,13 @@ export {
   hasSelect,
   hasIcuSyntax,
   IcuNodeType,
-  IcuErrorKind
+  IcuErrorKind,
+  // Conversion (Gettext ↔ ICU)
+  gettextToIcu,
+  isPluralItem,
+  normalizeItemToIcu,
+  normalizeToIcu,
+  icuToGettextSource
 } from "./icu/index"
 
 // Serialization utilities
@@ -76,11 +74,15 @@ export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
 export type { GenerateIdsOptions } from "./messageId"
-export type { GettextToIcuOptions, NormalizeToIcuOptions, IcuToGettextOptions } from "./icu"
 export type { ParsedPluralFormsResult } from "./plurals"
 
 // ICU MessageFormat types
 export type {
+  // Conversion types
+  GettextToIcuOptions,
+  NormalizeToIcuOptions,
+  IcuToGettextOptions,
+  // Parser types
   IcuNode,
   IcuLiteralNode,
   IcuArgumentNode,

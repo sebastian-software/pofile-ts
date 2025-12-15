@@ -5,10 +5,10 @@ import {
   normalizeItemToIcu,
   normalizeToIcu,
   icuToGettextSource
-} from "./icu"
-import type { PoItem, PoFile } from "./types"
-import { createItem } from "./Item"
-import { createPoFile } from "./PO"
+} from "./conversion"
+import type { PoItem, PoFile } from "../types"
+import { createItem } from "../Item"
+import { createPoFile } from "../PO"
 
 function createPluralItem(overrides: Partial<PoItem> = {}): PoItem {
   return {
