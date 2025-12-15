@@ -19,71 +19,67 @@ const cldr = pluralsData as CLDRPluralRules
 const pluralRules = cldr.supplemental["plurals-type-cardinal"]
 
 /**
+ * Expand a CLDR range like "2~4" into sample numbers.
+ */
+function expandRange(rangeStr: string): number[] {
+  const parts = rangeStr.split("~").map(Number)
+  const start = parts[0] ?? 0
+  const end = parts[1] ?? 0
+
+  if (!Number.isInteger(start) || !Number.isInteger(end)) {
+    return [start, (start + end) / 2, end]
+  }
+
+  if (end - start <= 20) {
+    const expanded: number[] = []
+    for (let i = start; i <= end; i++) {
+      expanded.push(i)
+    }
+    return expanded
+  }
+
+  return [start, end]
+}
+
+/**
+ * Parse numbers from a CLDR sample string (comma-separated, may include ranges).
+ */
+function parseNumberList(sampleStr: string, parseNum: (s: string) => number): number[] {
+  const results: number[] = []
+  const cleaned = sampleStr.replace(/…/g, "").trim()
+
+  for (const part of cleaned.split(",")) {
+    const trimmed = part.trim()
+    if (!trimmed) {
+      continue
+    }
+
+    if (trimmed.includes("~")) {
+      results.push(...expandRange(trimmed))
+    } else {
+      const num = parseNum(trimmed)
+      if (!isNaN(num)) {
+        results.push(num)
+      }
+    }
+  }
+
+  return results
+}
+
+/**
  * Parse CLDR sample numbers from a rule string.
  * Format: "n = 1 @integer 1, 21, 31 @decimal 1.0, 21.0"
  */
 function parseSamples(rule: string): { integers: number[]; decimals: number[] } {
-  const integers: number[] = []
-  const decimals: number[] = []
+  const intRegex = /@integer\s+([^@]+)/
+  const decRegex = /@decimal\s+([^@]+)/
 
-  // Extract @integer samples
-  const intMatch = rule.match(/@integer\s+([^@]+)/)
-  if (intMatch && intMatch[1]) {
-    const intPart = intMatch[1].replace(/…/g, "").trim()
-    for (const part of intPart.split(",")) {
-      const trimmed = part.trim()
-      if (!trimmed) {
-        continue
-      }
+  const intMatch = intRegex.exec(rule)
+  const integers = intMatch?.[1] ? parseNumberList(intMatch[1], (s) => parseInt(s, 10)) : []
 
-      // Handle ranges like "2~4" or "11~26"
-      if (trimmed.includes("~")) {
-        const parts = trimmed.split("~").map(Number)
-        const start = parts[0] ?? 0
-        const end = parts[1] ?? 0
-        // Only expand small ranges to avoid huge test sets
-        if (end - start <= 20) {
-          for (let i = start; i <= end; i++) {
-            integers.push(i)
-          }
-        } else {
-          // For large ranges, just use the boundaries
-          integers.push(start, end)
-        }
-      } else {
-        const num = parseInt(trimmed, 10)
-        if (!isNaN(num)) {
-          integers.push(num)
-        }
-      }
-    }
-  }
-
-  // Extract @decimal samples
-  const decMatch = rule.match(/@decimal\s+([^@]+)/)
-  if (decMatch && decMatch[1]) {
-    const decPart = decMatch[1].replace(/…/g, "").trim()
-    for (const part of decPart.split(",")) {
-      const trimmed = part.trim()
-      if (!trimmed) {
-        continue
-      }
-
-      // Handle ranges like "0.0~0.9"
-      if (trimmed.includes("~")) {
-        const parts = trimmed.split("~").map(Number)
-        const start = parts[0] ?? 0
-        const end = parts[1] ?? 0
-        // For decimal ranges, just use a few samples
-        decimals.push(start, (start + end) / 2, end)
-      } else {
-        const num = parseFloat(trimmed)
-        if (!isNaN(num)) {
-          decimals.push(num)
-        }
-      }
-    }
-  }
+  const decMatch = decRegex.exec(rule)
+  const decimals = decMatch?.[1] ? parseNumberList(decMatch[1], parseFloat) : []
 
   return { integers, decimals }
 }
@@ -218,7 +214,7 @@ describe("CLDR Validation", () => {
           for (const n of integers) {
             const actualIndex = fn(n)
             if (actualIndex !== expectedIndex) {
-              const actualCategory = categories[actualIndex] || `index-${actualIndex}`
+              const actualCategory = categories[actualIndex] ?? `index-${actualIndex}`
               errors.push(
                 `n=${n}: expected "${expectedCategory}" (${expectedIndex}), got "${actualCategory}" (${actualIndex})`
               )
@@ -273,7 +269,7 @@ describe("CLDR Validation", () => {
           for (const n of trueDecimals) {
             const actualIndex = fn(n)
             if (actualIndex !== expectedIndex) {
-              const actualCategory = categories[actualIndex] || `index-${actualIndex}`
+              const actualCategory = categories[actualIndex] ?? `index-${actualIndex}`
               errors.push(
                 `n=${n}: expected "${expectedCategory}" (${expectedIndex}), got "${actualCategory}" (${actualIndex})`
               )

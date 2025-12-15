@@ -461,11 +461,6 @@ export function getPluralCount(locale: string): number {
 
 // Helper predicates for complex plural rules
 const isFewSlavic = (n: number) => n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
-const isManySlavicEast = (n: number) =>
-  n % 10 === 0 || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 11 && n % 100 <= 14)
-const isManySlavicPolish = (n: number) =>
-  n !== 1 &&
-  ((n % 10 >= 0 && n % 10 <= 1) || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 12 && n % 100 <= 14))
 const isInteger = (n: number) => Number.isInteger(n)
 
 /**
