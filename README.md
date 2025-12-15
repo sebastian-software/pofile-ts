@@ -18,13 +18,13 @@
 [![Tree Shakeable](https://img.shields.io/badge/tree--shakeable-yes-brightgreen)](https://bundlephobia.com/package/pofile-ts)
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen)](https://nodejs.org/)
 
-**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 3× faster runtime than Lingui/FormatJS, CLDR 48 plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
+**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 3× faster runtime than Lingui/FormatJS, native CLDR plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
 
 ## Why pofile-ts?
 
 - **8× faster parsing** — Hand-optimized with first-char dispatch and fast-paths. No regex soup.
 - **ICU Compiler** — Compile ICU messages to JavaScript functions. 3× faster runtime than Lingui and FormatJS.
-- **CLDR 48 plurals** — Native `Intl.PluralRules` for all 100+ locales. Zero CLDR data in bundle.
+- **Native CLDR plurals** — Uses `Intl.PluralRules` for all 100+ locales. Zero CLDR data in bundle.
 - **CSP-safe** — No `eval()`, no `new Function()`. Works in strict security environments.
 - **Modern-first** — Built for Node 20+, ESM-native, tree-shakeable. No legacy polyfills.
 - **Zero dependencies** — ~11KB full, ~5KB tree-shaken. No transitive deps, no supply chain bloat.

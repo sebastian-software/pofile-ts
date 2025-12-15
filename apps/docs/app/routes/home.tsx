@@ -58,7 +58,7 @@ export default function Home() {
               <span className="font-semibold text-fd-foreground">8× faster</span>
             </p>
             <p className="max-w-xl text-sm text-fd-muted-foreground md:text-base">
-              Modern i18n toolkit with ICU compiler, CLDR 48 plurals, and format conversion.
+              Modern i18n toolkit with ICU compiler, native CLDR plurals, and format conversion.
               <br className="hidden md:block" />
               Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
             </p>
@@ -180,8 +180,8 @@ export default function Home() {
             />
             <FeatureCard
               icon={<GlobeIcon />}
-              title="CLDR 48 Plurals"
-              description="Native Intl.PluralRules for all 100+ locales. Zero CLDR data in bundle — the runtime provides it."
+              title="Native CLDR Plurals"
+              description="Uses Intl.PluralRules for all 100+ locales. Zero CLDR data in bundle — the runtime provides it."
               gradient="from-green-500 to-emerald-500"
             />
             <FeatureCard
