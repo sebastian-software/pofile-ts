@@ -120,7 +120,9 @@ import {
   getPluralCategories,
   getPluralCount,
   getPluralFormsHeader,
-  getPluralFunction
+  getPluralFunction,
+  getPluralSamples,
+  parsePluralFormsHeader
 } from "pofile-ts"
 
 getPluralCategories("de") // → ["one", "other"]
@@ -135,7 +137,23 @@ getPluralFormsHeader("de")
 const fn = getPluralFunction("de")
 fn(1) // → 0 (one)
 fn(5) // → 1 (other)
+
+// Sample numbers for each category
+getPluralSamples("pl")
+// → { one: [1], few: [2, 3, 4, 22...], many: [0, 5, 6...], other: [...] }
+
+// Parse Plural-Forms header back to function (CSP-safe)
+const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
+result.pluralFunc(1) // → 0 (one)
+result.pluralFunc(5) // → 1 (other)
 ```
+
+### ParsedPluralFormsResult
+
+<auto-type-table
+  path="../../../../packages/pofile-ts/src/plurals.ts"
+  name="ParsedPluralFormsResult"
+/>
 
 ## ICU Conversion
 
@@ -163,3 +181,19 @@ icuToGettextSource("{count, plural, one {# item} other {# items}}")
 ### IcuToGettextOptions
 
 <auto-type-table path="../../../../packages/pofile-ts/src/icu.ts" name="IcuToGettextOptions" />
+
+## Comment Utilities
+
+Split multiline comments for PO format output.
+
+```typescript
+import { splitMultilineComments } from "pofile-ts"
+
+// Source comments often contain newlines
+splitMultilineComments(["Line1\nLine2", "Line3"])
+// → ["Line1", "Line2", "Line3"]
+
+// Handles Windows/Mac line endings, trims whitespace
+splitMultilineComments(["  First\r\n  Second  "])
+// → ["First", "Second"]
+```

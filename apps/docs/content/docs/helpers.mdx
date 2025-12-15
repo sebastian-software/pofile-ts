@@ -5,6 +5,26 @@ description: Utilities for common i18n workflows
 
 Beyond parsing and serialization, pofile-ts includes utilities for common i18n workflows. All helpers are tree-shakeable — only import what you need.
 
+## Comment Processing
+
+Split multiline comments into individual lines for PO format output. Useful when extracting comments from source code:
+
+```typescript
+import { splitMultilineComments } from "pofile-ts"
+
+// Source comments often contain newlines
+splitMultilineComments(["Line1\nLine2", "Line3"])
+// → ["Line1", "Line2", "Line3"]
+
+// Handles Windows/Mac line endings
+splitMultilineComments(["First\r\nSecond"])
+// → ["First", "Second"]
+
+// Trims whitespace, filters empty lines
+splitMultilineComments(["  Line1\n\n  Line2  "])
+// → ["Line1", "Line2"]
+```
+
 ## Default Headers
 
 Create properly formatted PO headers with sensible defaults:
@@ -76,7 +96,30 @@ createReference("src\\components\\Button.tsx", 10)
 
 ## Plural Categories (CLDR)
 
-Get CLDR plural categories for any locale — useful for building ICU messages or validating translations:
+Get CLDR plural categories for any locale — useful for building ICU messages or validating translations.
+
+### How the Data is Stored
+
+Instead of shipping the full CLDR data (~50KB+), pofile-ts uses a **variant system**:
+
+- There are only **8 distinct plural rule patterns** worldwide (variants A-H)
+- Each of the 140+ supported locales maps to one variant
+- This reduces the data to **~2KB** while covering all CLDR languages
+
+| Variant | Forms                                | Languages                                   |
+| ------- | ------------------------------------ | ------------------------------------------- |
+| A       | 1 (other)                            | Chinese, Japanese, Korean, Vietnamese, Thai |
+| B       | 2 (one, other)                       | English, German, Spanish, French, Italian   |
+| C       | 3 (one, few, other)                  | Russian, Ukrainian, Croatian, Serbian       |
+| D       | 3 (one, two, other)                  | Slovenian, Sorbian, Sami                    |
+| E       | 4 (one, few, many, other)            | Polish, Belarusian                          |
+| F       | 4 (one, two, few, other)             | Scottish Gaelic, Cornish                    |
+| G       | 5 (one, two, few, many, other)       | Breton, Irish, Manx, Maltese                |
+| H       | 6 (zero, one, two, few, many, other) | Arabic, Welsh                               |
+
+The rules are derived from the [CLDR Plural Rules](https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html).
+
+### Basic Usage
 
 ```typescript
 import {
@@ -104,6 +147,56 @@ selectPlural(2) // → 1 (few)
 selectPlural(5) // → 2 (many)
 selectPlural(22) // → 1 (few)
 ```
+
+### Plural Samples
+
+Get representative sample numbers for each plural category. Useful for previewing translations in TMS tools or testing:
+
+```typescript
+import { getPluralSamples } from "pofile-ts"
+
+getPluralSamples("de")
+// → { one: [1], other: [0, 2, 3, 5, 10, 100, 1000] }
+
+getPluralSamples("pl")
+// → {
+//     one: [1],
+//     few: [2, 3, 4, 22, 23, 24, 32, 33, 34],
+//     many: [0, 5, 6, 7, 8, 9, 10, 11, ...],
+//     other: [1.5, 2.5, 0.5]  // fractions
+//   }
+
+getPluralSamples("ar")
+// → { zero: [0], one: [1], two: [2], few: [...], many: [...], other: [...] }
+```
+
+The samples are verified to correctly trigger each plural category via the locale's plural function.
+
+### Parse Plural-Forms Header
+
+Parse a Plural-Forms header and get a CSP-safe plural function. Uses pattern matching against known CLDR expressions instead of `eval()`:
+
+```typescript
+import { parsePluralFormsHeader } from "pofile-ts"
+
+const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
+// → {
+//     nplurals: 2,
+//     expression: "(n != 1)",
+//     pluralFunc: (n) => ...,  // CSP-safe function
+//     matchedVariant: "B"      // recognized as Germanic pattern
+//   }
+
+result.pluralFunc(1) // → 0 (one)
+result.pluralFunc(5) // → 1 (other)
+
+// Unknown expressions return null for pluralFunc (no silent failures)
+const custom = parsePluralFormsHeader("nplurals=3; plural=n%10;")
+custom.pluralFunc // → null
+custom.expression // → "n%10" (still available for inspection)
+```
+
+This approach covers 99%+ of real-world PO files since they use standard gettext expressions.
 
 ## ICU Conversion
 
