@@ -187,15 +187,14 @@ Compiling ICU messages to functions and executing them:
 
 ## Bundle Size
 
-The full library is **~11KB gzipped**. Tree-shaking reduces this further:
+The full library is **~11KB gzipped**. Tree-shaking lets you import only what you need:
 
-| Import                         | Gzipped |
-| ------------------------------ | ------: |
-| Full library                   |   ~11KB |
-| `parsePo` + `stringifyPo` only |    ~5KB |
-| + Plural helpers               |    +1KB |
-| + ICU conversion               |    +2KB |
-| + ICU parser                   |    +3KB |
+| Export         | Gzipped |
+| -------------- | ------: |
+| PO parsing     |    ~5KB |
+| Plural helpers |    ~1KB |
+| ICU conversion |    ~2KB |
+| ICU parser     |    ~3KB |
 
 Plural helpers use native `Intl.PluralRules` — no CLDR data in the bundle.
 
