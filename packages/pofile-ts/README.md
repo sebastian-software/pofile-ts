@@ -21,15 +21,14 @@ A modern, focused library for reading and writing [GNU gettext](https://www.gnu.
 
 ## Features
 
-- 📖 **Parse** PO files from strings
-- ✏️ **Serialize** PO files back to strings
+- 📖 **Parse** PO files from strings — 8× faster than alternatives
+- ✏️ **Serialize** PO files back to strings — 5× faster than alternatives
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
 - 🌍 **CLDR 48 plural data** — 100% compliant for all major languages
 - 🔄 **ICU conversion** — Gettext ↔ ICU MessageFormat
 - 📦 **Zero dependencies** — browser-compatible
 - 🌳 **Tree-shakeable** — only bundle what you use
 - 💎 **TypeScript-first** — full type definitions
-- ⚡ **23× faster** than alternatives
 
 ## Installation
 
