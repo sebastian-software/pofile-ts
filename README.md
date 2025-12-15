@@ -7,7 +7,7 @@
 <h1 align="center">pofile-ts</h1>
 
 <p align="center">
-  <strong>The fast, modern PO file toolkit for JavaScript</strong>
+  <strong>Parse, compile & transform PO files — 8× faster</strong>
 </p>
 
 [![CI](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/pofile-ts/actions/workflows/ci.yml)
@@ -16,16 +16,18 @@
 [![npm downloads](https://img.shields.io/npm/dm/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/pofile-ts)](https://bundlephobia.com/package/pofile-ts)
 [![Tree Shakeable](https://img.shields.io/badge/tree--shakeable-yes-brightgreen)](https://bundlephobia.com/package/pofile-ts)
+[![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen)](https://nodejs.org/)
 
-**pofile-ts** is a complete solution for working with [GNU gettext](https://www.gnu.org/software/gettext/) PO files in modern JavaScript and TypeScript projects. Whether you're building translation pipelines, integrating with i18n frameworks or creating custom localization tooling — pofile-ts gives you everything you need.
+**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 3× faster runtime than Lingui/FormatJS, CLDR 48 plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
 
 ## Why pofile-ts?
 
-- **Battle-tested parsing** — Handles edge cases, malformed files, and complex escape sequences that break other parsers
-- **Complete i18n toolkit** — Not just a parser: includes CLDR plural rules, ICU MessageFormat conversion, and workflow helpers
-- **Production-ready** — Used in real-world applications, fully tested against CLDR 48 specification
-- **Runs everywhere** — Works in Node.js, browsers, edge runtimes, and build tools like Vite or webpack
-- **Lightweight** — Zero dependencies, ~11KB gzipped, tree-shakeable to ~5KB for basic usage
+- **8× faster parsing** — Hand-optimized with first-char dispatch and fast-paths. No regex soup.
+- **ICU Compiler** — Compile ICU messages to JavaScript functions. 3× faster runtime than Lingui and FormatJS.
+- **CLDR 48 plurals** — Native `Intl.PluralRules` for all 100+ locales. Zero CLDR data in bundle.
+- **CSP-safe** — No `eval()`, no `new Function()`. Works in strict security environments.
+- **Modern-first** — Built for Node 20+, ESM-native, tree-shakeable. No legacy polyfills.
+- **Zero dependencies** — ~11KB full, ~5KB tree-shaken. No transitive deps, no supply chain bloat.
 
 ## Features
 
@@ -45,19 +47,18 @@
 
 ### Developer Experience
 
-- 📦 **Zero dependencies** — No bloat, works in browsers and edge runtimes
-- 🌳 **Tree-shakeable** — Only bundle what you use (~5KB for parsing only)
-- 💎 **TypeScript-first** — Full type definitions, excellent IDE support
-- 🛡️ **CSP-safe** — No `eval()` or `new Function()`, works in strict environments
+- 📦 **Zero dependencies** — No bloat, no supply chain risk
+- 🌳 **Tree-shakeable** — ~5KB for PO parsing only, ~11KB full
+- 💎 **TypeScript-first** — Written in TypeScript, full type definitions
+- 🛡️ **CSP-safe** — No `eval()`, no `new Function()`
+- ⚡ **Modern-first** — Node 20+, ESM-native, no legacy polyfills
 
 ## Use Cases
 
-- **Translation pipelines** — Read PO files from translators, merge with source strings, write back
-- **Build tool plugins** — Parse PO files in Vite, webpack, or Rollup plugins
-- **Message extraction** — Generate PO files from source code for translation
-- **Format conversion** — Convert legacy Gettext projects to modern ICU MessageFormat
-- **Translation management** — Build custom TMS integrations or translation workflows
-- **Plural validation** — Verify translations have correct plural forms for target locales
+- **Vite/Webpack plugins** — Parse and compile PO files at build time for zero runtime cost
+- **TMS pipelines** — Crowdin, Lokalise, Phrase — sync and transform translations
+- **CI/CD validation** — Validate plural forms, variables, and syntax in PRs
+- **Custom tooling** — Low-level APIs for message extraction and code generation
 
 ## Installation
 

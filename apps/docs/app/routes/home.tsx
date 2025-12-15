@@ -5,11 +5,11 @@ import { baseOptions } from "@/lib/layout.shared"
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "pofile-ts — Fast PO File Toolkit for JavaScript" },
+    { title: "pofile-ts — Parse, Compile & Transform PO Files 8× Faster" },
     {
       name: "description",
       content:
-        "The fast, modern PO file toolkit for JavaScript. Parse, serialize, and transform GNU gettext files with CLDR plural rules and ICU conversion."
+        "Modern PO file toolkit for JavaScript. 8× faster parsing, ICU compiler with 3× faster runtime than Lingui/FormatJS. Zero dependencies, TypeScript-first, ESM-native."
     }
   ]
 }
@@ -54,7 +54,13 @@ export default function Home() {
               pofile-ts
             </h1>
             <p className="text-xl leading-relaxed text-fd-muted-foreground md:text-2xl">
-              The fast, modern PO file toolkit for JavaScript
+              Parse, compile & transform PO files —{" "}
+              <span className="font-semibold text-fd-foreground">8× faster</span>
+            </p>
+            <p className="max-w-xl text-sm text-fd-muted-foreground md:text-base">
+              Modern i18n toolkit with ICU compiler, CLDR 48 plurals, and format conversion.
+              <br className="hidden md:block" />
+              Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
             </p>
           </div>
 
@@ -106,9 +112,46 @@ export default function Home() {
           <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm text-fd-muted-foreground">
             <span>Zero dependencies</span>
             <span className="text-fd-border">•</span>
-            <span>~14KB gzipped</span>
+            <span>~11KB gzipped</span>
             <span className="text-fd-border">•</span>
-            <span>Tree-shakeable</span>
+            <span>Tree-shakeable to ~5KB</span>
+            <span className="text-fd-border">•</span>
+            <span>ESM &amp; CJS</span>
+          </div>
+          <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <a
+              href="https://codecov.io/gh/sebastian-software/pofile-ts"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://codecov.io/gh/sebastian-software/pofile-ts/graph/badge.svg"
+                alt="Coverage"
+                className="h-5"
+              />
+            </a>
+            <a
+              href="https://www.npmjs.com/package/pofile-ts"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://img.shields.io/npm/dm/pofile-ts.svg"
+                alt="npm downloads"
+                className="h-5"
+              />
+            </a>
+            <a
+              href="https://bundlephobia.com/package/pofile-ts"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://img.shields.io/bundlephobia/minzip/pofile-ts"
+                alt="Bundle Size"
+                className="h-5"
+              />
+            </a>
           </div>
         </div>
       </section>
@@ -118,45 +161,45 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Why pofile-ts?</h2>
           <p className="mx-auto mb-14 max-w-2xl text-center text-lg text-fd-muted-foreground">
-            A complete solution for working with GNU gettext PO files in modern JavaScript and
-            TypeScript projects
+            Not just a parser — a complete i18n toolkit that's faster, smaller, and more modern than
+            the alternatives
           </p>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<SpeedIcon />}
               title="8× Faster Parsing"
-              description="Hand-optimized for performance. No regex soup, no unnecessary allocations — just fast parsing and serialization."
+              description="Hand-optimized with first-char dispatch and fast-paths. No regex soup — just raw performance for build tools and CI."
               gradient="from-blue-500 to-cyan-500"
             />
             <FeatureCard
-              icon={<GlobeIcon />}
-              title="Complete i18n Toolkit"
-              description="CLDR 48 plural rules, ICU MessageFormat parser (2.5× faster than FormatJS), and format conversion helpers."
+              icon={<CompileIcon />}
+              title="ICU Compiler"
+              description="Compile ICU messages to JavaScript functions. 3× faster runtime than Lingui and FormatJS — no AST interpretation."
               gradient="from-purple-500 to-fuchsia-500"
             />
             <FeatureCard
-              icon={<ShieldIcon />}
-              title="Battle-tested"
-              description="Handles edge cases, malformed files, and complex escape sequences that break other parsers."
+              icon={<GlobeIcon />}
+              title="CLDR 48 Plurals"
+              description="Native Intl.PluralRules for all 100+ locales. Zero CLDR data in bundle — the runtime provides it."
               gradient="from-green-500 to-emerald-500"
             />
             <FeatureCard
-              icon={<BoxIcon />}
-              title="Runs Everywhere"
-              description="Works in Node.js, browsers, edge runtimes, and build tools like Vite or webpack. CSP-safe."
+              icon={<ShieldIcon />}
+              title="CSP-Safe"
+              description="No eval(), no new Function(). Works in strict CSP environments, edge runtimes, and security-conscious apps."
               gradient="from-amber-500 to-orange-500"
             />
             <FeatureCard
-              icon={<TypeScriptIcon />}
-              title="TypeScript First"
-              description="Written in TypeScript with full type definitions for excellent IDE support and type safety."
+              icon={<ModernIcon />}
+              title="Modern-First"
+              description="Built for Node 20+, ESM-native, tree-shakeable. No legacy polyfills — clean, modern JavaScript."
               gradient="from-blue-500 to-indigo-500"
             />
             <FeatureCard
               icon={<FeatherIcon />}
-              title="Lightweight"
-              description="Zero dependencies. Full library is ~11KB gzipped, tree-shakes down to ~5KB for basic usage."
+              title="Zero Dependencies"
+              description="~11KB full, ~5KB tree-shaken. No transitive deps, no supply chain bloat. Just pofile-ts."
               gradient="from-rose-500 to-pink-500"
             />
           </div>
@@ -165,35 +208,84 @@ export default function Home() {
 
       {/* Performance */}
       <section className="border-t border-fd-border bg-fd-muted/20 px-6 py-20">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Performance</h2>
+        <div className="mx-auto max-w-5xl">
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Benchmarks</h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-fd-muted-foreground">
-            Hand-optimized for speed — no regex soup, no unnecessary allocations
+            Measured on Apple M1 Ultra, Node.js 22. Relative performance is consistent across
+            hardware.
           </p>
 
-          <div className="grid gap-8 md:grid-cols-2">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* PO Parsing */}
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-4 text-lg font-semibold">PO File Parsing</h3>
+              <h3 className="mb-1 text-lg font-semibold">PO Parsing</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">10K entries with plurals</p>
               <div className="space-y-3">
                 <BenchmarkBar label="pofile-ts" value={100} ops="211/s" fastest />
                 <BenchmarkBar label="gettext-parser" value={13} ops="27/s" />
                 <BenchmarkBar label="pofile" value={3} ops="7/s" />
               </div>
-              <p className="mt-4 text-sm text-fd-muted-foreground">10K entries • 8× faster</p>
+              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
+                8× faster
+              </p>
+            </div>
+
+            {/* PO Serialization */}
+            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 className="mb-1 text-lg font-semibold">PO Serialization</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">Same 10K entries</p>
+              <div className="space-y-3">
+                <BenchmarkBar label="pofile-ts" value={100} ops="255/s" fastest />
+                <BenchmarkBar label="pofile" value={40} ops="103/s" />
+                <BenchmarkBar label="gettext-parser" value={22} ops="55/s" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
+                5× faster
+              </p>
+            </div>
+
+            {/* ICU Parsing */}
+            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 className="mb-1 text-lg font-semibold">ICU Parsing</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">Plurals, selects, tags</p>
+              <div className="space-y-3">
+                <BenchmarkBar label="pofile-ts" value={100} ops="250k/s" fastest />
+                <BenchmarkBar label="@formatjs" value={40} ops="100k/s" />
+              </div>
+              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
+                2.5× faster, 4× smaller
+              </p>
             </div>
 
             {/* ICU Runtime */}
-            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-4 text-lg font-semibold">ICU Runtime</h3>
-              <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
-                <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
-                <BenchmarkBar label="@lingui" value={25} ops="200k/s" />
-              </div>
-              <p className="mt-4 text-sm text-fd-muted-foreground">
-                Compiled functions • 3× faster
+            <div className="rounded-xl border border-fd-border bg-fd-card p-6 lg:col-span-3">
+              <h3 className="mb-1 text-lg font-semibold">ICU Runtime (Compiled Functions)</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">
+                The real-world hot path: formatting messages at runtime
               </p>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="space-y-3">
+                  <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
+                  <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
+                  <BenchmarkBar label="@lingui (compiled)" value={25} ops="200k/s" />
+                </div>
+                <div className="flex flex-col justify-center md:col-span-2">
+                  <p className="text-sm text-fd-muted-foreground">
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">
+                      3× faster
+                    </span>{" "}
+                    than intl-messageformat,{" "}
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">
+                      4× faster
+                    </span>{" "}
+                    than Lingui's compiled format.
+                  </p>
+                  <p className="mt-2 text-xs text-fd-muted-foreground">
+                    The difference: pofile-ts compiles to native JavaScript functions with template
+                    literals — no AST walking at runtime.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -202,29 +294,29 @@ export default function Home() {
       {/* Use Cases */}
       <section className="border-t border-fd-border bg-fd-muted/20 px-6 py-20">
         <div className="mx-auto max-w-4xl">
-          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Use Cases</h2>
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Built For</h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-fd-muted-foreground">
-            From build tools to translation management
+            Whether you're building tools or integrating with frameworks
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <UseCase title="Translation pipelines">
-              Read PO files from translators, merge with source strings, write back
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <UseCase title="Vite/webpack Plugins" icon="🔧">
+              Parse and compile PO files at build time for zero runtime cost
             </UseCase>
-            <UseCase title="Build tool plugins">
-              Parse PO files in Vite, webpack, or Rollup plugins
+            <UseCase title="Lingui Integration" icon="🦜">
+              Convert Lingui's Gettext output to compiled ICU runtime
             </UseCase>
-            <UseCase title="Message extraction">
-              Generate PO files from source code for translation
+            <UseCase title="FormatJS Migration" icon="🔄">
+              Move from FormatJS to smaller, faster ICU compiler
             </UseCase>
-            <UseCase title="Format conversion">
-              Convert legacy Gettext projects to modern ICU MessageFormat
+            <UseCase title="TMS Pipelines" icon="🌐">
+              Crowdin, Lokalise, Phrase — sync and transform translations
             </UseCase>
-            <UseCase title="Translation management">
-              Build custom TMS integrations or translation workflows
+            <UseCase title="CI/CD Validation" icon="✅">
+              Validate plural forms, variables, and syntax in PRs
             </UseCase>
-            <UseCase title="Plural validation">
-              Verify translations have correct plural forms for target locales
+            <UseCase title="Custom Tooling" icon="⚡">
+              Low-level APIs for message extraction and code generation
             </UseCase>
           </div>
         </div>
@@ -233,9 +325,9 @@ export default function Home() {
       {/* Code examples */}
       <section className="border-t border-fd-border px-6 py-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Simple API</h2>
+          <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Clean, Functional API</h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-lg text-fd-muted-foreground">
-            Parse PO files and ICU messages in just a few lines
+            No classes, no side effects — just pure functions that do one thing well
           </p>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -245,64 +337,78 @@ export default function Home() {
                 <div className="h-3 w-3 rounded-full bg-red-500/60" />
                 <div className="h-3 w-3 rounded-full bg-amber-500/60" />
                 <div className="h-3 w-3 rounded-full bg-green-500/60" />
-                <span className="ml-2 text-sm text-fd-muted-foreground">po-parsing.ts</span>
+                <span className="ml-2 text-sm text-fd-muted-foreground">parse-po.ts</span>
               </div>
               <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
                 <code>
                   <span className="text-purple-600 dark:text-purple-400">import</span>
-                  {" { parsePo } "}
+                  {" { parsePo, stringifyPo } "}
                   <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
                   <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
                   {"\n\n"}
+                  <span className="text-fd-muted-foreground">
+                    {"// Parse → modify → serialize"}
+                  </span>
+                  {"\n"}
                   <span className="text-purple-600 dark:text-purple-400">const</span>
                   {" po = "}
                   <span className="text-blue-600 dark:text-blue-400">parsePo</span>
-                  {"(`\n"}
-                  <span className="text-emerald-600 dark:text-emerald-400">{'msgid "Hello"'}</span>
+                  {"(content)\n"}
+                  {"po.items[0].msgstr = ["}
+                  <span className="text-emerald-600 dark:text-emerald-400">"Hallo"</span>
+                  {"]\n"}
+                  <span className="text-purple-600 dark:text-purple-400">const</span>
+                  {" output = "}
+                  <span className="text-blue-600 dark:text-blue-400">stringifyPo</span>
+                  {"(po)\n\n"}
+                  <span className="text-fd-muted-foreground">{"// Full PO support:"}</span>
                   {"\n"}
-                  <span className="text-emerald-600 dark:text-emerald-400">{'msgstr "Hallo"'}</span>
-                  {"\n`)\n\n"}
-                  {"po.items[0].msgid   "}
-                  <span className="text-fd-muted-foreground">{'// "Hello"'}</span>
+                  <span className="text-fd-muted-foreground">
+                    {"// headers, plurals, context,"}
+                  </span>
                   {"\n"}
-                  {"po.items[0].msgstr  "}
-                  <span className="text-fd-muted-foreground">{'// ["Hallo"]'}</span>
+                  <span className="text-fd-muted-foreground">
+                    {"// flags, references, comments"}
+                  </span>
                 </code>
               </pre>
             </div>
 
-            {/* ICU Example */}
+            {/* ICU Compiler Example */}
             <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
               <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
                 <div className="h-3 w-3 rounded-full bg-red-500/60" />
                 <div className="h-3 w-3 rounded-full bg-amber-500/60" />
                 <div className="h-3 w-3 rounded-full bg-green-500/60" />
-                <span className="ml-2 text-sm text-fd-muted-foreground">icu-parsing.ts</span>
+                <span className="ml-2 text-sm text-fd-muted-foreground">compile-icu.ts</span>
               </div>
               <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
                 <code>
                   <span className="text-purple-600 dark:text-purple-400">import</span>
-                  {" { parseIcu, extractVariables } "}
+                  {" { compileIcu } "}
                   <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
                   <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
                   {"\n\n"}
-                  <span className="text-fd-muted-foreground">{"// Parse ICU → AST"}</span>
-                  {"\n"}
-                  <span className="text-blue-600 dark:text-blue-400">parseIcu</span>
-                  {"("}
-                  <span className="text-emerald-600 dark:text-emerald-400">
-                    '"{"{"}n, plural, one {"{"}"#"{"}"}...{"}"}"'
+                  <span className="text-fd-muted-foreground">
+                    {"// Compile ICU → fast JS function"}
                   </span>
-                  {")\n\n"}
-                  <span className="text-fd-muted-foreground">{"// Extract variables"}</span>
                   {"\n"}
-                  <span className="text-blue-600 dark:text-blue-400">extractVariables</span>
-                  {"("}
+                  <span className="text-purple-600 dark:text-purple-400">const</span>
+                  {" msg = "}
+                  <span className="text-blue-600 dark:text-blue-400">compileIcu</span>
+                  {"(\n  "}
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    '"{"{"}name{"}"} has {"{"}count{"}"}"'
+                    '"{"{"}n, plural, one {"{"}"#" item{"}"} other {"{"}"#" items{"}"}
+                    {"}"}"'
                   </span>
-                  {")\n"}
-                  <span className="text-fd-muted-foreground">{'// → ["name", "count"]'}</span>
+                  {",\n  { locale: "}
+                  <span className="text-emerald-600 dark:text-emerald-400">"en"</span>
+                  {" }\n)\n\n"}
+                  {"msg({ n: 1 })  "}
+                  <span className="text-fd-muted-foreground">{'// "1 item"'}</span>
+                  {"\n"}
+                  {"msg({ n: 5 })  "}
+                  <span className="text-fd-muted-foreground">{'// "5 items"'}</span>
                 </code>
               </pre>
             </div>
@@ -313,18 +419,41 @@ export default function Home() {
       {/* Footer CTA */}
       <section className="border-t border-fd-border bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-fuchsia-500/5 px-6 py-16">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
-          <h2 className="text-2xl font-bold md:text-3xl">Ready to get started?</h2>
+          <h2 className="text-2xl font-bold md:text-3xl">Drop-in replacement for pofile</h2>
           <p className="text-fd-muted-foreground">
-            Check out the documentation for the full API reference, i18n helpers, and migration
-            guide
+            Same API patterns as the popular{" "}
+            <code className="rounded bg-fd-muted px-1.5 py-0.5 text-sm">pofile</code> package, but
+            8× faster with modern TypeScript.
+            <br />
+            Check out the migration guide if you're coming from pofile or gettext-parser.
           </p>
-          <Link
-            to="/docs"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-fuchsia-600 px-8 py-4 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-105 hover:shadow-xl"
-          >
-            Read the Docs
-            <ArrowIcon />
-          </Link>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              to="/docs/quick-start"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-fuchsia-600 px-8 py-4 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            >
+              Quick Start
+              <ArrowIcon />
+            </Link>
+            <Link
+              to="/docs/migration"
+              className="inline-flex items-center gap-2 rounded-xl border-2 border-fd-border bg-fd-background/50 px-8 py-4 font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-purple-500/50"
+            >
+              Migration Guide
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-fd-muted-foreground">
+            Maintained by{" "}
+            <a
+              href="https://sebastian-software.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-fd-foreground"
+            >
+              Sebastian Software
+            </a>{" "}
+            • MIT Licensed
+          </p>
         </div>
       </section>
     </HomeLayout>
@@ -356,10 +485,21 @@ function FeatureCard({
   )
 }
 
-function UseCase({ title, children }: { title: string; children: React.ReactNode }) {
+function UseCase({
+  title,
+  icon,
+  children
+}: {
+  title: string
+  icon?: string
+  children: React.ReactNode
+}) {
   return (
-    <div className="rounded-lg border border-fd-border bg-fd-card p-4">
-      <h3 className="mb-1 font-semibold">{title}</h3>
+    <div className="rounded-lg border border-fd-border bg-fd-card p-4 transition-all duration-200 hover:border-purple-500/30 hover:shadow-md">
+      <h3 className="mb-1 flex items-center gap-2 font-semibold">
+        {icon && <span className="text-lg">{icon}</span>}
+        {title}
+      </h3>
       <p className="text-sm text-fd-muted-foreground">{children}</p>
     </div>
   )
@@ -492,6 +632,30 @@ function FeatherIcon() {
         d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5z"
       />
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 8L2 22M17.5 15H9" />
+    </svg>
+  )
+}
+
+function CompileIcon() {
+  return (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+      />
+    </svg>
+  )
+}
+
+function ModernIcon() {
+  return (
+    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+      />
     </svg>
   )
 }

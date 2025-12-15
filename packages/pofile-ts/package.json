@@ -45,8 +45,17 @@
     "i18n",
     "l10n",
     "gettext",
+    "po",
     "mo",
-    "po"
+    "icu",
+    "intl",
+    "messageformat",
+    "cldr",
+    "plural",
+    "translation",
+    "localization",
+    "lingui",
+    "formatjs"
   ],
   "scripts": {
     "build": "tsup",

@@ -57,7 +57,26 @@ export {
 } from "./icu/index"
 
 // Serialization utilities
-export { DEFAULT_SERIALIZE_OPTIONS } from "./internal/serialization"
+export { DEFAULT_SERIALIZE_OPTIONS, foldLine, formatKeyword } from "./internal/serialization"
+
+// Low-level parsing utilities
+export { escapeString, unescapeString, extractString } from "./internal/utils"
+export { splitHeaderAndBody, parseHeaders, parseItems } from "./internal/parser"
+
+// Code generation utilities (for build tools)
+export {
+  extractPluralVariable,
+  safeVarName,
+  sanitizeStyle,
+  escapeTemplateString,
+  escapeComment,
+  getNumberOptionsForStyle,
+  generatePluralFunctionCode,
+  generateFormatterDeclarations,
+  createCodeGenContext,
+  generateNodesCode,
+  generateNodeCode
+} from "./internal/codegen"
 
 // Types
 export type {
@@ -66,8 +85,12 @@ export type {
   PoFile,
   PoItem,
   CreateItemOptions,
-  SerializeOptions
+  SerializeOptions,
+  ParserState
 } from "./types"
+
+// Internal types (for advanced use cases)
+export type { CodeGenContext, MessageCodeResult } from "./internal/codegen"
 
 export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"

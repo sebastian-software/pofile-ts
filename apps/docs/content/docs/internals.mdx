@@ -1,0 +1,257 @@
+---
+title: Internal APIs
+description: Low-level utilities for advanced use cases
+---
+
+import { Callout } from "fumadocs-ui/components/callout"
+
+<Callout type="warn" title="Internal APIs">
+  These exports are considered **internal**. They are fully functional and tested, but:
+
+- They may change between minor versions without deprecation warnings
+- They are not covered by semantic versioning guarantees
+- Use them when building custom tooling that needs low-level access
+  </Callout>
+
+These utilities power the core library and are exported for advanced use cases like building custom parsers, code generators, or build tool plugins.
+
+## String Escaping
+
+Low-level string escape/unescape functions for PO file format:
+
+```typescript
+import { escapeString, unescapeString, extractString } from "pofile-ts"
+
+// Escape special characters for PO format
+escapeString('Hello\tWorld"!')
+// → 'Hello\\tWorld\\"!'
+
+// Unescape C-style sequences
+unescapeString("Hello\\nWorld")
+// → 'Hello\nWorld'
+
+// Extract string from a PO line (removes quotes, unescapes)
+extractString('msgid "Hello\\nWorld"')
+// → 'Hello\nWorld'
+```
+
+### Escape Sequences
+
+| Sequence        | Character       |
+| --------------- | --------------- |
+| `\a`            | Bell (0x07)     |
+| `\b`            | Backspace       |
+| `\t`            | Tab             |
+| `\n`            | Newline         |
+| `\v`            | Vertical tab    |
+| `\f`            | Form feed       |
+| `\r`            | Carriage return |
+| `\"`            | Double quote    |
+| `\\`            | Backslash       |
+| `\0` - `\377`   | Octal           |
+| `\x00` - `\xFF` | Hex             |
+
+## Parser Internals
+
+Low-level parsing functions used by `parsePo()`:
+
+```typescript
+import { splitHeaderAndBody, parseHeaders, parseItems } from "pofile-ts"
+import { createPoFile } from "pofile-ts"
+
+const content = fs.readFileSync("messages.po", "utf-8")
+
+// Split into header section and body lines
+const { headerSection, bodyLines } = splitHeaderAndBody(content)
+
+// Parse headers into a PoFile
+const po = createPoFile()
+parseHeaders(headerSection, po)
+
+// Parse items with plural form count
+parseItems(bodyLines, po, "2")
+```
+
+### ParserState
+
+The internal state object used during parsing:
+
+<auto-type-table path="../../../../packages/pofile-ts/src/types.ts" name="ParserState" />
+
+## Serialization Internals
+
+Low-level serialization functions:
+
+```typescript
+import { foldLine, formatKeyword, DEFAULT_SERIALIZE_OPTIONS } from "pofile-ts"
+
+// Fold a long string into multiple lines
+foldLine("A very long string that needs to be wrapped", 40)
+// → ["A very long string that needs ", "to be wrapped"]
+
+// Format a keyword line (msgid, msgstr, etc.)
+formatKeyword("msgid", "Hello World", { foldLength: 80 })
+// → 'msgid "Hello World"'
+
+// Access default options
+DEFAULT_SERIALIZE_OPTIONS.foldLength // 80
+DEFAULT_SERIALIZE_OPTIONS.compactMultiline // true
+```
+
+## Code Generation
+
+These functions generate JavaScript code from ICU AST nodes. Used by `compileCatalog()` and `generateCompiledCode()`:
+
+```typescript
+import {
+  createCodeGenContext,
+  generateNodesCode,
+  generatePluralFunctionCode,
+  generateFormatterDeclarations
+} from "pofile-ts"
+```
+
+### Context Creation
+
+```typescript
+import { createCodeGenContext, getPluralCategories } from "pofile-ts"
+
+const ctx = createCodeGenContext("de", getPluralCategories("de"))
+
+// ctx.locale → "de"
+// ctx.pluralCategories → ["one", "other"]
+// ctx.formatters → { number: Set, date: Set, time: Set }
+// ctx.needsPluralFn → false (set to true when plural is used)
+// ctx.hasTags → false (set to true when tags are used)
+```
+
+### Code Generation
+
+```typescript
+import { generateNodesCode, generateNodeCode } from "pofile-ts"
+import { parseIcu } from "pofile-ts"
+
+const result = parseIcu("Hello {name}!")
+if (result.success) {
+  const code = generateNodesCode(result.ast, ctx)
+  // → '`Hello ${(v?.name ?? "{name}")}!`'
+}
+```
+
+### Plural Function Generation
+
+```typescript
+import { generatePluralFunctionCode } from "pofile-ts"
+
+// Simple one/other
+generatePluralFunctionCode("en", ["one", "other"])
+// → 'const _pf = (n) => n !== 1 ? 1 : 0'
+
+// Complex (uses Intl.PluralRules)
+generatePluralFunctionCode("ru", ["one", "few", "many", "other"])
+// → 'const _pr = new Intl.PluralRules("ru")\nconst _pc = ...\nconst _pf = ...'
+```
+
+### Formatter Declarations
+
+```typescript
+import { generateFormatterDeclarations } from "pofile-ts"
+
+const used = {
+  number: new Set(["", "percent"]),
+  date: new Set(["short"]),
+  time: new Set()
+}
+
+generateFormatterDeclarations("de", used)
+// → 'const _nf = new Intl.NumberFormat("de")\n...'
+```
+
+### CodeGenContext
+
+<auto-type-table
+  path="../../../../packages/pofile-ts/src/internal/codegen.ts"
+  name="CodeGenContext"
+/>
+
+## Helper Utilities
+
+### Variable Name Extraction
+
+```typescript
+import { extractPluralVariable } from "pofile-ts"
+
+// Extract the plural variable from source strings
+extractPluralVariable("{count} item", "{count} items")
+// → "count"
+
+extractPluralVariable("One item", "{n} items")
+// → "n"
+
+extractPluralVariable("One item", "Many items")
+// → null (no variable found)
+```
+
+### Safe Variable Names
+
+```typescript
+import { safeVarName } from "pofile-ts"
+
+// Valid JS identifiers pass through
+safeVarName("count") // → "count"
+safeVarName("userName") // → "userName"
+
+// Invalid identifiers get bracket notation
+safeVarName("user-name") // → '["user-name"]'
+safeVarName("0") // → '["0"]'
+```
+
+### Style Sanitization
+
+```typescript
+import { sanitizeStyle } from "pofile-ts"
+
+// Convert ICU styles to valid variable name suffixes
+sanitizeStyle("currency/EUR") // → "currency_EUR"
+sanitizeStyle("::compact-short") // → "compact_short"
+```
+
+### Template String Escaping
+
+```typescript
+import { escapeTemplateString, escapeComment } from "pofile-ts"
+
+// Escape for template literals
+escapeTemplateString("hello`world") // → "hello\\`world"
+escapeTemplateString("${value}") // → "\\${value}"
+
+// Escape for JS comments
+escapeComment("test */ code") // → "test * / code"
+escapeComment("line1\nline2") // → "line1 line2"
+```
+
+### Number Format Options
+
+```typescript
+import { getNumberOptionsForStyle } from "pofile-ts"
+
+getNumberOptionsForStyle("percent")
+// → { style: "percent" }
+
+getNumberOptionsForStyle("currency")
+// → { style: "currency", currency: "USD" }
+
+getNumberOptionsForStyle("unknown")
+// → {}
+```
+
+## When to Use Internals
+
+These APIs are useful when:
+
+- **Building custom parsers** — Reuse escape/unescape logic
+- **Creating build plugins** — Generate optimized code for specific frameworks
+- **Extending the library** — Add new output formats or transformations
+- **Testing/debugging** — Access intermediate parsing states
+
+For most use cases, prefer the public API (`parsePo`, `stringifyPo`, `compileCatalog`, etc.) which provides stability guarantees.

@@ -70,9 +70,9 @@ _Benchmarked on Apple M1 Ultra, Node.js 22. Relative performance is consistent a
 
 | Library        |       Parsing | Serialization |
 | -------------- | ------------: | ------------: |
-| **pofile-ts**  | **185 ops/s** | **217 ops/s** |
-| gettext-parser |      27 ops/s |      53 ops/s |
-| pofile         |       8 ops/s |     100 ops/s |
+| **pofile-ts**  | **211 ops/s** | **255 ops/s** |
+| gettext-parser |      27 ops/s |      55 ops/s |
+| pofile         |       7 ops/s |     103 ops/s |
 
 → **8× faster parsing**, **5× faster serialization**
 
@@ -82,7 +82,7 @@ Realistic messages with plurals, selects, nested structures, and tags:
 
 | Library                            |           Speed | Bundle (gzip) |
 | ---------------------------------- | --------------: | ------------: |
-| **pofile-ts**                      | **2.5× faster** |      **~2KB** |
+| **pofile-ts**                      | **2.5× faster** |     **\<3KB** |
 | @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
 
 → **2.5× faster**, **4× smaller bundle**
