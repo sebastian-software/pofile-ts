@@ -130,7 +130,8 @@ export class IcuParser {
         nodes.push({ type: IcuNodeType.pound })
       } else if (ch === "<" && !this.ignoreTag) {
         const next = this.msg[this.pos + 1]
-        if (next && isAlpha(next)) {
+        // Support both alphabetic tags (<b>, <link>) and numeric tags (<0>, <1> - Lingui style)
+        if (next && (isAlpha(next) || isDigit(next))) {
           nodes.push(this.parseTag(depth, parentArg))
         } else if (next === "/") {
           break // Closing tag - handled by parseTag
@@ -411,7 +412,8 @@ export class IcuParser {
       }
       if (ch === "<" && !this.ignoreTag) {
         const next = this.msg[this.pos + 1]
-        if ((next && isAlpha(next)) || next === "/") {
+        // Support both alphabetic tags (<b>, <link>) and numeric tags (<0>, <1> - Lingui style)
+        if ((next && (isAlpha(next) || isDigit(next))) || next === "/") {
           break
         }
       }

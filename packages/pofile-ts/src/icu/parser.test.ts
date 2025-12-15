@@ -333,6 +333,33 @@ describe("parseIcu", () => {
         value: "hello <b>world</b>"
       })
     })
+
+    it("parses numeric tags (Lingui-style)", () => {
+      const result = parseIcu("Click <0>here</0> to <1>continue</1>")
+      expect(result.success).toBe(true)
+      expect(result.ast).toHaveLength(4)
+      expect(result.ast![1]).toMatchObject({
+        type: IcuNodeType.tag,
+        value: "0"
+      })
+      expect(result.ast![3]).toMatchObject({
+        type: IcuNodeType.tag,
+        value: "1"
+      })
+    })
+
+    it("parses mixed numeric and named tags", () => {
+      const result = parseIcu("<0>Hello</0> <name>World</name>!")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: IcuNodeType.tag,
+        value: "0"
+      })
+      expect(result.ast![2]).toMatchObject({
+        type: IcuNodeType.tag,
+        value: "name"
+      })
+    })
   })
 
   describe("complex messages", () => {
