@@ -46,7 +46,7 @@ export type MessageValues = Record<string, unknown>
  * - string: when no tags are used
  * - (string | unknown)[]: when tags are used (for JSX support)
  */
-export type MessageResult = string | readonly (string | unknown)[]
+export type MessageResult = string | readonly unknown[]
 
 /**
  * A compiled message function.
@@ -184,8 +184,8 @@ function getDateTimeFormatter(
 /**
  * Compiles an array of AST nodes into parts.
  */
-function compileNodes(nodes: IcuNode[], ctx: CompileContext): (string | unknown)[] {
-  const parts: (string | unknown)[] = []
+function compileNodes(nodes: IcuNode[], ctx: CompileContext): unknown[] {
+  const parts: unknown[] = []
 
   for (const node of nodes) {
     const result = compileNode(node, ctx)
@@ -200,18 +200,23 @@ function compileNodes(nodes: IcuNode[], ctx: CompileContext): (string | unknown)
 /**
  * Compiles a single AST node.
  */
-// eslint-disable-next-line complexity
 function compileNode(
   node: IcuNode,
   ctx: CompileContext
-): string | ((values?: MessageValues) => string | unknown) {
+): string | ((values?: MessageValues) => unknown) {
   switch (node.type) {
     case IcuNodeType.literal:
       return node.value
 
     case IcuNodeType.argument:
       // Return a getter function - will be called with values
-      return (values?: MessageValues) => String(values?.[node.value] ?? `{${node.value}}`)
+      return (values?: MessageValues) => {
+        const val = values?.[node.value]
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return typeof val === "string" ? val : String(val as string | number | boolean)
+      }
 
     case IcuNodeType.number: {
       const formatter = getNumberFormatter(ctx.formatters, ctx.locale, node.style)
@@ -220,7 +225,10 @@ function compileNode(
         if (typeof val === "number") {
           return formatter.format(val)
         }
-        return String(val ?? `{${node.value}}`)
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -234,7 +242,10 @@ function compileNode(
         if (typeof val === "number") {
           return formatter.format(new Date(val))
         }
-        return String(val ?? `{${node.value}}`)
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -248,7 +259,10 @@ function compileNode(
         if (typeof val === "number") {
           return formatter.format(new Date(val))
         }
-        return String(val ?? `{${node.value}}`)
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -269,7 +283,10 @@ function compileNode(
           const formatter = getNumberFormatter(ctx.formatters, ctx.locale, null)
           return formatter.format(val - ctx.pluralOffset)
         }
-        return String(val ?? "#")
+        if (val == null) {
+          return "#"
+        }
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
     case IcuNodeType.tag:
@@ -348,7 +365,13 @@ function compileSelect(
   }
 
   return (values?: MessageValues) => {
-    const selector = String(values?.[varName] ?? "")
+    const selectorVal = values?.[varName]
+    const selector =
+      selectorVal == null
+        ? ""
+        : typeof selectorVal === "string"
+          ? selectorVal
+          : String(selectorVal as string | number | boolean)
 
     // Try exact match, fall back to "other"
     const resolver = compiledOptions[selector] ?? compiledOptions.other
@@ -374,7 +397,7 @@ function compileTag(node: IcuTagNode, ctx: CompileContext): (values?: MessageVal
 
     // If tag value is a function, call it with children
     if (typeof tagFn === "function") {
-      return tagFn(resolvedChildren)
+      return (tagFn as (children: string) => unknown)(resolvedChildren)
     }
 
     // If no function provided, return children as-is
@@ -385,7 +408,7 @@ function compileTag(node: IcuTagNode, ctx: CompileContext): (values?: MessageVal
 /**
  * Creates a resolver function that combines parts into a string or array.
  */
-function createResolver(parts: (string | unknown)[]): (values?: MessageValues) => string {
+function createResolver(parts: unknown[]): (values?: MessageValues) => string {
   // Optimize: if all parts are strings, just join them
   if (parts.every((p) => typeof p === "string")) {
     const joined = parts.join("")
@@ -398,8 +421,12 @@ function createResolver(parts: (string | unknown)[]): (values?: MessageValues) =
       if (typeof part === "string") {
         result += part
       } else if (typeof part === "function") {
-        const resolved = part(values)
-        result += typeof resolved === "string" ? resolved : String(resolved ?? "")
+        const resolved = (part as (v?: MessageValues) => unknown)(values)
+        if (typeof resolved === "string") {
+          result += resolved
+        } else if (resolved != null) {
+          result += String(resolved as string | number | boolean)
+        }
       }
     }
     return result
@@ -477,17 +504,14 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
 /**
  * Resolves parts that may contain tag results (non-strings).
  */
-function resolveWithTags(
-  parts: (string | unknown)[],
-  values?: MessageValues
-): (string | unknown)[] {
-  const result: (string | unknown)[] = []
+function resolveWithTags(parts: unknown[], values?: MessageValues): unknown[] {
+  const result: unknown[] = []
 
   for (const part of parts) {
     if (typeof part === "string") {
       result.push(part)
     } else if (typeof part === "function") {
-      const resolved = part(values)
+      const resolved = (part as (v?: MessageValues) => unknown)(values)
       result.push(resolved)
     }
   }

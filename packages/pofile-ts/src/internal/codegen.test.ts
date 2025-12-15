@@ -13,7 +13,7 @@ import {
   generateNodeCode
 } from "./codegen"
 import { IcuNodeType } from "../icu/types"
-import type { IcuNode, IcuLiteralNode, IcuArgumentNode, IcuPluralNode } from "../icu/types"
+import type { IcuNode, IcuLiteralNode, IcuArgumentNode } from "../icu/types"
 
 describe("codegen", () => {
   describe("extractPluralVariable", () => {

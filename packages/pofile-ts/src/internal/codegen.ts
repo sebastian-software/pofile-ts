@@ -131,7 +131,6 @@ function isTagNode(node: IcuNode, ctx: CodeGenContext): boolean {
 /**
  * Generates code for a single node.
  */
-// eslint-disable-next-line complexity
 export function generateNodeCode(node: IcuNode, ctx: CodeGenContext): string {
   switch (node.type) {
     case IcuNodeType.literal:
@@ -229,7 +228,6 @@ function generatePoundCode(ctx: CodeGenContext): string {
 /**
  * Generates code for a plural node.
  */
-// eslint-disable-next-line complexity
 export function generatePluralCode(node: IcuPluralNode, ctx: CodeGenContext): string {
   ctx.needsPluralFn = true
   const varName = safeVarName(node.value)
@@ -268,6 +266,7 @@ export function generatePluralCode(node: IcuPluralNode, ctx: CodeGenContext): st
 /**
  * Builds the conditional expression for plural.
  */
+// eslint-disable-next-line complexity
 function buildPluralCondition(
   varName: string,
   offset: number,
@@ -390,7 +389,7 @@ export function extractPluralVariable(msgid: string, pluralSource?: string): str
 
   for (const source of sources) {
     // Match {varName} or {varName, ...}
-    const match = source.match(/\{([a-zA-Z_$][a-zA-Z0-9_$]*?)(?:,|\})/u)
+    const match = /\{([a-zA-Z_$][a-zA-Z0-9_$]*?)(?:,|\})/u.exec(source)
     if (match?.[1]) {
       return match[1]
     }
