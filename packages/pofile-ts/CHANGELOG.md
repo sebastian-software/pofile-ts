@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.6.0](///compare/v3.5.1...v3.6.0) (2025-12-15)
+
+### Features
+
+- **plurals:** CLDR 48 compliant plural rules 1e7d7cc
+
+### Bug Fixes
+
+- css fix 78104e7
+- eslint issues c6dbf67
+- resolve TypeScript errors in CLDR test file 2b36c80
+
+### Documentation
+
+- add bundle size badges and tree-shaking documentation 9e0fc8b
+- expand README with better marketing copy 2676012
+- move performance metrics to Parse/Serialize features 963146e
+- update content 1c3aa22
+
 ## [3.5.1](///compare/v3.5.0...v3.5.1) (2025-12-15)
 
 ## [3.5.0](///compare/v3.4.2...v3.5.0) (2025-12-15)
