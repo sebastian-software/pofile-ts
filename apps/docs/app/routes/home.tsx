@@ -176,23 +176,23 @@ export default function Home() {
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
               <h3 className="mb-4 text-lg font-semibold">PO File Parsing</h3>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="211" fastest />
-                <BenchmarkBar label="gettext-parser" value={13} ops="27" />
-                <BenchmarkBar label="pofile" value={3} ops="7" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="211/s" fastest />
+                <BenchmarkBar label="gettext-parser" value={13} ops="27/s" />
+                <BenchmarkBar label="pofile" value={3} ops="7/s" />
               </div>
-              <p className="mt-4 text-sm text-fd-muted-foreground">8× faster than alternatives</p>
+              <p className="mt-4 text-sm text-fd-muted-foreground">10K entries • 8× faster</p>
             </div>
 
             {/* ICU Parsing */}
             <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-4 text-lg font-semibold">ICU MessageFormat</h3>
+              <h3 className="mb-4 text-lg font-semibold">ICU MessageFormat Parser</h3>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="2.5×" fastest />
-                <BenchmarkBar label="@formatjs" value={40} ops="1×" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="~2KB" fastest />
+                <BenchmarkBar label="@formatjs" value={40} ops="~9KB" />
               </div>
               <div className="mt-4 flex justify-between text-sm text-fd-muted-foreground">
-                <span>2.5× faster parsing</span>
-                <span>4× smaller bundle</span>
+                <span>2.5× faster</span>
+                <span>4× smaller</span>
               </div>
             </div>
           </div>
@@ -230,53 +230,82 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Code example */}
+      {/* Code examples */}
       <section className="border-t border-fd-border px-6 py-20">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-5xl">
           <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Simple API</h2>
           <p className="mx-auto mb-10 max-w-2xl text-center text-lg text-fd-muted-foreground">
-            Parse, modify, and serialize PO files in just a few lines
+            Parse PO files and ICU messages in just a few lines
           </p>
 
-          <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
-            <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
-              <div className="h-3 w-3 rounded-full bg-red-500/60" />
-              <div className="h-3 w-3 rounded-full bg-amber-500/60" />
-              <div className="h-3 w-3 rounded-full bg-green-500/60" />
-              <span className="ml-2 text-sm text-fd-muted-foreground">example.ts</span>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* PO Example */}
+            <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
+              <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
+                <div className="h-3 w-3 rounded-full bg-red-500/60" />
+                <div className="h-3 w-3 rounded-full bg-amber-500/60" />
+                <div className="h-3 w-3 rounded-full bg-green-500/60" />
+                <span className="ml-2 text-sm text-fd-muted-foreground">po-parsing.ts</span>
+              </div>
+              <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
+                <code>
+                  <span className="text-purple-600 dark:text-purple-400">import</span>
+                  {" { parsePo } "}
+                  <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
+                  <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
+                  {"\n\n"}
+                  <span className="text-purple-600 dark:text-purple-400">const</span>
+                  {" po = "}
+                  <span className="text-blue-600 dark:text-blue-400">parsePo</span>
+                  {"(`\n"}
+                  <span className="text-emerald-600 dark:text-emerald-400">{'msgid "Hello"'}</span>
+                  {"\n"}
+                  <span className="text-emerald-600 dark:text-emerald-400">{'msgstr "Hallo"'}</span>
+                  {"\n`)\n\n"}
+                  {"po.items[0].msgid   "}
+                  <span className="text-fd-muted-foreground">{'// "Hello"'}</span>
+                  {"\n"}
+                  {"po.items[0].msgstr  "}
+                  <span className="text-fd-muted-foreground">{'// ["Hallo"]'}</span>
+                </code>
+              </pre>
             </div>
-            <pre className="overflow-x-auto p-6 font-mono text-sm leading-relaxed">
-              <code>
-                <span className="text-purple-600 dark:text-purple-400">import</span>
-                {" { parsePo, stringifyPo } "}
-                <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
-                <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
-                {"\n\n"}
-                <span className="text-purple-600 dark:text-purple-400">const</span>
-                {" po = "}
-                <span className="text-blue-600 dark:text-blue-400">parsePo</span>
-                {"(`\n"}
-                <span className="text-emerald-600 dark:text-emerald-400">{'msgid "Hello"'}</span>
-                {"\n"}
-                <span className="text-emerald-600 dark:text-emerald-400">{'msgstr "Hallo"'}</span>
-                {"\n`)\n\n"}
-                {"console."}
-                <span className="text-blue-600 dark:text-blue-400">log</span>
-                {"(po.items[0].msgid)   "}
-                <span className="text-fd-muted-foreground">{'// "Hello"'}</span>
-                {"\n"}
-                {"console."}
-                <span className="text-blue-600 dark:text-blue-400">log</span>
-                {"(po.items[0].msgstr)  "}
-                <span className="text-fd-muted-foreground">{'// ["Hallo"]'}</span>
-                {"\n\n"}
-                {"console."}
-                <span className="text-blue-600 dark:text-blue-400">log</span>
-                {"("}
-                <span className="text-blue-600 dark:text-blue-400">stringifyPo</span>
-                {"(po))"}
-              </code>
-            </pre>
+
+            {/* ICU Example */}
+            <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
+              <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
+                <div className="h-3 w-3 rounded-full bg-red-500/60" />
+                <div className="h-3 w-3 rounded-full bg-amber-500/60" />
+                <div className="h-3 w-3 rounded-full bg-green-500/60" />
+                <span className="ml-2 text-sm text-fd-muted-foreground">icu-parsing.ts</span>
+              </div>
+              <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
+                <code>
+                  <span className="text-purple-600 dark:text-purple-400">import</span>
+                  {" { parseIcu, extractVariables } "}
+                  <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
+                  <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
+                  {"\n\n"}
+                  <span className="text-fd-muted-foreground">{"// Parse ICU → AST"}</span>
+                  {"\n"}
+                  <span className="text-blue-600 dark:text-blue-400">parseIcu</span>
+                  {"("}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    '"{"{"}n, plural, one {"{"}"#"{"}"}...{"}"}"'
+                  </span>
+                  {")\n\n"}
+                  <span className="text-fd-muted-foreground">{"// Extract variables"}</span>
+                  {"\n"}
+                  <span className="text-blue-600 dark:text-blue-400">extractVariables</span>
+                  {"("}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    '"{"{"}name{"}"} has {"{"}count{"}"}"'
+                  </span>
+                  {")\n"}
+                  <span className="text-fd-muted-foreground">{'// → ["name", "count"]'}</span>
+                </code>
+              </pre>
+            </div>
           </div>
         </div>
       </section>
