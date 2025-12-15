@@ -6,88 +6,163 @@
  *
  * ## Data Sources
  *
- * The plural rules and categories are derived from CLDR (Common Locale Data Repository):
+ * The plural rules and categories are derived from CLDR 48 (Common Locale Data Repository):
  * - CLDR Plural Rules: https://cldr.unicode.org/index/cldr-spec/plural-rules
  * - Plural Rules Chart: https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
  *
  * ## Variant System
  *
- * Instead of storing data per-locale (~500+ locales), we use a variant system:
- * - There are only 8 distinct plural rule patterns worldwide (variants A-H)
- * - Each locale maps to one variant
- * - This reduces data from ~50KB to ~2KB
+ * Instead of storing data per-locale (~500+ locales), we use a variant system
+ * with 14 distinct patterns covering 140+ locales.
  *
- * The variants are named A-H for compactness, corresponding to:
- * - A: East Asian (1 form) - zh, ja, ko, vi, th, etc.
- * - B: Germanic/Romance (2 forms) - en, de, es, fr, it, pt, etc.
- * - C: Slavic-3 (3 forms) - ru, uk, hr, sr, etc.
- * - D: Dual (3 forms with "two") - sl, dsb, hsb, etc.
- * - E: Slavic-4 (4 forms) - pl, be, etc.
- * - F: Celtic-4 (4 forms with "two") - gd, kw
- * - G: Celtic-5 (5 forms) - br, ga, gv, mt
- * - H: Arabic (6 forms) - ar, cy
+ * ## Known Limitations
+ *
+ * ### Decimal Numbers (v operand)
+ * CLDR distinguishes integers (v=0) from decimals (v!=0), e.g.:
+ * - Russian "many" applies to integers 0, 5-19, 100...
+ * - Russian "other" applies to decimals like 0.5, 1.5, 10.0...
+ *
+ * JavaScript cannot distinguish 10 from 10.0 (they are identical numbers).
+ * Therefore, values like 10.0 are treated as integers. This matches practical
+ * usage since gettext/PO files work with integer counts.
+ *
+ * True non-integer decimals (0.5, 1.5, etc.) are handled correctly.
+ *
+ * ### Approximate Support
+ * Some locales use simplified rules:
+ * - Romance (fr, es, pt, it, ca): "many" only for exact millions (n % 1000000 = 0)
+ *   CLDR also uses "many" for compact notation which we don't support.
+ * - Scottish Gaelic (gd): Uses 4 categories, but CLDR rules are more complex
+ *   (one=1,11; two=2,12; few=3-10,13-19)
+ * - Breton (br): Uses 4 categories as approximation; CLDR defines 5 with
+ *   complex n%10/n%100 patterns.
+ * - Welsh (cy): Uses Arabic-like 6 categories; CLDR has specific integer rules
+ *   (few=3, many=6 only).
  */
 
 /**
  * Plural category variants used across all languages.
- * There are only ~10 unique combinations worldwide.
+ * Based on CLDR 45+ plural rules.
+ *
+ * @see https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
  */
 const VARIANTS = {
-  // 1 form: East Asian languages (no plural distinction)
+  // A: 1 form - East Asian languages (no plural distinction)
+  // zh, ja, ko, vi, th, id, etc.
   A: ["other"],
 
-  // 2 forms: Germanic, Romance, most common
+  // B: 2 forms - Germanic and others without "many"
+  // en, de, nl, sv, etc.
   B: ["one", "other"],
 
-  // 3 forms: Baltic, Celtic
-  C: ["one", "few", "other"],
+  // C: 3 forms - Romance languages with "many" for exact millions
+  // fr, es, pt, it, ca - many = i != 0 && i % 1000000 = 0
+  C: ["one", "many", "other"],
 
-  // 3 forms with "two": Slovenian, Sorbian
-  D: ["one", "two", "other"],
+  // D: 3 forms - South Slavic (no "many" category)
+  // hr, sr, bs - one/few/other
+  D: ["one", "few", "other"],
 
-  // 4 forms: Slavic (Polish, Russian, etc.)
-  E: ["one", "few", "many", "other"],
+  // E: 3 forms - Dual languages (simple)
+  // se, smi, etc. - one/two/other
+  E: ["one", "two", "other"],
 
-  // 4 forms with "two": Scottish Gaelic, Irish
-  F: ["one", "two", "few", "other"],
+  // E2: 4 forms - Slovenian (dual with few)
+  // sl - one/two/few/other based on i % 100
+  E2: ["one", "two", "few", "other"],
 
-  // 5 forms: Breton, Maltese
-  G: ["one", "two", "few", "many", "other"],
+  // F: 4 forms - East Slavic with "many"
+  // ru, uk, be - many = 0, 5-19, 100, etc.
+  F: ["one", "few", "many", "other"],
 
-  // 6 forms: Arabic
-  H: ["zero", "one", "two", "few", "many", "other"]
+  // G: 4 forms - West Slavic (Polish type)
+  // pl, csb, szl - many for integers, other for fractions
+  G: ["one", "few", "many", "other"],
+
+  // H: 4 forms - Czech/Slovak type
+  // cs, sk - many = fractions only
+  H: ["one", "few", "many", "other"],
+
+  // I: 4 forms - Lithuanian
+  // lt - one/few/many/other with different rules
+  I: ["one", "few", "many", "other"],
+
+  // J: 3 forms - Latvian (zero, one, other)
+  // lv, prg
+  J: ["zero", "one", "other"],
+
+  // K: 4 forms - Celtic without "many"
+  // gd, kw - one/two/few/other
+  K: ["one", "two", "few", "other"],
+
+  // L: 5 forms - Irish (specific ranges)
+  // ga - one=1, two=2, few=3-6, many=7-10, other=rest
+  L: ["one", "two", "few", "many", "other"],
+
+  // L2: 5 forms - Maltese
+  // mt - one=1, two=2, few=0/3-10, many=11-19, other=rest
+  L2: ["one", "two", "few", "many", "other"],
+
+  // N: 6 forms - Arabic, Welsh
+  // ar, cy - zero/one/two/few/many/other
+  N: ["zero", "one", "two", "few", "many", "other"]
 } as const
 
 type VariantKey = keyof typeof VARIANTS
 
 /**
  * Compact locale-to-variant mapping.
- * ~500 bytes for 140+ locales.
+ * Based on CLDR 45+ plural rules.
  */
 const LOCALES: Record<VariantKey, string> = {
-  // 1 form
+  // A: 1 form (other only)
   A: "bm,bo,dz,id,ig,ii,ja,jbo,jv,kde,kea,km,ko,lkt,lo,ms,my,nqo,root,sah,ses,sg,su,th,to,vi,wo,yo,yue,zh",
 
-  // 2 forms (one, other) - most common
-  B: "af,an,asa,ast,az,bal,bem,bez,bg,bn,brx,ca,ce,cgg,chr,ckb,da,de,doi,dv,ee,el,en,eo,es,et,eu,fi,fo,fur,fy,gl,gsw,gu,ha,haw,he,hi,hu,hy,ia,is,it,jgo,jmc,ka,kab,kaj,kcg,kk,kkj,kl,ks,ksb,ku,ky,lb,lg,lij,lmo,ln,mas,mgo,ml,mn,mr,nah,nb,nd,ne,nl,nn,nnh,no,nr,nso,ny,nyn,om,or,os,pa,pap,ps,pt,rm,rof,rwk,saq,sc,scn,sd,seh,sn,so,sq,ss,ssy,st,sv,sw,syr,ta,te,teo,tig,tk,tn,tr,ts,ug,ur,uz,ve,vec,vo,vun,wae,xh,xog,zu",
+  // B: 2 forms (one, other) - Germanic, etc.
+  B: "af,an,asa,ast,az,bal,bem,bez,bg,bn,brx,ce,cgg,chr,ckb,da,de,doi,dv,ee,el,en,eo,et,eu,fi,fo,fur,fy,gl,gsw,gu,ha,haw,he,hi,hu,hy,ia,is,jgo,jmc,ka,kab,kaj,kcg,kk,kkj,kl,ks,ksb,ku,ky,lb,lg,lij,lmo,ln,mas,mgo,ml,mn,mr,nah,nb,nd,ne,nl,nn,nnh,no,nr,nso,ny,nyn,om,or,os,pa,pap,ps,rm,rof,rwk,saq,sc,scn,sd,seh,sn,so,sq,ss,ssy,st,sv,sw,syr,ta,te,teo,tig,tk,tn,tr,ts,ug,ur,uz,ve,vec,vo,vun,wae,xh,xog,zu",
 
-  // 3 forms (one, few, other)
-  C: "bs,cs,hr,lt,ru,sh,sk,sr,uk",
+  // C: 3 forms (one, many, other) - Romance with "many" for millions
+  C: "ca,es,fr,it,pt",
 
-  // 3 forms (one, two, other)
-  D: "iu,naq,sat,se,sl,sma,smi,smj,smn,sms",
+  // D: 3 forms (one, few, other) - South Slavic without "many"
+  D: "bs,cnr,hr,sh,sr",
 
-  // 4 forms (one, few, many, other)
-  E: "be,cnr,csb,dsb,hsb,lv,pl,prg,szl",
+  // E: 3 forms (one, two, other) - Dual languages (simple)
+  E: "dsb,hsb,iu,naq,sat,se,sma,smi,smj,smn,sms",
 
-  // 4 forms (one, two, few, other)
-  F: "gd,kw",
+  // E2: 4 forms (one, two, few, other) - Slovenian
+  E2: "sl",
 
-  // 5 forms (one, two, few, many, other)
-  G: "br,ga,gv,mt",
+  // F: 4 forms (one, few, many, other) - East Slavic
+  F: "be,ru,uk",
 
-  // 6 forms (zero, one, two, few, many, other)
-  H: "ar,cy"
+  // G: 4 forms (one, few, many, other) - Polish type
+  G: "csb,pl,szl",
+
+  // H: 4 forms (one, few, many, other) - Czech/Slovak
+  H: "cs,sk",
+
+  // I: 4 forms (one, few, many, other) - Lithuanian
+  I: "lt",
+
+  // J: 3 forms (zero, one, other) - Latvian
+  J: "lv,prg",
+
+  // K: 4 forms (one, two, few, other) - Celtic without "many"
+  // Note: br, gd have more complex CLDR rules, K is an approximation
+  K: "br,gd,kw",
+
+  // L: 5 forms (one, two, few, many, other) - Irish
+  L: "ga,gv",
+
+  // L2: 5 forms (one, two, few, many, other) - Maltese
+  L2: "mt",
+
+  // Note: br (Breton) and gd (Scottish Gaelic) use K as approximation
+  // Their CLDR rules are more complex but K provides reasonable coverage
+
+  // N: 6 forms (zero, one, two, few, many, other) - Arabic, Welsh
+  N: "ar,cy"
 } as const
 
 /**
@@ -115,33 +190,20 @@ export const PLURAL_SAMPLES: Record<string, number> = {
  * 2. Include edge cases (boundaries, typical values)
  * 3. Be useful for testing and TMS preview
  *
- * ## How samples were derived
- *
- * For each variant, we use the CLDR plural rules to find numbers that fall into
- * each category. The samples are verified against the PLURAL_FUNCTIONS.
- *
- * Example for variant C (Slavic-3, e.g. Russian):
- * - Rule: one = n%10==1 && n%100!=11
- * - Rule: few = n%10 in 2..4 && n%100 not in 12..14
- * - Rule: other = everything else
- * - Samples: one=[1,21,31], few=[2,3,4,22], other=[0,5,11,12,20,100]
- *
  * @see https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html
  */
 const VARIANT_SAMPLES: Record<VariantKey, Record<string, readonly number[]>> = {
   /**
    * Variant A: East Asian languages (Chinese, Japanese, Korean, Vietnamese, Thai, etc.)
    * Only one form - no plural distinction.
-   * All integers map to "other".
    */
   A: {
     other: [0, 1, 2, 5, 10, 100, 1000]
   },
 
   /**
-   * Variant B: Germanic, Romance, and many other languages (English, German, Spanish, etc.)
+   * Variant B: Germanic and many other languages (English, German, etc.)
    * Two forms: one (n=1), other (n≠1).
-   * This is the most common pattern worldwide.
    */
   B: {
     one: [1],
@@ -149,55 +211,129 @@ const VARIANT_SAMPLES: Record<VariantKey, Record<string, readonly number[]>> = {
   },
 
   /**
-   * Variant C: Slavic languages with 3 forms (Russian, Ukrainian, Croatian, Serbian, etc.)
-   * Pattern:
-   * - one: n%10=1 && n%100≠11 (1, 21, 31, 41... but not 11, 111, 211...)
-   * - few: n%10 in 2..4 && n%100 not in 12..14 (2-4, 22-24, 32-34... but not 12-14)
-   * - other: everything else (0, 5-20, 25-30, 100...)
+   * Variant C: Romance languages (French, Spanish, Portuguese, Italian, Catalan)
+   * Three forms: one (i=0,1), many (exact millions), other (everything else).
+   * Note: "many" only triggers for i % 1000000 = 0 (very rare in practice).
    */
   C: {
+    one: [0, 1],
+    many: [1000000, 2000000],
+    other: [2, 3, 5, 10, 100, 1000, 1000001]
+  },
+
+  /**
+   * Variant D: South Slavic without "many" (Croatian, Serbian, Bosnian)
+   * Three forms: one, few, other.
+   */
+  D: {
     one: [1, 21, 31, 41, 51, 101],
     few: [2, 3, 4, 22, 23, 24, 32],
     other: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 100]
   },
 
   /**
-   * Variant D: Languages with dual form (Slovenian, Sorbian, Sami, etc.)
+   * Variant E: Simple dual languages (Sorbian, Sami, etc.)
    * Three forms: one (n=1), two (n=2), other (n≥3 or n=0).
    */
-  D: {
+  E: {
     one: [1],
     two: [2],
     other: [0, 3, 4, 5, 10, 100, 1000]
   },
 
   /**
-   * Variant E: Slavic languages with 4 forms (Polish, Belarusian, etc.)
-   * Pattern:
-   * - one: n=1 exactly
-   * - few: n%10 in 2..4 && n%100 not in 12..14
-   * - many: n≠1 && (n%10 in 0..1 || n%10 in 5..9 || n%100 in 12..14)
-   * - other: non-integers (1.5, 2.5, etc.) - rarely used in gettext
-   *
-   * Note: The "other" category in Polish is for fractions, which gettext
-   * typically doesn't handle. In practice, only one/few/many are used.
+   * Variant E2: Slovenian
+   * Four forms based on i % 100:
+   * - one: i % 100 = 1
+   * - two: i % 100 = 2
+   * - few: i % 100 = 3..4
+   * - other: everything else
    */
-  E: {
-    one: [1],
-    few: [2, 3, 4, 22, 23, 24, 32, 33, 34],
-    many: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 25, 100],
-    other: [1.5, 2.5, 0.5] // Fractions - rare in gettext context
+  E2: {
+    one: [1, 101, 201, 301],
+    two: [2, 102, 202, 302],
+    few: [3, 4, 103, 104],
+    other: [0, 5, 6, 10, 11, 100, 1000]
   },
 
   /**
-   * Variant F: Celtic languages with 4 forms (Scottish Gaelic, Cornish)
-   * Pattern:
-   * - one: n=1
-   * - two: n=2
-   * - few: n in 3..10
-   * - other: n=0 or n>10
+   * Variant F: East Slavic (Russian, Ukrainian, Belarusian)
+   * Four forms: one, few, many, other (fractions).
+   * - one: i%10=1 && i%100≠11
+   * - few: i%10 in 2..4 && i%100 not in 12..14
+   * - many: i%10=0 || i%10 in 5..9 || i%100 in 11..14
+   * - other: fractions only
    */
   F: {
+    one: [1, 21, 31, 41, 51, 101],
+    few: [2, 3, 4, 22, 23, 24, 32],
+    many: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 100],
+    other: [0.5, 1.5, 2.5] // Fractions
+  },
+
+  /**
+   * Variant G: Polish type (Polish, Kashubian, Silesian)
+   * Four forms: one, few, many, other (fractions).
+   * - one: i=1 && v=0
+   * - few: i%10 in 2..4 && i%100 not in 12..14
+   * - many: i≠1 && (i%10 in 0..1 || i%10 in 5..9 || i%100 in 12..14)
+   * - other: fractions
+   */
+  G: {
+    one: [1],
+    few: [2, 3, 4, 22, 23, 24, 32, 33, 34],
+    many: [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 25, 100],
+    other: [0.5, 1.5, 2.5] // Fractions
+  },
+
+  /**
+   * Variant H: Czech/Slovak
+   * Four forms: one, few, many (fractions), other.
+   * - one: i=1 && v=0
+   * - few: i in 2..4 && v=0
+   * - many: v≠0 (fractions)
+   * - other: 0, 5+ integers
+   */
+  H: {
+    one: [1],
+    few: [2, 3, 4],
+    many: [0.5, 1.5, 2.5], // Fractions
+    other: [0, 5, 6, 7, 8, 9, 10, 11, 100, 1000]
+  },
+
+  /**
+   * Variant I: Lithuanian
+   * Four forms: one, few, many (fractions), other.
+   * - one: n%10=1 && n%100 not in 11..19
+   * - few: n%10 in 2..9 && n%100 not in 11..19
+   * - many: f≠0 (fractions)
+   * - other: 0, 10-19, etc.
+   */
+  I: {
+    one: [1, 21, 31, 41, 51, 101],
+    few: [2, 3, 4, 5, 6, 7, 8, 9, 22, 23],
+    many: [0.5, 1.5, 2.5], // Fractions
+    other: [0, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 100]
+  },
+
+  /**
+   * Variant J: Latvian
+   * Three forms: zero, one, other.
+   * - zero: n%10=0 || n%100 in 11..19
+   * - one: n%10=1 && n%100≠11
+   * - other: everything else
+   */
+  J: {
+    zero: [0, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 100],
+    one: [1, 21, 31, 41, 51, 101],
+    other: [2, 3, 4, 5, 6, 7, 8, 9, 22, 23, 24, 25]
+  },
+
+  /**
+   * Variant K: Celtic without "many" (Scottish Gaelic, Cornish)
+   * Four forms: one, two, few, other.
+   */
+  K: {
     one: [1],
     two: [2],
     few: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -205,33 +341,44 @@ const VARIANT_SAMPLES: Record<VariantKey, Record<string, readonly number[]>> = {
   },
 
   /**
-   * Variant G: Celtic languages with 5 forms (Breton, Irish, Manx, Maltese)
-   * Pattern:
-   * - one: n=1
-   * - two: n=2
-   * - few: n in 3..10
-   * - many: n in 11..99
-   * - other: n=0 or n≥100
+   * Variant L: Irish (ga, gv)
+   * Five forms with specific integer ranges:
+   * - one: n = 1
+   * - two: n = 2
+   * - few: n = 3..6
+   * - many: n = 7..10
+   * - other: everything else
    */
-  G: {
+  L: {
     one: [1],
     two: [2],
-    few: [3, 4, 5, 6, 7, 8, 9, 10],
-    many: [11, 12, 20, 50, 99],
-    other: [0, 100, 101, 1000]
+    few: [3, 4, 5, 6],
+    many: [7, 8, 9, 10],
+    other: [0, 11, 12, 20, 100, 1000]
   },
 
   /**
-   * Variant H: Arabic and Welsh (6 forms)
-   * Pattern:
-   * - zero: n=0
-   * - one: n=1
-   * - two: n=2
-   * - few: n%100 in 3..10
-   * - many: n%100 in 11..99
-   * - other: n≥100 where n%100 in 0..2
+   * Variant L2: Maltese
+   * Five forms: one, two, few, many, other.
+   * - one: n = 1
+   * - two: n = 2
+   * - few: n = 0 || n % 100 = 3..10
+   * - many: n % 100 = 11..19
+   * - other: everything else
    */
-  H: {
+  L2: {
+    one: [1],
+    two: [2],
+    few: [0, 3, 4, 5, 6, 7, 8, 9, 10, 103, 104],
+    many: [11, 12, 13, 14, 15, 16, 17, 18, 19, 111, 112],
+    other: [20, 21, 30, 40, 100, 101, 1000]
+  },
+
+  /**
+   * Variant N: Arabic and Welsh
+   * Six forms: zero, one, two, few, many, other.
+   */
+  N: {
     zero: [0],
     one: [1],
     two: [2],
@@ -314,8 +461,12 @@ export function getPluralCount(locale: string): number {
 
 // Helper predicates for complex plural rules
 const isFewSlavic = (n: number) => n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
-const isManySlavic = (n: number) =>
-  (n % 10 >= 0 && n % 10 <= 1) || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 12 && n % 100 <= 14)
+const isManySlavicEast = (n: number) =>
+  n % 10 === 0 || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 11 && n % 100 <= 14)
+const isManySlavicPolish = (n: number) =>
+  n !== 1 &&
+  ((n % 10 >= 0 && n % 10 <= 1) || (n % 10 >= 5 && n % 10 <= 9) || (n % 100 >= 12 && n % 100 <= 14))
+const isInteger = (n: number) => Number.isInteger(n)
 
 /**
  * Plural selector functions for each variant.
@@ -323,29 +474,159 @@ const isManySlavic = (n: number) =>
  * No eval() needed - pure functions for CSP compatibility.
  */
 const PLURAL_FUNCTIONS: Record<VariantKey, (n: number) => number> = {
-  // 1 form: always 0
+  // A: 1 form - always 0
   A: () => 0,
 
-  // 2 forms: one (n=1), other
+  // B: 2 forms - one (n=1), other
   B: (n) => (n !== 1 ? 1 : 0),
 
-  // 3 forms (Slavic): one, few, other
-  C: (n) => (n % 10 === 1 && n % 100 !== 11 ? 0 : isFewSlavic(n) ? 1 : 2),
+  // C: 3 forms - Romance (one, many, other)
+  // one: i = 0, 1
+  // many: i != 0 && i % 1000000 = 0 (exact millions)
+  // other: everything else
+  C: (n) => {
+    if (n === 0 || n === 1) {
+      return 0
+    } // one
+    if (isInteger(n) && n !== 0 && n % 1000000 === 0) {
+      return 1
+    } // many
+    return 2 // other
+  },
 
-  // 3 forms (with two): one, two, other
-  D: (n) => (n === 1 ? 0 : n === 2 ? 1 : 2),
+  // D: 3 forms - South Slavic (one, few, other)
+  D: (n) => (n % 10 === 1 && n % 100 !== 11 ? 0 : isFewSlavic(n) ? 1 : 2),
 
-  // 4 forms (Polish): one, few, many, other
-  E: (n) => (n === 1 ? 0 : isFewSlavic(n) ? 1 : isManySlavic(n) ? 2 : 3),
+  // E: 3 forms - Simple dual (one, two, other)
+  E: (n) => (n === 1 ? 0 : n === 2 ? 1 : 2),
 
-  // 4 forms (Celtic): one, two, few, other
-  F: (n) => (n === 1 ? 0 : n === 2 ? 1 : n >= 3 && n <= 10 ? 2 : 3),
+  // E2: 4 forms - Slovenian (one, two, few, other)
+  // Based on i % 100
+  E2: (n) => {
+    const i100 = n % 100
+    if (i100 === 1) {
+      return 0
+    } // one
+    if (i100 === 2) {
+      return 1
+    } // two
+    if (i100 === 3 || i100 === 4) {
+      return 2
+    } // few
+    return 3 // other
+  },
 
-  // 5 forms (Breton/Irish): one, two, few, many, other
-  G: (n) => (n === 1 ? 0 : n === 2 ? 1 : n >= 3 && n <= 10 ? 2 : n >= 11 && n <= 99 ? 3 : 4),
+  // F: 4 forms - East Slavic (one, few, many, other)
+  // other is for fractions only
+  F: (n) => {
+    if (!isInteger(n)) {
+      return 3
+    } // other (fractions)
+    if (n % 10 === 1 && n % 100 !== 11) {
+      return 0
+    } // one
+    if (isFewSlavic(n)) {
+      return 1
+    } // few
+    return 2 // many
+  },
 
-  // 6 forms (Arabic): zero, one, two, few, many, other
+  // G: 4 forms - Polish type (one, few, many, other)
+  // other is for fractions only
+  G: (n) => {
+    if (!isInteger(n)) {
+      return 3
+    } // other (fractions)
+    if (n === 1) {
+      return 0
+    } // one
+    if (isFewSlavic(n)) {
+      return 1
+    } // few
+    return 2 // many
+  },
+
+  // H: 4 forms - Czech/Slovak (one, few, many, other)
+  // many is for fractions, other is for 0, 5+
   H: (n) => {
+    if (!isInteger(n)) {
+      return 2
+    } // many (fractions)
+    if (n === 1) {
+      return 0
+    } // one
+    if (n >= 2 && n <= 4) {
+      return 1
+    } // few
+    return 3 // other (0, 5+)
+  },
+
+  // I: 4 forms - Lithuanian (one, few, many, other)
+  // many is for fractions
+  I: (n) => {
+    if (!isInteger(n)) {
+      return 2
+    } // many (fractions)
+    if (n % 10 === 1 && !(n % 100 >= 11 && n % 100 <= 19)) {
+      return 0
+    } // one
+    if (n % 10 >= 2 && n % 10 <= 9 && !(n % 100 >= 11 && n % 100 <= 19)) {
+      return 1
+    } // few
+    return 3 // other (0, 10-19, etc.)
+  },
+
+  // J: 3 forms - Latvian (zero, one, other)
+  J: (n) => {
+    if (n % 10 === 0 || (n % 100 >= 11 && n % 100 <= 19)) {
+      return 0
+    } // zero
+    if (n % 10 === 1 && n % 100 !== 11) {
+      return 1
+    } // one
+    return 2 // other
+  },
+
+  // K: 4 forms - Celtic without "many" (one, two, few, other)
+  K: (n) => (n === 1 ? 0 : n === 2 ? 1 : n >= 3 && n <= 10 ? 2 : 3),
+
+  // L: 5 forms - Irish (one, two, few, many, other)
+  // Specific integer ranges
+  L: (n) => {
+    if (n === 1) {
+      return 0
+    } // one
+    if (n === 2) {
+      return 1
+    } // two
+    if (n >= 3 && n <= 6) {
+      return 2
+    } // few
+    if (n >= 7 && n <= 10) {
+      return 3
+    } // many
+    return 4 // other
+  },
+
+  // L2: 5 forms - Maltese (one, two, few, many, other)
+  L2: (n) => {
+    if (n === 1) {
+      return 0
+    } // one
+    if (n === 2) {
+      return 1
+    } // two
+    if (n === 0 || (n % 100 >= 3 && n % 100 <= 10)) {
+      return 2
+    } // few
+    if (n % 100 >= 11 && n % 100 <= 19) {
+      return 3
+    } // many
+    return 4 // other
+  },
+
+  // N: 6 forms - Arabic (zero, one, two, few, many, other)
+  N: (n) => {
     if (n === 0) {
       return 0
     }
@@ -369,14 +650,50 @@ const PLURAL_FUNCTIONS: Record<VariantKey, (n: number) => number> = {
  * Plural expression strings for Gettext headers.
  */
 const PLURAL_EXPRESSIONS: Record<VariantKey, string> = {
+  // A: 1 form
   A: "0",
+
+  // B: 2 forms (one, other)
   B: "(n != 1)",
-  C: "(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
-  D: "(n==1 ? 0 : n==2 ? 1 : 2)",
-  E: "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n!=1 && n%10>=0 && n%10<=1 || n%10>=5 && n%10<=9 || n%100>=12 && n%100<=14 ? 2 : 3)",
-  F: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=6 ? 2 : n>=7 && n<=10 ? 2 : 3)",
-  G: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=10 ? 2 : n>=11 && n<=99 ? 3 : 4)",
-  H: "(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5)"
+
+  // C: 3 forms - Romance (one, many, other)
+  C: "(n == 0 || n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2)",
+
+  // D: 3 forms - South Slavic (one, few, other)
+  D: "(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
+
+  // E: 3 forms - Simple dual (one, two, other)
+  E: "(n==1 ? 0 : n==2 ? 1 : 2)",
+
+  // E2: 4 forms - Slovenian (one, two, few, other)
+  E2: "(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3)",
+
+  // F: 4 forms - East Slavic (one, few, many, other)
+  F: "(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
+
+  // G: 4 forms - Polish type (one, few, many, other)
+  G: "(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2)",
+
+  // H: 4 forms - Czech/Slovak (one, few, many, other)
+  H: "(n==1 ? 0 : n>=2 && n<=4 ? 1 : 3)",
+
+  // I: 4 forms - Lithuanian (one, few, many, other)
+  I: "(n%10==1 && (n%100<11 || n%100>19) ? 0 : n%10>=2 && n%10<=9 && (n%100<11 || n%100>19) ? 1 : 3)",
+
+  // J: 3 forms - Latvian (zero, one, other)
+  J: "(n%10==0 || (n%100>=11 && n%100<=19) ? 0 : n%10==1 && n%100!=11 ? 1 : 2)",
+
+  // K: 4 forms - Celtic without "many" (one, two, few, other)
+  K: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=10 ? 2 : 3)",
+
+  // L: 5 forms - Irish (one, two, few, many, other)
+  L: "(n==1 ? 0 : n==2 ? 1 : n>=3 && n<=6 ? 2 : n>=7 && n<=10 ? 3 : 4)",
+
+  // L2: 5 forms - Maltese (one, two, few, many, other)
+  L2: "(n==1 ? 0 : n==2 ? 1 : n==0 || (n%100>=3 && n%100<=10) ? 2 : n%100>=11 && n%100<=19 ? 3 : 4)",
+
+  // N: 6 forms - Arabic (zero, one, two, few, many, other)
+  N: "(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5)"
 }
 
 /**

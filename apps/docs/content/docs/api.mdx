@@ -113,7 +113,7 @@ Uses SHA-256 with Base64URL encoding — 281 trillion possibilities, practically
 
 ## Plural Categories
 
-Get CLDR plural categories and Gettext Plural-Forms headers for any locale.
+Get CLDR 48 plural categories and Gettext Plural-Forms headers for any locale. Validated against official CLDR test data — all major languages pass 100%.
 
 ```typescript
 import {
@@ -125,8 +125,11 @@ import {
   parsePluralFormsHeader
 } from "pofile-ts"
 
+// CLDR-compliant categories
 getPluralCategories("de") // → ["one", "other"]
+getPluralCategories("ru") // → ["one", "few", "many", "other"]
 getPluralCategories("pl") // → ["one", "few", "many", "other"]
+getPluralCategories("ar") // → ["zero", "one", "two", "few", "many", "other"]
 
 getPluralCount("ar") // → 6
 
@@ -134,13 +137,15 @@ getPluralFormsHeader("de")
 // → "nplurals=2; plural=(n != 1);"
 
 // Plural selector function (CSP-safe, no eval)
-const fn = getPluralFunction("de")
+const fn = getPluralFunction("ru")
 fn(1) // → 0 (one)
-fn(5) // → 1 (other)
+fn(2) // → 1 (few)
+fn(5) // → 2 (many)
+fn(21) // → 0 (one)
 
 // Sample numbers for each category
-getPluralSamples("pl")
-// → { one: [1], few: [2, 3, 4, 22...], many: [0, 5, 6...], other: [...] }
+getPluralSamples("ru")
+// → { one: [1, 21, 31...], few: [2, 3, 4, 22...], many: [0, 5, 6...], other: [0.5, 1.5...] }
 
 // Parse Plural-Forms header back to function (CSP-safe)
 const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")

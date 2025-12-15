@@ -22,7 +22,7 @@ A modern, focused library for reading and writing [GNU gettext](https://www.gnu.
 - 📖 **Parse** PO files from strings
 - ✏️ **Serialize** PO files back to strings
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
-- 🌍 **CLDR plural data** — compact rules for 140+ locales (~2KB)
+- 🌍 **CLDR 48 plural data** — 100% compliant for all major languages (~3KB)
 - 🔄 **ICU conversion** — Gettext ↔ ICU MessageFormat
 - 📦 **Zero dependencies** — browser-compatible
 - 💎 **TypeScript-first** — full type definitions

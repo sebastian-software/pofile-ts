@@ -119,6 +119,9 @@ importers:
       "@vitest/coverage-v8":
         specifier: ^4.0.15
         version: 4.0.15(vitest@4.0.15(@types/node@22.19.2)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      cldr-core:
+        specifier: ^48.0.0
+        version: 48.0.0
       eslint:
         specifier: ^9.39.1
         version: 9.39.1(jiti@2.6.1)
@@ -3393,6 +3396,12 @@ packages:
     resolution:
       {
         integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==
+      }
+
+  cldr-core@48.0.0:
+    resolution:
+      {
+        integrity: sha512-iQnK68eOjEsHEOwCvi2CI7xbjcVlCdaSNTQrkwCgEMnyZUbHCgF0GPw2CXi0D2IGz+9Pj80cmcWzRFcF6zdrYQ==
       }
 
   cli-boxes@3.0.0:
@@ -9647,6 +9656,8 @@ snapshots:
       clsx: 2.1.1
 
   classnames@2.5.1: {}
+
+  cldr-core@48.0.0: {}
 
   cli-boxes@3.0.0: {}
 

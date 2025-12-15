@@ -66,6 +66,7 @@
     "@release-it/conventional-changelog": "^10.0.2",
     "@types/node": "^22.19.1",
     "@vitest/coverage-v8": "^4.0.15",
+    "cldr-core": "^48.0.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "tsup": "^8.5.0",
