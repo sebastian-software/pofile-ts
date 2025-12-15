@@ -1,0 +1,552 @@
+/**
+ * ICU MessageFormat v1 Parser.
+ *
+ * A minimal, zero-dependency parser for ICU MessageFormat strings.
+ * Optimized for small bundle size (~3kb gzipped).
+ *
+ * Supported syntax:
+ * - Simple arguments: {name}
+ * - Formatted: {n, number}, {d, date, short}, {t, time, medium}
+ * - Skeletons: {n, number, ::currency/EUR} (as opaque string)
+ * - Plural: {n, plural, offset:1 =0 {...} one {...} other {...}}
+ * - Select: {gender, select, male {...} female {...} other {...}}
+ * - Selectordinal: {n, selectordinal, one {#st} two {#nd} ...}
+ * - Tags: <b>bold</b>, <0>numbered</0>
+ * - Escaping: '' → literal ', '{text}' → literal text
+ *
+ * Trade-offs for bundle size / complexity:
+ * - Modern JS only (no IE11 polyfills)
+ * - No location tracking (typical messages are single-line anyway)
+ * - Styles/skeletons stored as opaque strings (runtime handles interpretation)
+ * - Quoting only escapes ICU special chars ({, }, <, >, #), not arbitrary text
+ *
+ * @see https://unicode-org.github.io/icu/userguide/format_parse/messages/
+ */
+
+import type {
+  IcuNode,
+  IcuLiteralNode,
+  IcuArgumentNode,
+  IcuNumberNode,
+  IcuDateNode,
+  IcuTimeNode,
+  IcuSelectNode,
+  IcuPluralNode,
+  IcuPoundNode,
+  IcuTagNode,
+  IcuPluralOption,
+  IcuSelectOption,
+  IcuParserOptions,
+  IcuParseResult
+} from "./types"
+import { IcuNodeType } from "./types"
+
+// Character classification using regex (modern engines optimize this well)
+const RE_WHITESPACE = /\s/
+const RE_IDENTIFIER_CHAR = /[^\s{}#<>,:]/
+const RE_TAG_CHAR = /[\w\-.:]/
+const RE_ALPHA = /[a-zA-Z]/
+
+type ArgType = "plural" | "selectordinal" | ""
+
+/**
+ * ICU syntax error thrown during parsing.
+ */
+export class IcuSyntaxError extends Error {
+  constructor(
+    message: string,
+    public readonly offset: number
+  ) {
+    super(`ICU syntax error at position ${offset}: ${message}`)
+    this.name = "IcuSyntaxError"
+  }
+}
+
+/**
+ * ICU MessageFormat Parser.
+ */
+export class IcuParser {
+  private pos = 0
+  private readonly msg: string
+  private readonly ignoreTag: boolean
+  private readonly requiresOther: boolean
+
+  constructor(message: string, options: IcuParserOptions = {}) {
+    this.msg = message
+    this.ignoreTag = options.ignoreTag ?? false
+    this.requiresOther = options.requiresOtherClause ?? true
+  }
+
+  parse(): IcuNode[] {
+    const result = this.parseMessage(0, "")
+    if (this.pos < this.msg.length) {
+      this.error("Unexpected character")
+    }
+    return result
+  }
+
+  private parseMessage(depth: number, parentArg: ArgType): IcuNode[] {
+    const nodes: IcuNode[] = []
+
+    while (this.pos < this.msg.length) {
+      const ch = this.msg[this.pos]
+
+      if (ch === "{") {
+        nodes.push(this.parseArgument(depth))
+      } else if (ch === "}" && depth > 0) {
+        break
+      } else if (ch === "#" && (parentArg === "plural" || parentArg === "selectordinal")) {
+        this.pos++
+        nodes.push({ type: IcuNodeType.pound })
+      } else if (ch === "<" && !this.ignoreTag && RE_ALPHA.test(this.peek(1) ?? "")) {
+        nodes.push(this.parseTag(depth, parentArg))
+      } else if (ch === "<" && !this.ignoreTag && this.peek(1) === "/") {
+        break // Closing tag - handled by parseTag
+      } else {
+        nodes.push(this.parseLiteral(depth, parentArg))
+      }
+    }
+
+    return nodes
+  }
+
+  private parseArgument(depth: number): IcuNode {
+    const start = this.pos
+    this.pos++ // skip {
+    this.skipWhitespace()
+
+    if (this.msg[this.pos] === "}") {
+      this.error("Empty argument", start)
+    }
+
+    const name = this.parseIdentifier()
+    if (!name) {
+      this.error("Expected argument name", start)
+    }
+
+    this.skipWhitespace()
+
+    // Simple argument: {name}
+    if (this.msg[this.pos] === "}") {
+      this.pos++
+      return { type: IcuNodeType.argument, value: name }
+    }
+
+    // Formatted: {name, type, ...}
+    if (this.msg[this.pos] !== ",") {
+      this.error("Expected ',' or '}'", start)
+    }
+    this.pos++ // skip ,
+    this.skipWhitespace()
+
+    const argType = this.parseIdentifier()
+    if (!argType) {
+      this.error("Expected argument type", start)
+    }
+
+    switch (argType) {
+      case "number":
+      case "date":
+      case "time":
+        return this.parseFormattedArg(argType, name, start)
+      case "plural":
+      case "selectordinal":
+        return this.parsePlural(argType, name, depth, start)
+      case "select":
+        return this.parseSelect(name, depth, start)
+      default:
+        this.error(`Invalid argument type: ${argType}`, start)
+    }
+  }
+
+  private parseFormattedArg(
+    argType: "number" | "date" | "time",
+    name: string,
+    start: number
+  ): IcuNumberNode | IcuDateNode | IcuTimeNode {
+    this.skipWhitespace()
+    let style: string | null = null
+
+    if (this.msg[this.pos] === ",") {
+      this.pos++
+      this.skipWhitespace()
+      style = this.parseStyle()
+      if (!style) {
+        this.error("Expected style", start)
+      }
+    }
+
+    this.expectChar("}", start)
+
+    const type =
+      argType === "number"
+        ? IcuNodeType.number
+        : argType === "date"
+          ? IcuNodeType.date
+          : IcuNodeType.time
+
+    return { type, value: name, style } as IcuNumberNode | IcuDateNode | IcuTimeNode
+  }
+
+  private parsePlural(
+    argType: "plural" | "selectordinal",
+    name: string,
+    depth: number,
+    start: number
+  ): IcuPluralNode {
+    this.skipWhitespace()
+    this.expectChar(",", start)
+    this.skipWhitespace()
+
+    let offset = 0
+
+    // Check for offset:N
+    const maybeOffset = this.parseIdentifier()
+    if (maybeOffset === "offset") {
+      this.expectChar(":", start)
+      this.skipWhitespace()
+      offset = this.parseInteger()
+      this.skipWhitespace()
+    } else if (maybeOffset) {
+      // Not offset, rewind
+      this.pos -= maybeOffset.length
+    }
+
+    const options = this.parsePluralOptions(depth, argType)
+    this.expectChar("}", start)
+
+    return {
+      type: IcuNodeType.plural,
+      value: name,
+      options,
+      offset,
+      pluralType: argType === "plural" ? "cardinal" : "ordinal"
+    }
+  }
+
+  private parseSelect(name: string, depth: number, start: number): IcuSelectNode {
+    this.skipWhitespace()
+    this.expectChar(",", start)
+    this.skipWhitespace()
+
+    const options = this.parseSelectOptions(depth)
+    this.expectChar("}", start)
+
+    return { type: IcuNodeType.select, value: name, options }
+  }
+
+  private parsePluralOptions(depth: number, parentArg: ArgType): Record<string, IcuPluralOption> {
+    const options: Record<string, IcuPluralOption> = {}
+    const seen = new Set<string>()
+
+    while (this.pos < this.msg.length && this.msg[this.pos] !== "}") {
+      this.skipWhitespace()
+      if (this.msg[this.pos] === "}") {
+        break
+      }
+
+      // Parse selector: one, other, =0, =1, etc.
+      let selector: string
+      if (this.msg[this.pos] === "=") {
+        this.pos++
+        const num = this.parseInteger()
+        selector = `=${num}`
+      } else {
+        selector = this.parseIdentifier()
+        if (!selector) {
+          break
+        }
+      }
+
+      if (seen.has(selector)) {
+        this.error(`Duplicate selector: ${selector}`)
+      }
+      seen.add(selector)
+
+      this.skipWhitespace()
+      this.expectChar("{")
+      const value = this.parseMessage(depth + 1, parentArg)
+      this.expectChar("}")
+
+      options[selector] = { value }
+      this.skipWhitespace()
+    }
+
+    if (Object.keys(options).length === 0) {
+      this.error("Expected at least one plural option")
+    }
+    if (this.requiresOther && !("other" in options)) {
+      this.error("Missing 'other' clause")
+    }
+
+    return options
+  }
+
+  private parseSelectOptions(depth: number): Record<string, IcuSelectOption> {
+    const options: Record<string, IcuSelectOption> = {}
+    const seen = new Set<string>()
+
+    while (this.pos < this.msg.length && this.msg[this.pos] !== "}") {
+      this.skipWhitespace()
+      if (this.msg[this.pos] === "}") {
+        break
+      }
+
+      const selector = this.parseIdentifier()
+      if (!selector) {
+        break
+      }
+
+      if (seen.has(selector)) {
+        this.error(`Duplicate selector: ${selector}`)
+      }
+      seen.add(selector)
+
+      this.skipWhitespace()
+      this.expectChar("{")
+      const value = this.parseMessage(depth + 1, "")
+      this.expectChar("}")
+
+      options[selector] = { value }
+      this.skipWhitespace()
+    }
+
+    if (Object.keys(options).length === 0) {
+      this.error("Expected at least one select option")
+    }
+    if (this.requiresOther && !("other" in options)) {
+      this.error("Missing 'other' clause")
+    }
+
+    return options
+  }
+
+  private parseTag(depth: number, parentArg: ArgType): IcuTagNode | IcuLiteralNode {
+    const start = this.pos
+    this.pos++ // skip <
+
+    const tagName = this.parseTagName()
+    this.skipWhitespace()
+
+    // Self-closing: <br/>
+    if (this.msg.slice(this.pos, this.pos + 2) === "/>") {
+      this.pos += 2
+      return { type: IcuNodeType.literal, value: `<${tagName}/>` }
+    }
+
+    // Opening tag: <b>
+    this.expectChar(">", start)
+
+    const children = this.parseMessage(depth + 1, parentArg)
+
+    // Closing tag: </b>
+    if (this.msg.slice(this.pos, this.pos + 2) !== "</") {
+      this.error("Unclosed tag", start)
+    }
+    this.pos += 2
+
+    const closingName = this.parseTagName()
+    if (closingName !== tagName) {
+      this.error(`Mismatched tag: expected </${tagName}>, got </${closingName}>`, start)
+    }
+
+    this.skipWhitespace()
+    this.expectChar(">", start)
+
+    return { type: IcuNodeType.tag, value: tagName, children }
+  }
+
+  private parseLiteral(depth: number, parentArg: ArgType): IcuLiteralNode {
+    let value = ""
+
+    while (this.pos < this.msg.length) {
+      const ch = this.msg[this.pos]
+
+      // End of literal
+      if (ch === "{" || (ch === "}" && depth > 0)) {
+        break
+      }
+      if (ch === "#" && (parentArg === "plural" || parentArg === "selectordinal")) {
+        break
+      }
+      if (ch === "<" && !this.ignoreTag) {
+        const next = this.peek(1)
+        if (RE_ALPHA.test(next ?? "") || next === "/") {
+          break
+        }
+      }
+
+      // Quoting: '' → ' or '{...}' → {...}
+      if (ch === "'") {
+        const next = this.peek(1)
+        if (next === "'") {
+          // '' → '
+          value += "'"
+          this.pos += 2
+        } else if (
+          next === "{" ||
+          next === "}" ||
+          next === "<" ||
+          next === ">" ||
+          (next === "#" && (parentArg === "plural" || parentArg === "selectordinal"))
+        ) {
+          // '{...}' or '<...>' etc. → literal until closing '
+          this.pos++ // skip opening '
+          while (this.pos < this.msg.length) {
+            if (this.msg[this.pos] === "'") {
+              if (this.peek(1) === "'") {
+                value += "'"
+                this.pos += 2
+              } else {
+                this.pos++ // skip closing '
+                break
+              }
+            } else {
+              value += this.msg[this.pos++]
+            }
+          }
+        } else {
+          value += ch
+          this.pos++
+        }
+      } else {
+        value += ch
+        this.pos++
+      }
+    }
+
+    return { type: IcuNodeType.literal, value }
+  }
+
+  private parseStyle(): string {
+    const start = this.pos
+    let braceDepth = 0
+
+    while (this.pos < this.msg.length) {
+      const ch = this.msg[this.pos]
+      if (ch === "'") {
+        // Skip quoted content
+        this.pos++
+        while (this.pos < this.msg.length && this.msg[this.pos] !== "'") {
+          this.pos++
+        }
+        if (this.pos < this.msg.length) {
+          this.pos++
+        }
+      } else if (ch === "{") {
+        braceDepth++
+        this.pos++
+      } else if (ch === "}") {
+        if (braceDepth === 0) {
+          break
+        }
+        braceDepth--
+        this.pos++
+      } else {
+        this.pos++
+      }
+    }
+
+    return this.msg.slice(start, this.pos).trim()
+  }
+
+  private parseIdentifier(): string {
+    const start = this.pos
+    while (this.pos < this.msg.length && RE_IDENTIFIER_CHAR.test(this.char())) {
+      this.pos++
+    }
+    return this.msg.slice(start, this.pos)
+  }
+
+  private parseTagName(): string {
+    const start = this.pos
+    while (this.pos < this.msg.length && RE_TAG_CHAR.test(this.char())) {
+      this.pos++
+    }
+    return this.msg.slice(start, this.pos)
+  }
+
+  private parseInteger(): number {
+    const start = this.pos
+    let sign = 1
+    if (this.char() === "-") {
+      sign = -1
+      this.pos++
+    } else if (this.char() === "+") {
+      this.pos++
+    }
+
+    const numStart = this.pos
+    while (this.pos < this.msg.length && this.char() >= "0" && this.char() <= "9") {
+      this.pos++
+    }
+
+    if (this.pos === numStart) {
+      this.error("Expected integer", start)
+    }
+
+    return sign * parseInt(this.msg.slice(numStart, this.pos), 10)
+  }
+
+  private skipWhitespace(): void {
+    while (this.pos < this.msg.length && RE_WHITESPACE.test(this.char())) {
+      this.pos++
+    }
+  }
+
+  private char(): string {
+    return this.msg.charAt(this.pos)
+  }
+
+  private peek(offset: number): string | undefined {
+    return this.msg[this.pos + offset]
+  }
+
+  private expectChar(ch: string, errorPos?: number): void {
+    if (this.msg[this.pos] !== ch) {
+      this.error(`Expected '${ch}'`, errorPos)
+    }
+    this.pos++
+  }
+
+  private error(message: string, pos?: number): never {
+    throw new IcuSyntaxError(message, pos ?? this.pos)
+  }
+}
+
+/**
+ * Parse an ICU MessageFormat string.
+ *
+ * @example
+ * const result = parseIcu("Hello {name}!")
+ * if (result.success) {
+ *   console.log(result.ast)
+ * }
+ *
+ * @example
+ * const result = parseIcu("{count, plural, one {# item} other {# items}}")
+ */
+export function parseIcu(message: string, options?: IcuParserOptions): IcuParseResult {
+  try {
+    const ast = new IcuParser(message, options).parse()
+    return { success: true, ast, errors: [] }
+  } catch (e) {
+    if (e instanceof IcuSyntaxError) {
+      return {
+        success: false,
+        ast: null,
+        errors: [
+          {
+            kind: "SYNTAX_ERROR",
+            message: e.message,
+            location: {
+              start: { offset: e.offset, line: 1, column: e.offset + 1 },
+              end: { offset: e.offset, line: 1, column: e.offset + 1 }
+            }
+          }
+        ]
+      }
+    }
+    throw e
+  }
+}

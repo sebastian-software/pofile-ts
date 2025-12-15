@@ -34,7 +34,7 @@ export {
 // Comment utilities
 export { splitMultilineComments } from "./comments"
 
-// ICU conversion
+// ICU conversion (Gettext ↔ ICU)
 export {
   gettextToIcu,
   isPluralItem,
@@ -42,6 +42,22 @@ export {
   normalizeToIcu,
   icuToGettextSource
 } from "./icu"
+
+// ICU MessageFormat parsing
+export {
+  parseIcu,
+  IcuParser,
+  IcuSyntaxError,
+  extractVariables,
+  extractVariableInfo,
+  validateIcu,
+  compareVariables,
+  hasPlural,
+  hasSelect,
+  hasIcuSyntax,
+  IcuNodeType,
+  IcuErrorKind
+} from "./icu/index"
 
 // Serialization utilities
 export { DEFAULT_SERIALIZE_OPTIONS } from "./serialization"
@@ -62,3 +78,27 @@ export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOption
 export type { GenerateIdsOptions } from "./messageId"
 export type { GettextToIcuOptions, NormalizeToIcuOptions, IcuToGettextOptions } from "./icu"
 export type { ParsedPluralFormsResult } from "./plurals"
+
+// ICU MessageFormat types
+export type {
+  IcuNode,
+  IcuLiteralNode,
+  IcuArgumentNode,
+  IcuNumberNode,
+  IcuDateNode,
+  IcuTimeNode,
+  IcuSelectNode,
+  IcuPluralNode,
+  IcuPoundNode,
+  IcuTagNode,
+  IcuPluralOption,
+  IcuSelectOption,
+  IcuLocation,
+  IcuPosition,
+  IcuParserOptions,
+  IcuParseError,
+  IcuParseResult,
+  IcuVariable,
+  IcuValidationResult,
+  IcuVariableComparison
+} from "./icu/index"
