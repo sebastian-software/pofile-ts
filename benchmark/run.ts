@@ -3,12 +3,22 @@ import { join } from "node:path"
 import { Bench } from "tinybench"
 
 // pofile-ts (this library)
-import { parsePo, stringifyPo, parseIcu } from "pofile-ts"
+import {
+  parsePo,
+  stringifyPo,
+  parseIcu,
+  compileIcu,
+  compileCatalog,
+  generateCompiledCode
+} from "pofile-ts"
+import type { Catalog } from "pofile-ts"
 
 // Competitors
 import PO from "pofile"
 import gettextParser from "gettext-parser"
 import { parse as parseFormatJs } from "@formatjs/icu-messageformat-parser"
+import { IntlMessageFormat } from "intl-messageformat"
+import { i18n } from "@lingui/core"
 
 // ICU test messages
 const icuMessages = {
@@ -31,6 +41,8 @@ async function run() {
 
   await runPoFileBenchmark()
   await runIcuBenchmark()
+  await runCompilerBenchmark()
+  showFormatComparison()
 
   console.log("\n" + "═".repeat(70))
   console.log("  Done!")
@@ -172,6 +184,275 @@ async function runIcuBenchmark() {
   console.log(
     `    vs @formatjs: ${avgRatio.toFixed(1)}x faster (avg), ${(batchPofileTs.result!.hz / batchFormatJs.result!.hz).toFixed(1)}x faster (batch)`
   )
+}
+
+// ============================================================================
+// COMPILER & RUNTIME BENCHMARK
+// ============================================================================
+
+async function runCompilerBenchmark() {
+  console.log("\n┌─ ICU Message Compilation & Runtime ──────────────────────────────┐")
+  console.log(`│  pofile-ts (JS functions) vs intl-messageformat vs @lingui (AST)`)
+  console.log(`│  Note: @lingui compiles to AST arrays, still interpreted at runtime`)
+  console.log("└────────────────────────────────────────────────────────────────────┘")
+
+  // Setup Lingui
+  i18n.load("en", {})
+  i18n.activate("en")
+
+  // Test messages
+  const messages = {
+    simple: "Hello, {name}!",
+    plural: "{count, plural, one {# item} other {# items}}",
+    complex:
+      "{userName}, you have {unreadCount, plural, =0 {no messages} one {# message} other {# messages}}"
+  }
+
+  // Pre-compile all messages for runtime benchmarks
+  const compiledPofileTs = Object.fromEntries(
+    Object.entries(messages).map(([k, v]) => [k, compileIcu(v, { locale: "en" })])
+  )
+
+  const compiledIntlMF = Object.fromEntries(
+    Object.entries(messages).map(([k, v]) => [k, new IntlMessageFormat(v, "en")])
+  )
+
+  // Lingui's compiled format is an Array/AST structure
+  // We'll test both: raw ICU and pre-compiled AST format
+  const linguiMessagesRaw = Object.fromEntries(Object.entries(messages).map(([k, v]) => [k, v]))
+  // Pre-compiled AST format (what `lingui compile` produces)
+  const linguiMessagesCompiled: Record<string, unknown> = {
+    simple: ["Hello, ", ["name"], "!"],
+    plural: [["count", "plural", { one: ["#", " item"], other: ["#", " items"] }]],
+    complex: [
+      ["userName"],
+      ", you have ",
+      [
+        "unreadCount",
+        "plural",
+        {
+          "0": ["no messages"],
+          one: ["#", " message"],
+          other: ["#", " messages"]
+        }
+      ]
+    ]
+  }
+  i18n.load("en", linguiMessagesRaw)
+  i18n.load("en-compiled", linguiMessagesCompiled)
+
+  // Test values
+  const values = {
+    simple: { name: "World" },
+    plural: { count: 5 },
+    complex: { userName: "Alice", unreadCount: 3 }
+  }
+
+  // 1. Compilation speed (one-time cost)
+  console.log("\n  Compilation (one-time):")
+  const compileBench = new Bench({ time: 1000, warmupTime: 200 })
+
+  compileBench
+    .add("pofile-ts compileIcu", () => {
+      for (const msg of Object.values(messages)) {
+        compileIcu(msg, { locale: "en" })
+      }
+    })
+    .add("intl-messageformat", () => {
+      for (const msg of Object.values(messages)) {
+        new IntlMessageFormat(msg, "en")
+      }
+    })
+
+  await compileBench.run()
+  printCompactResults(compileBench)
+
+  // 2. Runtime formatting speed (hot path)
+  console.log("\n  Runtime formatting (hot path):")
+  const runtimeBench = new Bench({ time: 2000, warmupTime: 300 })
+
+  runtimeBench
+    .add("pofile-ts (compiled)", () => {
+      compiledPofileTs.simple!(values.simple)
+      compiledPofileTs.plural!(values.plural)
+      compiledPofileTs.complex!(values.complex)
+    })
+    .add("intl-messageformat", () => {
+      compiledIntlMF.simple!.format(values.simple)
+      compiledIntlMF.plural!.format(values.plural)
+      compiledIntlMF.complex!.format(values.complex)
+    })
+    .add("@lingui (raw ICU)", () => {
+      i18n.activate("en")
+      i18n._("simple", values.simple)
+      i18n._("plural", values.plural)
+      i18n._("complex", values.complex)
+    })
+    .add("@lingui (compiled AST)", () => {
+      i18n.activate("en-compiled")
+      i18n._("simple", values.simple)
+      i18n._("plural", values.plural)
+      i18n._("complex", values.complex)
+    })
+
+  await runtimeBench.run()
+  printCompactResults(runtimeBench)
+
+  // 3. Catalog compilation - simulates batch compile at build time
+  console.log("\n  Catalog compilation (200 ICU messages):")
+
+  // Create a test catalog with 200 entries
+  const testCatalog: Catalog = {}
+  for (let i = 0; i < 100; i++) {
+    testCatalog[`Message ${i}: {name}`] = {
+      translation: `Nachricht ${i}: {name}`
+    }
+    testCatalog[`{count} item ${i}`] = {
+      translation: "{count, plural, one {# Artikel} other {# Artikel}}"
+    }
+  }
+
+  // Also build equivalent intl-messageformat catalog for comparison
+  const catalogBench = new Bench({ time: 2000, warmupTime: 500 })
+
+  catalogBench
+    .add("pofile-ts", () => {
+      compileCatalog(testCatalog, { locale: "de", useMessageId: false })
+    })
+    .add("intl-messageformat", () => {
+      const result: Record<string, IntlMessageFormat> = {}
+      for (const [key, entry] of Object.entries(testCatalog)) {
+        if (entry.translation && typeof entry.translation === "string") {
+          result[key] = new IntlMessageFormat(entry.translation, "de")
+        }
+      }
+    })
+
+  await catalogBench.run()
+  printCompactResults(catalogBench)
+
+  const pofileTask = catalogBench.tasks.find((t) => t.name === "pofile-ts")!
+  const intlTask = catalogBench.tasks.find((t) => t.name === "intl-messageformat")!
+  const catalogRatio = pofileTask.result!.hz / intlTask.result!.hz
+
+  console.log(
+    `    → ${catalogRatio.toFixed(1)}x faster, ~${Math.round(pofileTask.result!.hz * 200).toLocaleString()} messages/s`
+  )
+
+  // Summary
+  const compilePofileTs = compileBench.tasks.find((t) => t.name === "pofile-ts compileIcu")!
+  const compileIntlMF = compileBench.tasks.find((t) => t.name === "intl-messageformat")!
+  const runtimePofileTs = runtimeBench.tasks.find((t) => t.name === "pofile-ts (compiled)")!
+  const runtimeIntlMF = runtimeBench.tasks.find((t) => t.name === "intl-messageformat")!
+  const runtimeLinguiRaw = runtimeBench.tasks.find((t) => t.name === "@lingui (raw ICU)")!
+  const runtimeLinguiCompiled = runtimeBench.tasks.find((t) => t.name === "@lingui (compiled AST)")!
+
+  console.log("\n  Summary:")
+  console.log(
+    `    Compilation: ${(compilePofileTs.result!.hz / compileIntlMF.result!.hz).toFixed(1)}x vs intl-messageformat`
+  )
+  console.log(
+    `    Runtime:     ${(runtimePofileTs.result!.hz / runtimeIntlMF.result!.hz).toFixed(1)}x vs intl-messageformat`
+  )
+  console.log(
+    `                 ${(runtimePofileTs.result!.hz / runtimeLinguiRaw.result!.hz).toFixed(1)}x vs @lingui (raw), ${(runtimePofileTs.result!.hz / runtimeLinguiCompiled.result!.hz).toFixed(1)}x vs @lingui (compiled)`
+  )
+}
+
+// ============================================================================
+// FORMAT COMPARISON
+// ============================================================================
+
+function showFormatComparison() {
+  console.log("\n┌─ Format Comparison: Input → Output ─────────────────────────────┐")
+  console.log("│  How each library handles the same ICU message")
+  console.log("└────────────────────────────────────────────────────────────────────┘")
+
+  const examples = [
+    {
+      name: "Simple interpolation",
+      input: "Hello {name}!",
+      values: { name: "World" }
+    },
+    {
+      name: "Plural",
+      input: "{count, plural, one {# item} other {# items}}",
+      values: { count: 5 }
+    },
+    {
+      name: "Select + Plural (nested)",
+      input:
+        "{gender, select, male {He has {n, plural, one {# car} other {# cars}}} female {She has {n, plural, one {# car} other {# cars}}} other {They have {n, plural, one {# car} other {# cars}}}}",
+      values: { gender: "female", n: 2 }
+    }
+  ]
+
+  for (const { name, input, values } of examples) {
+    console.log(`\n  ${name}:`)
+    console.log(`  ┌─ Input: ${input.length > 50 ? input.slice(0, 50) + "..." : input}`)
+    console.log(`  │`)
+
+    // pofile-ts compiled output
+    const pofileTsFn = compileIcu(input, { locale: "en" })
+    const pofileTsResult = pofileTsFn(values)
+    console.log(`  ├─ pofile-ts (compiled fn):`)
+    console.log(`  │    Result: "${pofileTsResult}"`)
+
+    // intl-messageformat output
+    const intlMF = new IntlMessageFormat(input, "en")
+    const intlResult = intlMF.format(values)
+    console.log(`  ├─ intl-messageformat:`)
+    console.log(`  │    Result: "${intlResult}"`)
+
+    // Lingui output (raw ICU)
+    i18n.load("en-US", { example: input })
+    i18n.activate("en-US")
+    const linguiResult = i18n._("example", values)
+    console.log(`  ├─ @lingui/core (raw ICU):`)
+    console.log(`  │    Result: "${linguiResult}"`)
+
+    console.log(`  │`)
+    console.log(
+      `  └─ All produce same output: ${pofileTsResult === intlResult && intlResult === linguiResult ? "✓" : "✗"}`
+    )
+  }
+
+  // Show generated code comparison
+  console.log("\n  Generated Code Comparison (Build Output):")
+  console.log("  ─────────────────────────────────────────")
+
+  const sampleCatalog: Catalog = {
+    "Hello {name}!": { translation: "Hallo {name}!" },
+    "{count, plural, one {# item} other {# items}}": {
+      translation: "{count, plural, one {# Artikel} other {# Artikel}}"
+    }
+  }
+
+  console.log("\n  pofile-ts generateCompiledCode():")
+  const generatedCode = generateCompiledCode(sampleCatalog, { locale: "de", useMessageId: false })
+  // Show first ~20 lines
+  const codeLines = generatedCode.split("\n").slice(0, 25)
+  for (const line of codeLines) {
+    console.log(`    ${line}`)
+  }
+  if (generatedCode.split("\n").length > 25) {
+    console.log(`    ... (${generatedCode.split("\n").length - 25} more lines)`)
+  }
+
+  console.log("\n  @lingui compiled catalog format:")
+  console.log(`    // Lingui compiles to Array/AST format, interpreted at runtime:`)
+  console.log(`    {`)
+  console.log(`      "abc123": ["Hallo ", ["name"], "!"],`)
+  console.log(`      "def456": [["count", "plural", {`)
+  console.log(`        "one": ["#", " Artikel"],`)
+  console.log(`        "other": ["#", " Artikel"]`)
+  console.log(`      }]]`)
+  console.log(`    }`)
+  console.log(`    // Runtime walks this AST structure to produce output`)
+
+  console.log("\n  intl-messageformat (for comparison):")
+  console.log(`    // No static compilation - creates IntlMessageFormat at runtime:`)
+  console.log(`    new IntlMessageFormat("Hallo {name}!", "de")`)
 }
 
 // ============================================================================
