@@ -63,8 +63,28 @@ function getPluralRules(locale: string): Intl.PluralRules {
 }
 
 /**
+ * Canonical CLDR category order.
+ * Intl.PluralRules returns categories in varying orders across ICU versions.
+ * We normalize to this order for consistent behavior.
+ */
+const CLDR_CATEGORY_ORDER: Record<string, number> = {
+  zero: 0,
+  one: 1,
+  two: 2,
+  few: 3,
+  many: 4,
+  other: 5
+}
+
+/**
+ * Cache for sorted plural categories per locale.
+ */
+const categoriesCache = new Map<string, readonly string[]>()
+
+/**
  * Returns the CLDR plural categories for a locale.
  * Uses native Intl.PluralRules for accurate, up-to-date CLDR data.
+ * Categories are sorted in canonical CLDR order for consistency across ICU versions.
  *
  * @example
  * getPluralCategories("de")  // → ["one", "other"]
@@ -72,7 +92,16 @@ function getPluralRules(locale: string): Intl.PluralRules {
  * getPluralCategories("ar")  // → ["zero", "one", "two", "few", "many", "other"]
  */
 export function getPluralCategories(locale: string): readonly string[] {
-  return getPluralRules(locale).resolvedOptions().pluralCategories
+  const normalized = normalizeLocale(locale)
+  let categories = categoriesCache.get(normalized)
+  if (!categories) {
+    const raw = getPluralRules(locale).resolvedOptions().pluralCategories
+    categories = [...raw].sort(
+      (a, b) => (CLDR_CATEGORY_ORDER[a] ?? 99) - (CLDR_CATEGORY_ORDER[b] ?? 99)
+    )
+    categoriesCache.set(normalized, categories)
+  }
+  return categories
 }
 
 /**
@@ -98,7 +127,7 @@ export function getPluralCount(locale: string): number {
  */
 export function getPluralFunction(locale: string): (n: number) => number {
   const pr = getPluralRules(locale)
-  const categories = pr.resolvedOptions().pluralCategories
+  const categories = getPluralCategories(locale)
 
   return (n: number): number => {
     const category = pr.select(n)
