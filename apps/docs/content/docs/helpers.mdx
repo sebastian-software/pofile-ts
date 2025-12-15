@@ -311,13 +311,16 @@ The parser is optimized for bundle size and typical i18n use cases:
 | Library                            |  Gzipped |
 | ---------------------------------- | -------: |
 | @formatjs/icu-messageformat-parser |     ~9KB |
-| **pofile-ts ICU parser**           | **~3KB** |
+| **pofile-ts ICU parser**           | **<3KB** |
 
-Trade-offs for smaller bundles:
+### Limitations
 
-- Modern JS only (no IE11 polyfills)
-- No source location tracking (messages are typically single-line)
-- Styles/skeletons stored as opaque strings (runtime handles interpretation)
+Trade-offs for smaller bundle size:
+
+- **ICU MessageFormat v1 only** — no MF2 syntax
+- **No source location tracking** — messages are typically single-line anyway
+- **Styles/skeletons as opaque strings** — stored but not parsed (e.g., `::currency/EUR`)
+- **Modern JS only** — no IE11 polyfills
 
 ### Basic Usage
 

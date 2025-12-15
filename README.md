@@ -17,7 +17,7 @@
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/pofile-ts)](https://bundlephobia.com/package/pofile-ts)
 [![Tree Shakeable](https://img.shields.io/badge/tree--shakeable-yes-brightgreen)](https://bundlephobia.com/package/pofile-ts)
 
-**pofile-ts** is a complete solution for working with [GNU gettext](https://www.gnu.org/software/gettext/) PO files in modern JavaScript and TypeScript projects. Whether you're building translation pipelines, integrating with i18n frameworks like [Lingui](https://lingui.dev/) or [FormatJS](https://formatjs.io/), or creating custom localization tooling — pofile-ts gives you everything you need.
+**pofile-ts** is a complete solution for working with [GNU gettext](https://www.gnu.org/software/gettext/) PO files in modern JavaScript and TypeScript projects. Whether you're building translation pipelines, integrating with i18n frameworks or creating custom localization tooling — pofile-ts gives you everything you need.
 
 ## Why pofile-ts?
 
@@ -106,7 +106,7 @@ hasPlural("{n, plural, one {#} other {#}}") // true
 hasPlural("Hello {name}") // false
 ```
 
-Supports all ICU MessageFormat v1 features: arguments, plurals, selects, selectordinals, number/date/time formatting, tags, and escaping.
+Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, number/date/time formatting, tags, and escaping. Trade-offs for size: no AST location tracking, styles stored as opaque strings.
 
 ## Documentation
 
