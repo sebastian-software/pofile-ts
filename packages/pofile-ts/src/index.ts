@@ -26,8 +26,13 @@ export {
   getPluralCategories,
   getPluralCount,
   getPluralFormsHeader,
-  getPluralFunction
+  getPluralFunction,
+  getPluralSamples,
+  parsePluralFormsHeader
 } from "./plurals"
+
+// Comment utilities
+export { splitMultilineComments } from "./comments"
 
 // ICU conversion
 export {
@@ -56,3 +61,4 @@ export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
 export type { GenerateIdsOptions } from "./messageId"
 export type { GettextToIcuOptions, NormalizeToIcuOptions, IcuToGettextOptions } from "./icu"
+export type { ParsedPluralFormsResult } from "./plurals"
