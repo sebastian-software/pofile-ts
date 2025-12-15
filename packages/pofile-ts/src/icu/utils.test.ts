@@ -99,6 +99,10 @@ describe("extractVariableInfo", () => {
       { name: "n", type: "number", style: "::currency/EUR" }
     ])
   })
+
+  it("returns empty array for invalid ICU message", () => {
+    expect(extractVariableInfo("{unclosed")).toEqual([])
+  })
 })
 
 describe("validateIcu", () => {
@@ -193,6 +197,10 @@ describe("hasPlural", () => {
       hasPlural("{g, select, male {{n, plural, one {He has #} other {He has #}}} other {They}}")
     ).toBe(true)
   })
+
+  it("returns false for invalid ICU", () => {
+    expect(hasPlural("{unclosed")).toBe(false)
+  })
 })
 
 describe("hasSelect", () => {
@@ -206,6 +214,10 @@ describe("hasSelect", () => {
 
   it("returns false for simple messages", () => {
     expect(hasSelect("Hello {name}")).toBe(false)
+  })
+
+  it("returns false for invalid ICU", () => {
+    expect(hasSelect("{unclosed")).toBe(false)
   })
 })
 
@@ -224,5 +236,9 @@ describe("hasIcuSyntax", () => {
 
   it("returns false for empty string", () => {
     expect(hasIcuSyntax("")).toBe(false)
+  })
+
+  it("returns false for invalid ICU", () => {
+    expect(hasIcuSyntax("{unclosed")).toBe(false)
   })
 })
