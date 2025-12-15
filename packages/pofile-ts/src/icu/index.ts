@@ -3,9 +3,18 @@
  *
  * - Parsing: parseIcu, validateIcu, extractVariables
  * - Conversion: gettextToIcu, icuToGettextSource, normalizeToIcu
+ * - Compilation: compileIcu
  */
 
 export { parseIcu, IcuParser, IcuSyntaxError } from "./parser"
+
+export {
+  compileIcu,
+  type CompileIcuOptions,
+  type CompiledMessageFunction,
+  type MessageValues,
+  type MessageResult
+} from "./compile"
 
 export {
   gettextToIcu,
