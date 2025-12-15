@@ -41,11 +41,36 @@ import type {
 } from "./types"
 import { IcuNodeType } from "./types"
 
-// Character classification using regex (modern engines optimize this well)
-const RE_WHITESPACE = /\s/
-const RE_IDENTIFIER_CHAR = /[^\s{}#<>,:]/
-const RE_TAG_CHAR = /[\w\-.:]/
-const RE_ALPHA = /[a-zA-Z]/
+// Character classification helpers (clearer than inline regex)
+function isWhitespace(ch: string): boolean {
+  return ch === " " || ch === "\t" || ch === "\n" || ch === "\r"
+}
+
+function isAlpha(ch: string): boolean {
+  return (ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z")
+}
+
+function isDigit(ch: string): boolean {
+  return ch >= "0" && ch <= "9"
+}
+
+function isIdentifierChar(ch: string): boolean {
+  // Everything except: whitespace, {, }, #, <, >, comma, :
+  return (
+    ch > " " &&
+    ch !== "{" &&
+    ch !== "}" &&
+    ch !== "#" &&
+    ch !== "<" &&
+    ch !== ">" &&
+    ch !== "," &&
+    ch !== ":"
+  )
+}
+
+function isTagChar(ch: string): boolean {
+  return isAlpha(ch) || isDigit(ch) || ch === "-" || ch === "." || ch === ":" || ch === "_"
+}
 
 type ArgType = "plural" | "selectordinal" | ""
 
@@ -87,6 +112,7 @@ export class IcuParser {
 
   private parseMessage(depth: number, parentArg: ArgType): IcuNode[] {
     const nodes: IcuNode[] = []
+    const inPlural = parentArg === "plural" || parentArg === "selectordinal"
 
     while (this.pos < this.msg.length) {
       const ch = this.msg[this.pos]
@@ -95,15 +121,20 @@ export class IcuParser {
         nodes.push(this.parseArgument(depth))
       } else if (ch === "}" && depth > 0) {
         break
-      } else if (ch === "#" && (parentArg === "plural" || parentArg === "selectordinal")) {
+      } else if (ch === "#" && inPlural) {
         this.pos++
         nodes.push({ type: IcuNodeType.pound })
-      } else if (ch === "<" && !this.ignoreTag && RE_ALPHA.test(this.peek(1) ?? "")) {
-        nodes.push(this.parseTag(depth, parentArg))
-      } else if (ch === "<" && !this.ignoreTag && this.peek(1) === "/") {
-        break // Closing tag - handled by parseTag
+      } else if (ch === "<" && !this.ignoreTag) {
+        const next = this.msg[this.pos + 1]
+        if (next && isAlpha(next)) {
+          nodes.push(this.parseTag(depth, parentArg))
+        } else if (next === "/") {
+          break // Closing tag - handled by parseTag
+        } else {
+          nodes.push(this.parseLiteral(depth, inPlural))
+        }
       } else {
-        nodes.push(this.parseLiteral(depth, parentArg))
+        nodes.push(this.parseLiteral(depth, inPlural))
       }
     }
 
@@ -356,7 +387,7 @@ export class IcuParser {
     return { type: IcuNodeType.tag, value: tagName, children }
   }
 
-  private parseLiteral(depth: number, parentArg: ArgType): IcuLiteralNode {
+  private parseLiteral(depth: number, inPlural: boolean): IcuLiteralNode {
     let value = ""
 
     while (this.pos < this.msg.length) {
@@ -366,19 +397,19 @@ export class IcuParser {
       if (ch === "{" || (ch === "}" && depth > 0)) {
         break
       }
-      if (ch === "#" && (parentArg === "plural" || parentArg === "selectordinal")) {
+      if (ch === "#" && inPlural) {
         break
       }
       if (ch === "<" && !this.ignoreTag) {
-        const next = this.peek(1)
-        if (RE_ALPHA.test(next ?? "") || next === "/") {
+        const next = this.msg[this.pos + 1]
+        if ((next && isAlpha(next)) || next === "/") {
           break
         }
       }
 
       // Quoting: '' → ' or '{...}' → {...}
       if (ch === "'") {
-        const next = this.peek(1)
+        const next = this.msg[this.pos + 1]
         if (next === "'") {
           // '' → '
           value += "'"
@@ -388,13 +419,13 @@ export class IcuParser {
           next === "}" ||
           next === "<" ||
           next === ">" ||
-          (next === "#" && (parentArg === "plural" || parentArg === "selectordinal"))
+          (next === "#" && inPlural)
         ) {
           // '{...}' or '<...>' etc. → literal until closing '
           this.pos++ // skip opening '
           while (this.pos < this.msg.length) {
             if (this.msg[this.pos] === "'") {
-              if (this.peek(1) === "'") {
+              if (this.msg[this.pos + 1] === "'") {
                 value += "'"
                 this.pos += 2
               } else {
@@ -452,7 +483,7 @@ export class IcuParser {
 
   private parseIdentifier(): string {
     const start = this.pos
-    while (this.pos < this.msg.length && RE_IDENTIFIER_CHAR.test(this.char())) {
+    while (this.pos < this.msg.length && isIdentifierChar(this.msg[this.pos])) {
       this.pos++
     }
     return this.msg.slice(start, this.pos)
@@ -460,7 +491,7 @@ export class IcuParser {
 
   private parseTagName(): string {
     const start = this.pos
-    while (this.pos < this.msg.length && RE_TAG_CHAR.test(this.char())) {
+    while (this.pos < this.msg.length && isTagChar(this.msg[this.pos])) {
       this.pos++
     }
     return this.msg.slice(start, this.pos)
@@ -469,15 +500,15 @@ export class IcuParser {
   private parseInteger(): number {
     const start = this.pos
     let sign = 1
-    if (this.char() === "-") {
+    if (this.msg[this.pos] === "-") {
       sign = -1
       this.pos++
-    } else if (this.char() === "+") {
+    } else if (this.msg[this.pos] === "+") {
       this.pos++
     }
 
     const numStart = this.pos
-    while (this.pos < this.msg.length && this.char() >= "0" && this.char() <= "9") {
+    while (this.pos < this.msg.length && isDigit(this.msg[this.pos])) {
       this.pos++
     }
 
@@ -489,17 +520,9 @@ export class IcuParser {
   }
 
   private skipWhitespace(): void {
-    while (this.pos < this.msg.length && RE_WHITESPACE.test(this.char())) {
+    while (this.pos < this.msg.length && isWhitespace(this.msg[this.pos])) {
       this.pos++
     }
-  }
-
-  private char(): string {
-    return this.msg.charAt(this.pos)
-  }
-
-  private peek(offset: number): string | undefined {
-    return this.msg[this.pos + offset]
   }
 
   private expectChar(ch: string, errorPos?: number): void {
