@@ -81,7 +81,7 @@ Realistic messages with plurals, selects, nested structures, and tags:
 
 | Library                            |           Speed | Bundle (gzip) |
 | ---------------------------------- | --------------: | ------------: |
-| **pofile-ts**                      | **2.5× faster** |      **<3KB** |
+| **pofile-ts**                      | **2.5× faster** |      **~2KB** |
 | @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
 
 → **2.5× faster**, **4× smaller bundle**
@@ -96,6 +96,6 @@ The library is fully **tree-shakeable**. Import only what you need:
 | `parsePo` + `stringifyPo` only |    ~5KB |
 | + CLDR plural helpers          |    +3KB |
 | + ICU conversion               |    +2KB |
-| + ICU parser                   |    <3KB |
+| + ICU parser                   |    +3KB |
 
 All exports are named exports — modern bundlers automatically eliminate unused code.
