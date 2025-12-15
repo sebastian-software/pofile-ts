@@ -51,6 +51,10 @@ describe("extractVariables", () => {
   it("deduplicates variables", () => {
     expect(extractVariables("{name} and {name} again")).toEqual(["name"])
   })
+
+  it("extracts variables from tags", () => {
+    expect(extractVariables("<b>{name}</b>")).toEqual(["name"])
+  })
 })
 
 describe("extractVariableInfo", () => {
@@ -102,6 +106,12 @@ describe("extractVariableInfo", () => {
 
   it("returns empty array for invalid ICU message", () => {
     expect(extractVariableInfo("{unclosed")).toEqual([])
+  })
+
+  it("extracts variable info from within tags", () => {
+    expect(extractVariableInfo("<b>{n, number}</b>")).toEqual([
+      { name: "n", type: "number", style: undefined }
+    ])
   })
 })
 
@@ -201,6 +211,14 @@ describe("hasPlural", () => {
   it("returns false for invalid ICU", () => {
     expect(hasPlural("{unclosed")).toBe(false)
   })
+
+  it("detects plural inside tags", () => {
+    expect(hasPlural("<b>{n, plural, one {#} other {#}}</b>")).toBe(true)
+  })
+
+  it("returns false when tags contain no plural", () => {
+    expect(hasPlural("<b>{name}</b>")).toBe(false)
+  })
 })
 
 describe("hasSelect", () => {
@@ -218,6 +236,10 @@ describe("hasSelect", () => {
 
   it("returns false for invalid ICU", () => {
     expect(hasSelect("{unclosed")).toBe(false)
+  })
+
+  it("detects select inside tags", () => {
+    expect(hasSelect("<b>{g, select, a {A} other {O}}</b>")).toBe(true)
   })
 })
 

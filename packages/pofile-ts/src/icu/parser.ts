@@ -68,7 +68,7 @@ function isIdentifierChar(ch: string | undefined): ch is string {
   )
 }
 
-function isTagChar(ch: string | undefined): ch is string {
+function isTagChar(ch: string | undefined): boolean {
   if (ch == null) {
     return false
   }
@@ -278,9 +278,6 @@ export class IcuParser {
 
     while (this.pos < this.msg.length && this.msg[this.pos] !== "}") {
       this.skipWhitespace()
-      if (this.msg[this.pos] === "}") {
-        break
-      }
 
       // Parse selector: one, other, =0, =1, etc.
       let selector: string
@@ -325,9 +322,6 @@ export class IcuParser {
 
     while (this.pos < this.msg.length && this.msg[this.pos] !== "}") {
       this.skipWhitespace()
-      if (this.msg[this.pos] === "}") {
-        break
-      }
 
       const selector = this.parseIdentifier()
       if (!selector) {
@@ -436,6 +430,9 @@ export class IcuParser {
           this.pos++ // skip opening '
           while (this.pos < this.msg.length) {
             const quoted = this.msg[this.pos]
+            if (quoted == null) {
+              break
+            }
             if (quoted === "'") {
               if (this.msg[this.pos + 1] === "'") {
                 value += "'"
@@ -444,11 +441,9 @@ export class IcuParser {
                 this.pos++ // skip closing '
                 break
               }
-            } else if (quoted != null) {
+            } else {
               value += quoted
               this.pos++
-            } else {
-              break
             }
           }
         } else {
@@ -506,7 +501,11 @@ export class IcuParser {
 
   private parseTagName(): string {
     const start = this.pos
-    while (this.pos < this.msg.length && isTagChar(this.msg[this.pos])) {
+    while (this.pos < this.msg.length) {
+      const ch = this.msg[this.pos]
+      if (!isTagChar(ch)) {
+        break
+      }
       this.pos++
     }
     return this.msg.slice(start, this.pos)

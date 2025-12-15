@@ -272,11 +272,34 @@ describe("codegen", () => {
       expect(code).toContain("v?.count")
     })
 
+    it("generates code for time node", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      const node: IcuNode = { type: IcuNodeType.time, value: "t", style: "short" }
+      const code = generateNodeCode(node, ctx)
+      expect(code).toContain("_tf_short")
+      expect(ctx.formatters.time.has("short")).toBe(true)
+    })
+
     it("generates # as literal when no plural context", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
 
       const node: IcuNode = { type: IcuNodeType.pound }
       expect(generateNodeCode(node, ctx)).toBe('"#"')
+    })
+
+    it("generates # with offset when pluralOffset is set", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      ctx.pluralVar = "count"
+      ctx.pluralOffset = 2
+
+      const node: IcuNode = { type: IcuNodeType.pound }
+      const code = generateNodeCode(node, ctx)
+      expect(code).toContain("- 2")
+    })
+
+    it("falls back to empty string for unknown node type", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      expect(generateNodeCode({ type: 999 } as unknown as IcuNode, ctx)).toBe('""')
     })
   })
 
@@ -319,6 +342,59 @@ describe("codegen", () => {
       const code = generateNodesCode(nodes, ctx)
       expect(code).toContain("[")
       expect(ctx.hasTags).toBe(true)
+    })
+
+    it("returns empty string for an array containing only undefined (runtime safety)", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      expect(generateNodesCode([undefined] as unknown as IcuNode[], ctx)).toBe('""')
+    })
+  })
+
+  describe("generatePluralCode / generateSelectCode edge cases", () => {
+    it("adds fallback when plural 'other' is missing in options", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      const node = {
+        type: IcuNodeType.plural,
+        value: "count",
+        offset: 0,
+        pluralType: "cardinal",
+        options: {
+          one: { value: [{ type: IcuNodeType.literal, value: "one" }] }
+        }
+      } as unknown as import("../icu/types").IcuPluralNode
+
+      const code = generateNodeCode(node, ctx)
+      expect(code).toContain('"{count}"')
+    })
+
+    it("handles plural with only exact matches (no categories)", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      const node = {
+        type: IcuNodeType.plural,
+        value: "count",
+        offset: 0,
+        pluralType: "cardinal",
+        options: {
+          "=0": { value: [{ type: IcuNodeType.literal, value: "zero" }] }
+        }
+      } as unknown as import("../icu/types").IcuPluralNode
+
+      const code = generateNodeCode(node, ctx)
+      expect(code).toContain('"{count}"')
+    })
+
+    it("adds fallback when select 'other' is missing", () => {
+      const ctx = createCodeGenContext("en", ["one", "other"])
+      const node = {
+        type: IcuNodeType.select,
+        value: "gender",
+        options: {
+          male: { value: [{ type: IcuNodeType.literal, value: "He" }] }
+        }
+      } as unknown as import("../icu/types").IcuSelectNode
+
+      const code = generateNodeCode(node, ctx)
+      expect(code).toContain('"{gender}"')
     })
   })
 })
