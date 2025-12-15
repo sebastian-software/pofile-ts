@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseIcu, IcuParser } from "./parser"
+import { parseIcu } from "./parser"
 import { IcuNodeType } from "./types"
 
 describe("parseIcu", () => {
@@ -212,9 +212,9 @@ describe("parseIcu", () => {
 
       const plural = result.ast![0] as {
         type: typeof IcuNodeType.plural
-        options: Record<string, { value: Array<{ type: number }> }>
+        options: Record<string, { value: { type: number }[] }>
       }
-      const oneOption = plural.options["one"]!
+      const oneOption = plural.options.one!
       expect(oneOption.value[0]).toMatchObject({ type: IcuNodeType.pound })
     })
 
@@ -293,7 +293,7 @@ describe("parseIcu", () => {
     it("parses nested tags", () => {
       const result = parseIcu("hello <b>world<i>!</i></b>")
       expect(result.success).toBe(true)
-      const tag = result.ast![1] as { children: Array<{ type: number }> }
+      const tag = result.ast![1] as { children: { type: number }[] }
       expect(tag.children).toHaveLength(2)
       expect(tag.children[1]).toMatchObject({
         type: IcuNodeType.tag,
@@ -314,7 +314,7 @@ describe("parseIcu", () => {
     it("parses tag with argument inside", () => {
       const result = parseIcu("<a>{placeholder}</a>")
       expect(result.success).toBe(true)
-      const tag = result.ast![0] as { children: Array<{ type: number; value?: string }> }
+      const tag = result.ast![0] as { children: { type: number; value?: string }[] }
       expect(tag).toMatchObject({
         type: IcuNodeType.tag,
         value: "a"

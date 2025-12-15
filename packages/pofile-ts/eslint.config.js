@@ -24,5 +24,11 @@ export default tseslint.config(
       complexity: ["error", { max: 10 }],
       curly: ["error", "all"]
     }
+  },
+  {
+    files: ["src/**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off"
+    }
   }
 )

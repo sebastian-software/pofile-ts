@@ -4,7 +4,7 @@
  * Convenience APIs for working with ICU messages.
  */
 
-import type { IcuNode, IcuParseResult, IcuParseError, IcuParserOptions } from "./types"
+import type { IcuNode, IcuParseError, IcuParserOptions } from "./types"
 import { IcuNodeType } from "./types"
 import { parseIcu } from "./parser"
 
@@ -167,6 +167,7 @@ export function hasIcuSyntax(message: string): boolean {
 function extractVariablesFromAst(nodes: IcuNode[]): string[] {
   const variables = new Set<string>()
 
+  // eslint-disable-next-line complexity -- node type switch
   function visit(node: IcuNode) {
     switch (node.type) {
       case IcuNodeType.argument:
@@ -206,6 +207,7 @@ function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
   const variables: IcuVariable[] = []
   const seen = new Set<string>()
 
+  // eslint-disable-next-line complexity -- node type switch with type inference
   function visit(node: IcuNode) {
     switch (node.type) {
       case IcuNodeType.argument:

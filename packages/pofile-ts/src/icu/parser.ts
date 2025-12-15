@@ -26,13 +26,11 @@
 import type {
   IcuNode,
   IcuLiteralNode,
-  IcuArgumentNode,
   IcuNumberNode,
   IcuDateNode,
   IcuTimeNode,
   IcuSelectNode,
   IcuPluralNode,
-  IcuPoundNode,
   IcuTagNode,
   IcuPluralOption,
   IcuSelectOption,
@@ -71,6 +69,9 @@ function isIdentifierChar(ch: string | undefined): ch is string {
 }
 
 function isTagChar(ch: string | undefined): ch is string {
+  if (ch == null) {
+    return false
+  }
   return isAlpha(ch) || isDigit(ch) || ch === "-" || ch === "." || ch === ":" || ch === "_"
 }
 
@@ -112,6 +113,7 @@ export class IcuParser {
     return result
   }
 
+  // eslint-disable-next-line complexity -- parser dispatch logic
   private parseMessage(depth: number, parentArg: ArgType): IcuNode[] {
     const nodes: IcuNode[] = []
     const inPlural = parentArg === "plural" || parentArg === "selectordinal"
@@ -143,6 +145,7 @@ export class IcuParser {
     return nodes
   }
 
+  // eslint-disable-next-line complexity -- argument type dispatch logic
   private parseArgument(depth: number): IcuNode {
     const start = this.pos
     this.pos++ // skip {
@@ -389,11 +392,15 @@ export class IcuParser {
     return { type: IcuNodeType.tag, value: tagName, children }
   }
 
+  // eslint-disable-next-line complexity -- quote escaping state machine
   private parseLiteral(depth: number, inPlural: boolean): IcuLiteralNode {
     let value = ""
 
     while (this.pos < this.msg.length) {
       const ch = this.msg[this.pos]
+      if (ch == null) {
+        break
+      }
 
       // End of literal
       if (ch === "{" || (ch === "}" && depth > 0)) {
@@ -426,7 +433,8 @@ export class IcuParser {
           // '{...}' or '<...>' etc. → literal until closing '
           this.pos++ // skip opening '
           while (this.pos < this.msg.length) {
-            if (this.msg[this.pos] === "'") {
+            const quoted = this.msg[this.pos]
+            if (quoted === "'") {
               if (this.msg[this.pos + 1] === "'") {
                 value += "'"
                 this.pos += 2
@@ -434,8 +442,11 @@ export class IcuParser {
                 this.pos++ // skip closing '
                 break
               }
+            } else if (quoted != null) {
+              value += quoted
+              this.pos++
             } else {
-              value += this.msg[this.pos++]
+              break
             }
           }
         } else {
