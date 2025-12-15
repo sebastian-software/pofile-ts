@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.5.0](///compare/v3.4.2...v3.5.0) (2025-12-15)
+
+### Features
+
+- **pofile-ts:** add getPluralSamples and parsePluralFormsHeader 30c4dfc
+- **pofile-ts:** add splitMultilineComments helper 3f56274
+- **pofile-ts:** export new utilities from index f07c2b2
+
+### Bug Fixes
+
+- **pofile-ts:** remove non-null assertions from tests b2111e8
+
+### Documentation
+
+- add benchmark system profile to performance tables dcbf1ee
+- document new plural utilities and comment helper d599b50
+
 ## [3.4.2](///compare/v3.4.1...v3.4.2) (2025-12-13)
 
 ## [3.4.1](///compare/v3.4.0...v3.4.1) (2025-12-13)
