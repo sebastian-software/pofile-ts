@@ -299,3 +299,140 @@ gettextToIcu(plItem, { locale: "pl" })
 gettextToIcu(arItem, { locale: "ar" })
 // → "{count, plural, zero {...} one {...} two {...} few {...} many {...} other {...}}"
 ```
+
+## ICU Parser
+
+Parse and analyze ICU MessageFormat strings. Useful for extracting variables, validating syntax, or building translation tools.
+
+### Why a Custom Parser?
+
+The parser is optimized for bundle size and typical i18n use cases:
+
+| Library                            |  Gzipped |
+| ---------------------------------- | -------: |
+| @formatjs/icu-messageformat-parser |     ~9KB |
+| **pofile-ts ICU parser**           | **~3KB** |
+
+Trade-offs for smaller bundles:
+
+- Modern JS only (no IE11 polyfills)
+- No source location tracking (messages are typically single-line)
+- Styles/skeletons stored as opaque strings (runtime handles interpretation)
+
+### Basic Usage
+
+```typescript
+import { parseIcu, validateIcu, extractVariables } from "pofile-ts"
+
+// Parse ICU message to AST
+const result = parseIcu("{count, plural, one {# item} other {# items}}")
+if (result.success) {
+  console.log(result.ast) // Array of AST nodes
+}
+
+// Validate syntax
+const validation = validateIcu("{broken, plural, one {x}}")
+console.log(validation.valid) // false
+console.log(validation.errors) // [{ kind: "SYNTAX_ERROR", message: "..." }]
+
+// Extract variable names
+extractVariables("{name} has {count} messages")
+// → ["name", "count"]
+```
+
+### Supported Syntax
+
+The parser supports the full ICU MessageFormat v1 specification:
+
+```typescript
+// Simple arguments
+parseIcu("{name}")
+
+// Formatted arguments
+parseIcu("{n, number}")
+parseIcu("{d, date, short}")
+parseIcu("{t, time, medium}")
+
+// Number/date skeletons (stored as opaque strings)
+parseIcu("{n, number, ::currency/EUR}")
+
+// Plural
+parseIcu("{n, plural, offset:1 =0 {none} one {# item} other {# items}}")
+
+// Select
+parseIcu("{gender, select, male {He} female {She} other {They}}")
+
+// Selectordinal
+parseIcu("{n, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}")
+
+// Tags (for rich text / JSX)
+parseIcu("Click <link>here</link> to continue")
+
+// Escaping: '' → ' and '{text}' → literal text
+parseIcu("It''s {name}''s turn") // "It's {name}'s turn"
+```
+
+### Variable Analysis
+
+Extract detailed information about variables in a message:
+
+```typescript
+import { extractVariableInfo, compareVariables } from "pofile-ts"
+
+// Get variable details including type and style
+extractVariableInfo("{count, number, currency} on {date, date, short}")
+// → [
+//   { name: "count", type: "number", style: "currency" },
+//   { name: "date", type: "date", style: "short" }
+// ]
+
+// Compare source and translation variables
+compareVariables(
+  "Hello {name}, you have {count} messages",
+  "Hallo {userName}, du hast {count} Nachrichten"
+)
+// → { missing: ["name"], extra: ["userName"], isMatch: false }
+```
+
+### Detection Helpers
+
+Quick checks without full parsing:
+
+```typescript
+import { hasPlural, hasSelect, hasIcuSyntax } from "pofile-ts"
+
+hasPlural("{n, plural, one {#} other {#}}") // true
+hasSelect("{g, select, male {He} other {They}}") // true
+hasIcuSyntax("{name}") // true (has argument)
+hasIcuSyntax("Hello world") // false (plain text)
+```
+
+### AST Node Types
+
+The parser produces an AST with these node types:
+
+```typescript
+import { IcuNodeType } from "pofile-ts"
+
+IcuNodeType.literal // Plain text
+IcuNodeType.argument // {name}
+IcuNodeType.number // {n, number}
+IcuNodeType.date // {d, date}
+IcuNodeType.time // {t, time}
+IcuNodeType.plural // {n, plural, ...}
+IcuNodeType.select // {g, select, ...}
+IcuNodeType.pound // # in plural
+IcuNodeType.tag // <b>...</b>
+```
+
+### Parser Options
+
+```typescript
+parseIcu(message, {
+  // Treat tags as literal text (default: false)
+  ignoreTag: true,
+
+  // Allow plural/select without 'other' clause (default: true = required)
+  requiresOtherClause: false
+})
+```

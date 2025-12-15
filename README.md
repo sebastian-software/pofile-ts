@@ -39,6 +39,7 @@
 
 - 🌍 **CLDR 48 plural rules** — 100% compliant for all major languages (140+ locales)
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
+- 🧩 **ICU Parser** — Parse and analyze ICU messages (~3KB gzipped, zero dependencies)
 - 🔢 **Plural helpers** — Get categories, sample numbers, and Plural-Forms headers for any locale
 
 ### Developer Experience
@@ -79,6 +80,24 @@ console.log(po.items[0].msgstr) // ["Hallo"]
 console.log(stringifyPo(po))
 ```
 
+### ICU MessageFormat
+
+```typescript
+import { parseIcu, extractVariables, validateIcu } from "pofile-ts"
+
+// Parse ICU messages
+const result = parseIcu("{count, plural, one {# item} other {# items}}")
+console.log(result.ast) // AST with plural node
+
+// Extract variables
+extractVariables("{name} has {count} messages")
+// → ["name", "count"]
+
+// Validate syntax
+validateIcu("{broken, plural, one {x}}")
+// → { valid: false, errors: [...] }
+```
+
 ## Documentation
 
 For full documentation including API reference, i18n helpers, and migration guide:
@@ -101,14 +120,15 @@ That's **8× faster parsing** and **5× faster serialization** than the next bes
 
 ## Bundle Size
 
-The full library is **~11KB gzipped**. Tree-shaking reduces this further:
+The full library is **~14KB gzipped**. Tree-shaking reduces this further:
 
 | Import                         | Gzipped |
 | ------------------------------ | ------: |
-| Full library                   |   ~11KB |
+| Full library                   |   ~14KB |
 | `parsePo` + `stringifyPo` only |    ~5KB |
 | Add CLDR plural helpers        |    +3KB |
 | Add ICU conversion             |    +2KB |
+| Add ICU parser                 |    +3KB |
 
 All exports are **named exports** — modern bundlers (Vite, esbuild, Rollup, webpack) automatically tree-shake unused code.
 
