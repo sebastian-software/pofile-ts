@@ -34,11 +34,24 @@ import { createDefaultHeaders } from "pofile-ts"
 
 const headers = createDefaultHeaders({
   language: "de",
-  generator: "my-tool",
-  pluralForms: "nplurals=2; plural=(n != 1);"
+  generator: "my-tool"
 })
 
 // Includes: POT-Creation-Date, MIME-Version, Content-Type, etc.
+// Plural-Forms is auto-generated from CLDR when language is set:
+// → "Plural-Forms: nplurals=2; plural=(n != 1);"
+
+// To use a custom Plural-Forms header:
+const custom = createDefaultHeaders({
+  language: "de",
+  pluralForms: "nplurals=2; plural=(n > 1);"
+})
+
+// To omit Plural-Forms entirely:
+const noPluralForms = createDefaultHeaders({
+  language: "de",
+  pluralForms: false
+})
 ```
 
 ## Catalog Conversion
@@ -98,17 +111,13 @@ createReference("src\\components\\Button.tsx", 10)
 
 Get CLDR plural categories for any locale — useful for building ICU messages or validating translations.
 
-### CLDR 48 Compliance
+### Native Intl.PluralRules
 
-The plural rules are validated against **official CLDR 48 test data**. All major languages pass 100% of CLDR sample tests.
+pofile-ts uses the browser's native `Intl.PluralRules` API for all plural handling. This means:
 
-### How the Data is Stored
-
-Instead of shipping the full CLDR data (~50KB+), pofile-ts uses a **variant system**:
-
-- **16 distinct plural rule patterns** cover all worldwide plural forms
-- Each of the **140+ supported locales** maps to one variant
-- Total data size: **~3KB** (gzipped: ~1KB)
+- **Zero bundle size** for plural data — the browser provides CLDR
+- **Always up-to-date** with the browser's CLDR version
+- **CSP-safe** — no eval or Function() needed
 
 | Forms | Categories                       | Languages                                     |
 | ----- | -------------------------------- | --------------------------------------------- |
@@ -116,63 +125,29 @@ Instead of shipping the full CLDR data (~50KB+), pofile-ts uses a **variant syst
 | 2     | one, other                       | English, German, Dutch, Swedish, Danish       |
 | 3     | one, many, other                 | French, Spanish, Portuguese, Italian, Catalan |
 | 3     | one, few, other                  | Croatian, Serbian, Bosnian                    |
-| 3     | one, two, other                  | Sorbian, Sami                                 |
 | 3     | zero, one, other                 | Latvian                                       |
 | 4     | one, two, few, other             | Slovenian                                     |
-| 4     | one, few, many, other            | Russian, Ukrainian, Belarusian                |
-| 4     | one, few, many, other            | Polish, Czech, Slovak, Lithuanian             |
+| 4     | one, few, many, other            | Russian, Ukrainian, Polish, Czech, Lithuanian |
 | 5     | one, two, few, many, other       | Irish, Maltese                                |
 | 6     | zero, one, two, few, many, other | Arabic, Welsh                                 |
 
-The rules are derived from [CLDR 48 Plural Rules](https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html).
-
-### Coverage
-
-✅ **100% CLDR-compliant** for all major languages:
-
-- East Asian: Chinese, Japanese, Korean, Vietnamese, Thai, Indonesian
-- Germanic: English, German, Dutch, Swedish, Danish, Norwegian
-- Romance: French, Spanish, Portuguese, Italian, Catalan
-- Slavic: Russian, Ukrainian, Polish, Czech, Slovak, Croatian, Serbian
-- Baltic: Lithuanian, Latvian
-- Other: Arabic, Hebrew, Turkish, Finnish, Hungarian, Greek
-
-⚠️ **Approximate support** for some niche languages:
-
-- Scottish Gaelic (gd), Breton (br): simplified rules, same category count
-- Welsh (cy): uses Arabic-like 6 categories as approximation
-
-### Known Limitations
-
-**Decimal Numbers**: JavaScript cannot distinguish `10` from `10.0` (they are identical). CLDR's `v` operand (decimal digits) is only supported for true non-integers like `0.5` or `1.5`. This matches practical usage since gettext/PO files work with integer counts.
-
-**Compact Notation**: CLDR's "many" category for Romance languages (French, Spanish, etc.) includes compact notation (e.g., "1M"). We only support the integer million case (`n % 1000000 = 0`), which is sufficient for gettext usage.
-
-### Basic Usage
+### Usage
 
 ```typescript
-import {
-  getPluralCategories,
-  getPluralCount,
-  getPluralFormsHeader,
-  getPluralFunction
-} from "pofile-ts"
+import { getPluralCategories, getPluralCount, getPluralFunction } from "pofile-ts"
 
-// All major languages are CLDR 48 compliant
+// Get categories for a locale
 getPluralCategories("de") // → ["one", "other"]
 getPluralCategories("ru") // → ["one", "few", "many", "other"]
 getPluralCategories("pl") // → ["one", "few", "many", "other"]
 getPluralCategories("ar") // → ["zero", "one", "two", "few", "many", "other"]
 
+// Count of plural forms
 getPluralCount("de") // → 2
 getPluralCount("ru") // → 4
 getPluralCount("ar") // → 6
 
-// Generate Gettext Plural-Forms header
-getPluralFormsHeader("ru")
-// → "nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : ...);"
-
-// Get plural selector function (CSP-safe, no eval)
+// Get plural selector function
 const selectPlural = getPluralFunction("ru")
 selectPlural(1) // → 0 (one)
 selectPlural(2) // → 1 (few)
@@ -181,55 +156,14 @@ selectPlural(21) // → 0 (one) — CLDR-correct!
 selectPlural(22) // → 1 (few)
 ```
 
-### Plural Samples
+### Locale Normalization
 
-Get representative sample numbers for each plural category. Useful for previewing translations in TMS tools or testing:
-
-```typescript
-import { getPluralSamples } from "pofile-ts"
-
-getPluralSamples("de")
-// → { one: [1], other: [0, 2, 3, 5, 10, 100, 1000] }
-
-getPluralSamples("ru")
-// → {
-//     one: [1, 21, 31, 41, 51, 101],
-//     few: [2, 3, 4, 22, 23, 24, 32],
-//     many: [0, 5, 6, 7, 8, 9, 10, 11, 12, ...],
-//     other: [0.5, 1.5, 2.5]  // fractions only
-//   }
-
-getPluralSamples("ar")
-// → { zero: [0], one: [1], two: [2], few: [...], many: [...], other: [...] }
-```
-
-The samples are validated against CLDR 48 test data to ensure they correctly trigger each plural category.
-
-### Parse Plural-Forms Header
-
-Parse a Plural-Forms header and get a CSP-safe plural function. Uses pattern matching against known CLDR expressions instead of `eval()`:
+Both underscore and hyphen formats are supported:
 
 ```typescript
-import { parsePluralFormsHeader } from "pofile-ts"
-
-const result = parsePluralFormsHeader("nplurals=2; plural=(n != 1);")
-// → {
-//     nplurals: 2,
-//     expression: "(n != 1)",
-//     pluralFunc: (n) => ...,  // CSP-safe function
-//     matchedVariant: "B"      // recognized as Germanic pattern
-//   }
-
-result.pluralFunc(1) // → 0 (one)
-result.pluralFunc(5) // → 1 (other)
-
-// Unknown expressions return null for pluralFunc (no silent failures)
-const custom = parsePluralFormsHeader("nplurals=3; plural=n%10;")
-custom.pluralFunc // → null
-custom.expression // → "n%10" (still available for inspection)
+getPluralCategories("pt_BR") // → ["one", "many", "other"]
+getPluralCategories("pt-BR") // → ["one", "many", "other"]
 ```
-
-This approach covers 99%+ of real-world PO files since they use standard gettext expressions.
 
 ## ICU Conversion
 

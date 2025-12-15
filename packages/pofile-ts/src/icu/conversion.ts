@@ -5,7 +5,7 @@
  */
 
 import type { PoItem, PoFile } from "../types"
-import { getPluralCategories, getPluralFunction, PLURAL_SAMPLES } from "../plurals"
+import { getPluralCategories } from "../plurals"
 
 /**
  * Options for Gettext to ICU conversion.
@@ -44,42 +44,11 @@ export interface NormalizeToIcuOptions extends GettextToIcuOptions {
 
 /**
  * Maps msgstr indices to CLDR plural categories for a given locale.
- * Uses the locale's plural function to determine the mapping.
+ * Intl.PluralRules.pluralCategories already returns categories in index order.
  */
 function getMsgstrToCategory(locale: string): string[] {
-  const categories = getPluralCategories(locale)
-  const pluralFn = getPluralFunction(locale)
-
-  // Map each category to its msgstr index using sample values
-  // Process in order and don't overwrite existing mappings
-  const mapping: string[] = []
-  const usedIndices = new Set<number>()
-
-  for (const category of categories) {
-    const sample = PLURAL_SAMPLES[category] ?? 100
-    const index = pluralFn(sample)
-
-    // Only use this index if not already taken
-    if (!usedIndices.has(index)) {
-      mapping[index] = category
-      usedIndices.add(index)
-    }
-  }
-
-  // Assign remaining categories to remaining slots
-  let nextSlot = 0
-  for (const category of categories) {
-    if (!mapping.includes(category)) {
-      // Find next available slot
-      while (usedIndices.has(nextSlot)) {
-        nextSlot++
-      }
-      mapping[nextSlot] = category
-      usedIndices.add(nextSlot)
-    }
-  }
-
-  return mapping
+  // pluralCategories is ordered: index 0 → categories[0], index 1 → categories[1], etc.
+  return [...getPluralCategories(locale)]
 }
 
 /**

@@ -2,6 +2,7 @@
  * Default headers helper for creating PO files.
  */
 
+import { getPluralCount } from "./plurals"
 import type { Headers } from "./types"
 
 /**
@@ -45,8 +46,10 @@ export interface CreateHeadersOptions {
 
   /**
    * Plural forms expression (e.g., "nplurals=2; plural=(n != 1);")
+   * If not provided but language is set, auto-generates from CLDR.
+   * Set to `false` to explicitly omit the header.
    */
-  pluralForms?: string
+  pluralForms?: string | false
 
   /**
    * Custom headers to add or override
@@ -96,20 +99,39 @@ function buildBaseHeaders(options: CreateHeadersOptions, now: string): Partial<H
 }
 
 /**
+ * Generates a minimal Plural-Forms header from CLDR data.
+ * Only includes nplurals - plural expression is a simple fallback.
+ */
+function generatePluralFormsHeader(language: string): string {
+  const nplurals = getPluralCount(language)
+  // Simple expression that works for 1-2 forms
+  // For 3+ forms, tools should use their own CLDR data
+  const plural = nplurals === 1 ? "0" : "(n != 1)"
+  return `nplurals=${nplurals}; plural=${plural};`
+}
+
+/**
  * Creates default PO file headers with sensible defaults.
+ *
+ * If `language` is provided and `pluralForms` is not explicitly set,
+ * automatically generates Plural-Forms from CLDR data.
  *
  * @example
  * const headers = createDefaultHeaders({
  *   language: "de",
  *   generator: "my-tool",
  * })
+ * // → includes "Plural-Forms: nplurals=2; plural=(n != 1);"
  */
 export function createDefaultHeaders(options: CreateHeadersOptions = {}): Partial<Headers> {
   const now = formatPoDate(new Date())
   const headers = buildBaseHeaders(options, now)
 
-  if (options.pluralForms) {
+  // Handle Plural-Forms: explicit string, auto-generate, or omit
+  if (typeof options.pluralForms === "string") {
     headers["Plural-Forms"] = options.pluralForms
+  } else if (options.pluralForms !== false && options.language) {
+    headers["Plural-Forms"] = generatePluralFormsHeader(options.language)
   }
 
   // Apply custom headers (can override defaults)

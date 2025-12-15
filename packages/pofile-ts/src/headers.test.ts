@@ -88,7 +88,7 @@ describe("createDefaultHeaders", () => {
     expect(headers["Language-Team"]).toBe("German <de@example.com>")
   })
 
-  it("sets plural forms when provided", () => {
+  it("sets plural forms when explicitly provided", () => {
     const headers = createDefaultHeaders({
       pluralForms: "nplurals=2; plural=(n != 1);"
     })
@@ -96,8 +96,29 @@ describe("createDefaultHeaders", () => {
     expect(headers["Plural-Forms"]).toBe("nplurals=2; plural=(n != 1);")
   })
 
-  it("does not include Plural-Forms when not provided", () => {
+  it("auto-generates Plural-Forms from CLDR when language is set", () => {
+    const headers = createDefaultHeaders({ language: "de" })
+
+    expect(headers["Plural-Forms"]).toBe("nplurals=2; plural=(n != 1);")
+  })
+
+  it("auto-generates correct nplurals for complex languages", () => {
+    expect(createDefaultHeaders({ language: "pl" })["Plural-Forms"]).toMatch(/^nplurals=4;/)
+    expect(createDefaultHeaders({ language: "ar" })["Plural-Forms"]).toMatch(/^nplurals=6;/)
+    expect(createDefaultHeaders({ language: "zh" })["Plural-Forms"]).toBe("nplurals=1; plural=0;")
+  })
+
+  it("does not include Plural-Forms when language is not set", () => {
     const headers = createDefaultHeaders()
+
+    expect(headers["Plural-Forms"]).toBeUndefined()
+  })
+
+  it("omits Plural-Forms when explicitly set to false", () => {
+    const headers = createDefaultHeaders({
+      language: "de",
+      pluralForms: false
+    })
 
     expect(headers["Plural-Forms"]).toBeUndefined()
   })

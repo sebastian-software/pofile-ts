@@ -26,15 +26,7 @@ export { compileCatalog, generateCompiledCode } from "./compile"
 export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
 
 // Plural utilities
-export {
-  parsePluralForms,
-  getPluralCategories,
-  getPluralCount,
-  getPluralFormsHeader,
-  getPluralFunction,
-  getPluralSamples,
-  parsePluralFormsHeader
-} from "./plurals"
+export { parsePluralForms, getPluralCategories, getPluralCount, getPluralFunction } from "./plurals"
 
 // Comment utilities
 export { splitMultilineComments } from "./comments"
@@ -82,7 +74,6 @@ export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
 export type { CompileCatalogOptions, CompiledCatalog, GenerateCodeOptions } from "./compile"
 export type { GenerateIdsOptions } from "./messageId"
-export type { ParsedPluralFormsResult } from "./plurals"
 
 // ICU MessageFormat types
 export type {
