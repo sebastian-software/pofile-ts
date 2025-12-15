@@ -1,5 +1,5 @@
 import type { SerializeOptions } from "../types"
-import { escapeString } from "../utils"
+import { escapeString } from "./utils"
 
 /** Default serialization options */
 export const DEFAULT_SERIALIZE_OPTIONS: Required<SerializeOptions> = {

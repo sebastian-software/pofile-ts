@@ -1,6 +1,6 @@
 import type { CreateItemOptions, PoItem, SerializeOptions } from "./types"
 import { formatKeyword, DEFAULT_SERIALIZE_OPTIONS } from "./internal/serialization"
-import { escapeString } from "./utils"
+import { escapeString } from "./internal/utils"
 
 /**
  * Creates a new translation item with default values.

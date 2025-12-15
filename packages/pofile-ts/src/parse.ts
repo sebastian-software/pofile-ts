@@ -1,5 +1,5 @@
 import type { PoFile } from "./types"
-import { DEFAULT_HEADERS } from "./constants"
+import { DEFAULT_HEADERS } from "./internal/constants"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./internal/parser"
 import { parsePluralForms } from "./plurals"
 
