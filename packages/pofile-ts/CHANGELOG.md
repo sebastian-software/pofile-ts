@@ -1,5 +1,54 @@
 # Changelog
 
+## [3.7.0](///compare/v3.6.1...v3.7.0) (2025-12-15)
+
+### Features
+
+- add compileCatalog() and generateCompiledCode() 91bbcc6
+- **benchmark:** add ICU parser benchmark vs [@formatjs](undefined/formatjs) 41ce17b
+- export internal APIs, add direct tests, improve marketing 6e46578
+- **icu:** add compileIcu() for runtime message compilation 918bd35
+- **icu:** add ICU MessageFormat v1 parser 944507e
+- **icu:** support numeric tags (<0>, <1>) for Lingui compatibility 9759e4a
+
+### Bug Fixes
+
+- **docs:** align homepage performance metrics 6ccd16e
+- ESLint errors - remove non-null assertions, fix types, disable complexity for parsers 3571dab
+- layout tweaks 0903069
+- MDX escaping for bundle sizes and correct ICU type paths 4467060
+- MDX syntax in internals.mdx callout 6f1517a
+- normalize plural category order across ICU versions 8f2aff9
+- resolve eslint errors in icu/compile and internal/codegen 5d40bb8
+- TypeScript errors in parser and tests dcc6a7c
+
+### Refactoring
+
+- **home:** cleaner benchmark section with 4 columns 67ded82
+- **icu:** consolidate all ICU code into icu/ directory 61f7271
+- **icu:** replace regex with readable helper functions b200594
+- move constants.ts and utils.ts to internal/ 4efbb21
+- **plurals:** migrate to native Intl.PluralRules b2d0866
+- reorganize file structure 0fd987c
+- replace emojis with Lucide SVG icons 4e4b1a6
+- use native Intl.PluralRules for plural handling 0a81a5f
+
+### Documentation
+
+- add ICU parser comparison with FormatJS 2f3f41c
+- add ICU parser documentation c1aa161
+- document ICU compiler API and benchmarks 39f6879
+- document ICU parser limitations 225f8a2
+- enhance homepage with ICU code example 3b1ca35
+- **home:** replace text badges with shields.io badges 23abd65
+- remove hardcoded CLDR 48 version references dbbd234
+- simplify bundle size table to show individual exports b88bd16
+- simplify bundle sizes (no decimals) 7ed3aa5
+- simplify performance claim to 3× faster 0a233b8
+- unify formatting across README and docs bed7adc
+- update documentation for Intl.PluralRules migration 70043c9
+- update ICU benchmark numbers to match current results aa0b029
+
 ## [3.6.1](///compare/v3.6.0...v3.6.1) (2025-12-15)
 
 ## [3.6.0](///compare/v3.5.1...v3.6.0) (2025-12-15)
