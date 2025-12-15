@@ -209,86 +209,74 @@ export default function Home() {
 
       {/* Performance */}
       <section className="border-t border-fd-border bg-fd-muted/20 px-6 py-20">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <h2 className="mb-4 text-center text-3xl font-bold md:text-4xl">Benchmarks</h2>
           <p className="mx-auto mb-12 max-w-2xl text-center text-lg text-fd-muted-foreground">
             Measured on Apple M1 Ultra, Node.js 22. Relative performance is consistent across
             hardware.
           </p>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* PO Parsing */}
-            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-1 text-lg font-semibold">PO Parsing</h3>
-              <p className="mb-4 text-xs text-fd-muted-foreground">10K entries with plurals</p>
+            <div className="rounded-xl border border-fd-border bg-fd-card p-5">
+              <h3 className="text-base font-semibold">PO Parsing</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">10K entries</p>
               <div className="space-y-3">
                 <BenchmarkBar label="pofile-ts" value={100} ops="211/s" fastest />
                 <BenchmarkBar label="gettext-parser" value={13} ops="27/s" />
                 <BenchmarkBar label="pofile" value={3} ops="7/s" />
               </div>
-              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
+              <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
                 8× faster
               </p>
             </div>
 
             {/* PO Serialization */}
-            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-1 text-lg font-semibold">PO Serialization</h3>
-              <p className="mb-4 text-xs text-fd-muted-foreground">Same 10K entries</p>
+            <div className="rounded-xl border border-fd-border bg-fd-card p-5">
+              <h3 className="text-base font-semibold">PO Stringify</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">10K entries</p>
               <div className="space-y-3">
                 <BenchmarkBar label="pofile-ts" value={100} ops="255/s" fastest />
                 <BenchmarkBar label="pofile" value={40} ops="103/s" />
                 <BenchmarkBar label="gettext-parser" value={22} ops="55/s" />
               </div>
-              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
+              <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
                 5× faster
               </p>
             </div>
 
             {/* ICU Parsing */}
-            <div className="rounded-xl border border-fd-border bg-fd-card p-6">
-              <h3 className="mb-1 text-lg font-semibold">ICU Parsing</h3>
+            <div className="rounded-xl border border-fd-border bg-fd-card p-5">
+              <h3 className="text-base font-semibold">ICU Parsing</h3>
               <p className="mb-4 text-xs text-fd-muted-foreground">Plurals, selects, tags</p>
               <div className="space-y-3">
                 <BenchmarkBar label="pofile-ts" value={100} ops="250k/s" fastest />
                 <BenchmarkBar label="@formatjs" value={40} ops="100k/s" />
               </div>
-              <p className="mt-4 text-sm font-medium text-purple-600 dark:text-purple-400">
-                2.5× faster, 4× smaller
+              <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
+                2.5× faster
               </p>
             </div>
 
             {/* ICU Runtime */}
-            <div className="rounded-xl border border-fd-border bg-fd-card p-6 lg:col-span-3">
-              <h3 className="mb-1 text-lg font-semibold">ICU Runtime (Compiled Functions)</h3>
-              <p className="mb-4 text-xs text-fd-muted-foreground">
-                The real-world hot path: formatting messages at runtime
-              </p>
-              <div className="grid gap-6 md:grid-cols-3">
-                <div className="space-y-3">
-                  <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
-                  <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
-                  <BenchmarkBar label="@lingui (compiled)" value={25} ops="200k/s" />
-                </div>
-                <div className="flex flex-col justify-center md:col-span-2">
-                  <p className="text-sm text-fd-muted-foreground">
-                    <span className="font-semibold text-purple-600 dark:text-purple-400">
-                      3× faster
-                    </span>{" "}
-                    than intl-messageformat,{" "}
-                    <span className="font-semibold text-purple-600 dark:text-purple-400">
-                      4× faster
-                    </span>{" "}
-                    than Lingui's compiled format.
-                  </p>
-                  <p className="mt-2 text-xs text-fd-muted-foreground">
-                    The difference: pofile-ts compiles to native JavaScript functions with template
-                    literals — no AST walking at runtime.
-                  </p>
-                </div>
+            <div className="rounded-xl border border-fd-border bg-fd-card p-5">
+              <h3 className="text-base font-semibold">ICU Runtime</h3>
+              <p className="mb-4 text-xs text-fd-muted-foreground">Compiled functions</p>
+              <div className="space-y-3">
+                <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
+                <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
+                <BenchmarkBar label="@lingui" value={25} ops="200k/s" />
               </div>
+              <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
+                3× faster
+              </p>
             </div>
           </div>
+
+          <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-fd-muted-foreground">
+            ICU Runtime compiles to native JavaScript with template literals — no AST walking at
+            runtime.
+          </p>
         </div>
       </section>
 
@@ -512,9 +500,20 @@ function BenchmarkBar({
   fastest?: boolean
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 text-sm font-medium">{label}</span>
-      <div className="relative h-6 flex-1 overflow-hidden rounded-full bg-fd-muted">
+    <div className="space-y-1">
+      <div className="flex items-baseline justify-between text-sm">
+        <span className={fastest ? "font-medium" : "text-fd-muted-foreground"}>{label}</span>
+        <span
+          className={
+            fastest
+              ? "font-semibold text-purple-600 dark:text-purple-400"
+              : "text-fd-muted-foreground"
+          }
+        >
+          {ops}
+        </span>
+      </div>
+      <div className="relative h-2 overflow-hidden rounded-full bg-fd-muted">
         <div
           className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
             fastest
@@ -524,11 +523,6 @@ function BenchmarkBar({
           style={{ width: `${value}%` }}
         />
       </div>
-      <span
-        className={`w-12 text-right text-sm ${fastest ? "font-semibold text-purple-600 dark:text-purple-400" : "text-fd-muted-foreground"}`}
-      >
-        {ops}
-      </span>
     </div>
   )
 }
