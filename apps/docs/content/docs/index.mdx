@@ -10,9 +10,10 @@ description: A modern, focused library for GNU gettext PO files
 - **Parse PO Files** — Read PO files from strings with full escape sequence support
 - **Serialize PO Files** — Convert PO data back to properly formatted strings
 - **Full PO Support** — Headers, comments, flags, plurals, and message context
-- **CLDR 48 Plural Data** — 100% compliant for all major languages, just ~3KB
+- **CLDR 48 Plural Data** — 100% compliant for all major languages
 - **ICU Conversion** — Convert between Gettext and ICU MessageFormat
 - **Zero Dependencies** — No Node.js APIs required, works in browsers too
+- **Tree-Shakeable** — Only bundle what you use (~11KB full, ~5KB core)
 - **TypeScript First** — Full type definitions for excellent IDE support
 - **Blazing Fast** — Up to 23× faster than alternatives
 
@@ -51,3 +52,16 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | pofile         |       8 ops/s |     100 ops/s |
 
 _Relative performance (×faster) is consistent across different hardware._
+
+## Bundle Size
+
+The library is fully **tree-shakeable**. Import only what you need:
+
+| Import                         | Gzipped |
+| ------------------------------ | ------: |
+| Full library                   |   ~11KB |
+| `parsePo` + `stringifyPo` only |    ~5KB |
+| Add CLDR plural helpers        |    +3KB |
+| Add ICU conversion             |    +2KB |
+
+All exports are named exports — modern bundlers automatically eliminate unused code.

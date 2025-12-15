@@ -14,6 +14,8 @@
 [![Coverage](https://codecov.io/gh/sebastian-software/pofile-ts/graph/badge.svg)](https://codecov.io/gh/sebastian-software/pofile-ts)
 [![npm version](https://img.shields.io/npm/v/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
 [![npm downloads](https://img.shields.io/npm/dm/pofile-ts.svg)](https://www.npmjs.com/package/pofile-ts)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/pofile-ts)](https://bundlephobia.com/package/pofile-ts)
+[![Tree Shakeable](https://img.shields.io/badge/tree--shakeable-yes-brightgreen)](https://bundlephobia.com/package/pofile-ts)
 
 A modern, focused library for reading and writing [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Hand-optimized for speed, runs everywhere.
 
@@ -22,9 +24,10 @@ A modern, focused library for reading and writing [GNU gettext](https://www.gnu.
 - 📖 **Parse** PO files from strings
 - ✏️ **Serialize** PO files back to strings
 - 🎯 **Full PO support** — headers, comments, flags, plurals, context
-- 🌍 **CLDR 48 plural data** — 100% compliant for all major languages (~3KB)
+- 🌍 **CLDR 48 plural data** — 100% compliant for all major languages
 - 🔄 **ICU conversion** — Gettext ↔ ICU MessageFormat
 - 📦 **Zero dependencies** — browser-compatible
+- 🌳 **Tree-shakeable** — only bundle what you use
 - 💎 **TypeScript-first** — full type definitions
 - ⚡ **23× faster** than alternatives
 
@@ -67,6 +70,19 @@ Benchmarked with 10,000 entries (~10% plurals) on Apple M1 Ultra, Node.js 22:
 | pofile         |       7 ops/s |     103 ops/s |
 
 _Relative performance (×faster) is consistent across different hardware._
+
+## Bundle Size
+
+The full library is **~11KB gzipped**. Tree-shaking reduces this further:
+
+| Import                         | Gzipped |
+| ------------------------------ | ------: |
+| Full library                   |   ~11KB |
+| `parsePo` + `stringifyPo` only |    ~5KB |
+| Add CLDR plural helpers        |    +3KB |
+| Add ICU conversion             |    +2KB |
+
+All exports are **named exports** — modern bundlers (Vite, esbuild, Rollup, webpack) automatically tree-shake unused code.
 
 ## Credits
 
