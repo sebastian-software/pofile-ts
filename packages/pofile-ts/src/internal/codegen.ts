@@ -414,86 +414,8 @@ export function getNumberOptionsForStyle(style: string): Intl.NumberFormatOption
 }
 
 /**
- * Plural function code templates for different locale patterns.
- * Maps locale base (e.g., "ru", "pl") to the function body code.
- */
-const PLURAL_FUNCTION_CODE: Record<string, string> = {
-  // East Slavic (Russian, Ukrainian, Belarusian)
-  ru: `(n) => {
-  if (n % 10 === 1 && n % 100 !== 11) return 0
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 1
-  return 2
-}`,
-  uk: `(n) => {
-  if (n % 10 === 1 && n % 100 !== 11) return 0
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 1
-  return 2
-}`,
-  be: `(n) => {
-  if (n % 10 === 1 && n % 100 !== 11) return 0
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 1
-  return 2
-}`,
-
-  // Polish
-  pl: `(n) => {
-  if (n === 1) return 0
-  if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 1
-  return 2
-}`,
-
-  // Czech, Slovak
-  cs: `(n) => {
-  if (n === 1) return 0
-  if (n >= 2 && n <= 4) return 1
-  return 2
-}`,
-  sk: `(n) => {
-  if (n === 1) return 0
-  if (n >= 2 && n <= 4) return 1
-  return 2
-}`,
-
-  // Romance languages with "many" for millions
-  fr: `(n) => {
-  if (n === 0 || n === 1) return 0
-  if (Number.isInteger(n) && n !== 0 && n % 1000000 === 0) return 1
-  return 2
-}`,
-  es: `(n) => {
-  if (n === 0 || n === 1) return 0
-  if (Number.isInteger(n) && n !== 0 && n % 1000000 === 0) return 1
-  return 2
-}`,
-  pt: `(n) => {
-  if (n === 0 || n === 1) return 0
-  if (Number.isInteger(n) && n !== 0 && n % 1000000 === 0) return 1
-  return 2
-}`,
-  it: `(n) => {
-  if (n === 0 || n === 1) return 0
-  if (Number.isInteger(n) && n !== 0 && n % 1000000 === 0) return 1
-  return 2
-}`,
-  ca: `(n) => {
-  if (n === 0 || n === 1) return 0
-  if (Number.isInteger(n) && n !== 0 && n % 1000000 === 0) return 1
-  return 2
-}`,
-
-  // Arabic
-  ar: `(n) => {
-  if (n === 0) return 0
-  if (n === 1) return 1
-  if (n === 2) return 2
-  if (n % 100 >= 3 && n % 100 <= 10) return 3
-  if (n % 100 >= 11) return 4
-  return 5
-}`
-}
-
-/**
  * Generates the plural function code for a locale.
+ * Uses native Intl.PluralRules for accurate CLDR-compliant plural selection.
  */
 export function generatePluralFunctionCode(locale: string, categories: readonly string[]): string {
   // For single category (only "other"), no plural function needed
@@ -501,21 +423,16 @@ export function generatePluralFunctionCode(locale: string, categories: readonly 
     return "const _pf = () => 0"
   }
 
-  // For simple one/other pattern
+  // For simple one/other pattern, use inline function for smaller output
   if (categories.length === 2 && categories[0] === "one" && categories[1] === "other") {
     return "const _pf = (n) => n !== 1 ? 1 : 0"
   }
 
-  // Look up in the static map
-  const localeBase = locale.split(/[-_]/)[0] ?? locale
-  const fnCode = PLURAL_FUNCTION_CODE[localeBase]
-
-  if (fnCode) {
-    return `const _pf = ${fnCode}`
-  }
-
-  // Default to simple one/other
-  return "const _pf = (n) => n !== 1 ? 1 : 0"
+  // Use Intl.PluralRules for complex patterns
+  // This ensures CLDR-compliant plural selection
+  return `const _pr = new Intl.PluralRules("${locale}")
+const _pc = _pr.resolvedOptions().pluralCategories
+const _pf = (n) => { const i = _pc.indexOf(_pr.select(n)); return i >= 0 ? i : _pc.length - 1 }`
 }
 
 /**

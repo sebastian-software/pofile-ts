@@ -167,13 +167,19 @@ describe("getPluralFunction", () => {
   })
 
   it("returns correct indices for Scottish Gaelic (4 forms - Celtic)", () => {
+    // CLDR rules: one=1,11; two=2,12; few=3-10,13-19; other=0,20+
     const fn = getPluralFunction("gd")
     expect(fn(1)).toBe(0) // one
+    expect(fn(11)).toBe(0) // one (CLDR: 11 is also "one")
     expect(fn(2)).toBe(1) // two
+    expect(fn(12)).toBe(1) // two (CLDR: 12 is also "two")
     expect(fn(3)).toBe(2) // few (3-10)
     expect(fn(10)).toBe(2) // few
-    expect(fn(11)).toBe(3) // other (>10)
+    expect(fn(13)).toBe(2) // few (13-19)
+    expect(fn(19)).toBe(2) // few
+    expect(fn(0)).toBe(3) // other
     expect(fn(20)).toBe(3) // other
+    expect(fn(100)).toBe(3) // other
   })
 
   it("returns correct indices for Irish (5 forms)", () => {
