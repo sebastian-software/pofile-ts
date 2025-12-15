@@ -192,7 +192,7 @@ export default function Home() {
                 <BenchmarkBar label="@lingui" value={25} ops="200k/s" />
               </div>
               <p className="mt-4 text-sm text-fd-muted-foreground">
-                Compiled functions • 3-4× faster
+                Compiled functions • 3× faster
               </p>
             </div>
           </div>
