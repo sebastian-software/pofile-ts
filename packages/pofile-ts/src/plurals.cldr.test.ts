@@ -6,7 +6,6 @@
  * and verifies that our getPluralFunction returns the correct category index.
  */
 import { describe, it, expect } from "vitest"
-// @ts-expect-error - cldr-core has no types
 import pluralsData from "cldr-core/supplemental/plurals.json"
 import { getPluralCategories, getPluralFunction } from "./plurals"
 
@@ -29,7 +28,7 @@ function parseSamples(rule: string): { integers: number[]; decimals: number[] } 
 
   // Extract @integer samples
   const intMatch = rule.match(/@integer\s+([^@]+)/)
-  if (intMatch) {
+  if (intMatch && intMatch[1]) {
     const intPart = intMatch[1].replace(/…/g, "").trim()
     for (const part of intPart.split(",")) {
       const trimmed = part.trim()
@@ -39,7 +38,9 @@ function parseSamples(rule: string): { integers: number[]; decimals: number[] } 
 
       // Handle ranges like "2~4" or "11~26"
       if (trimmed.includes("~")) {
-        const [start, end] = trimmed.split("~").map(Number)
+        const parts = trimmed.split("~").map(Number)
+        const start = parts[0] ?? 0
+        const end = parts[1] ?? 0
         // Only expand small ranges to avoid huge test sets
         if (end - start <= 20) {
           for (let i = start; i <= end; i++) {
@@ -60,7 +61,7 @@ function parseSamples(rule: string): { integers: number[]; decimals: number[] } 
 
   // Extract @decimal samples
   const decMatch = rule.match(/@decimal\s+([^@]+)/)
-  if (decMatch) {
+  if (decMatch && decMatch[1]) {
     const decPart = decMatch[1].replace(/…/g, "").trim()
     for (const part of decPart.split(",")) {
       const trimmed = part.trim()
@@ -70,7 +71,9 @@ function parseSamples(rule: string): { integers: number[]; decimals: number[] } 
 
       // Handle ranges like "0.0~0.9"
       if (trimmed.includes("~")) {
-        const [start, end] = trimmed.split("~").map(Number)
+        const parts = trimmed.split("~").map(Number)
+        const start = parts[0] ?? 0
+        const end = parts[1] ?? 0
         // For decimal ranges, just use a few samples
         decimals.push(start, (start + end) / 2, end)
       } else {
