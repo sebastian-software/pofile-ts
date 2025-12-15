@@ -109,16 +109,7 @@ export default function Home() {
               <span className="text-purple-600 dark:text-purple-400">npm</span> install pofile-ts
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-3 text-sm text-fd-muted-foreground">
-            <span>Zero dependencies</span>
-            <span className="text-fd-border">•</span>
-            <span>~11KB gzipped</span>
-            <span className="text-fd-border">•</span>
-            <span>Tree-shakeable to ~5KB</span>
-            <span className="text-fd-border">•</span>
-            <span>ESM &amp; CJS</span>
-          </div>
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
             <a
               href="https://codecov.io/gh/sebastian-software/pofile-ts"
               target="_blank"
@@ -152,6 +143,16 @@ export default function Home() {
                 className="h-5"
               />
             </a>
+            <img
+              src="https://img.shields.io/badge/dependencies-0-brightgreen"
+              alt="Zero Dependencies"
+              className="h-5"
+            />
+            <img
+              src="https://img.shields.io/badge/format-ESM%20%26%20CJS-blue"
+              alt="ESM & CJS"
+              className="h-5"
+            />
           </div>
         </div>
       </section>
