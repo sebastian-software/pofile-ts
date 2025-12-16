@@ -103,13 +103,9 @@ export type {
   GettextToIcuOptions,
   NormalizeToIcuOptions,
   IcuToGettextOptions,
-  // Style types (aligned with Intl APIs)
-  IcuListType,
+  // Style types
   IcuDurationStyle,
-  IcuRelativeTimeUnit,
-  IcuRelativeTimeStyle,
   IcuAgoStyle,
-  IcuDisplayNamesType,
   // Parser types
   IcuNode,
   IcuLiteralNode,

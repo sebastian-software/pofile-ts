@@ -1,52 +1,14 @@
 /**
  * ICU MessageFormat AST types.
+ *
+ * Style types use Intl APIs directly where available (via ESNext.Intl lib).
  */
-
-// ============================================================================
-// Style types for extended format nodes (aligned with Intl APIs)
-// ============================================================================
-
-/**
- * List format type (Intl.ListFormatType).
- * - conjunction: "A, B, and C"
- * - disjunction: "A, B, or C"
- * - unit: "A, B, C"
- */
-export type IcuListType = "conjunction" | "disjunction" | "unit"
 
 /**
  * Duration format style.
+ * Note: Intl.DurationFormat is Baseline 2025 but not yet in TypeScript's lib.
  */
 export type IcuDurationStyle = "long" | "short" | "narrow" | "digital"
-
-/**
- * Relative time unit (Intl.RelativeTimeFormatUnit).
- */
-export type IcuRelativeTimeUnit =
-  | "second"
-  | "minute"
-  | "hour"
-  | "day"
-  | "week"
-  | "month"
-  | "quarter"
-  | "year"
-
-/**
- * Relative time format style (Intl.RelativeTimeFormatStyle).
- */
-export type IcuRelativeTimeStyle = "long" | "short" | "narrow"
-
-/**
- * Display names type (Intl.DisplayNamesType).
- */
-export type IcuDisplayNamesType =
-  | "language"
-  | "region"
-  | "script"
-  | "currency"
-  | "calendar"
-  | "dateTimeField"
 
 // ============================================================================
 // Node types
@@ -160,7 +122,7 @@ export interface IcuListNode extends IcuNodeBase {
   type: "list"
   value: string
   /** List format type. Default: "conjunction" */
-  style: IcuListType | null
+  style: Intl.ListFormatType | null
 }
 
 /**
@@ -200,7 +162,9 @@ export interface IcuAgoNode extends IcuNodeBase {
  * Combined unit and style for ago format.
  * Format: "unit" or "unit style" (e.g. "day", "hour short")
  */
-export type IcuAgoStyle = IcuRelativeTimeUnit | `${IcuRelativeTimeUnit} ${IcuRelativeTimeStyle}`
+export type IcuAgoStyle =
+  | Intl.RelativeTimeFormatUnit
+  | `${Intl.RelativeTimeFormatUnit} ${Intl.RelativeTimeFormatStyle}`
 
 /**
  * Display names format: {code, name, type}
@@ -216,7 +180,7 @@ export interface IcuNameNode extends IcuNodeBase {
   type: "name"
   value: string
   /** Display names type. Default: "language" */
-  style: IcuDisplayNamesType | null
+  style: Intl.DisplayNamesType | null
 }
 
 /**

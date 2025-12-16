@@ -423,7 +423,18 @@ nameFn({ lang: "en" })
 
 #### Browser Support
 
-These formatters require native `Intl` APIs. Check browser compatibility:
+pofile-ts uses native `Intl` APIs for all formatting. Here's the complete list:
+
+**Standard ICU Formats:**
+
+| Format        | Intl API              | Baseline | Links                                                                                                                                                                                    |
+| ------------- | --------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{n, plural}` | `Intl.PluralRules`    | 2018     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules) · [CanIUse](https://caniuse.com/intl-pluralrules)                               |
+| `{n, number}` | `Intl.NumberFormat`   | 2017     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_numberformat)     |
+| `{d, date}`   | `Intl.DateTimeFormat` | 2017     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_datetimeformat) |
+| `{t, time}`   | `Intl.DateTimeFormat` | 2017     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_datetimeformat) |
+
+**Extended Formats (pofile-ts):**
 
 | Format          | Intl API                  | Baseline | Links                                                                                                                                                                                            |
 | --------------- | ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -432,7 +443,7 @@ These formatters require native `Intl` APIs. Check browser compatibility:
 | `{x, name}`     | `Intl.DisplayNames`       | 2021     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_displaynames)             |
 | `{x, duration}` | `Intl.DurationFormat`     | 2025     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DurationFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_durationformat)         |
 
-All APIs are part of the [Baseline](https://web.dev/baseline) standard, meaning they work across the latest versions of Chrome, Firefox, Safari, and Edge. For older browsers, pofile-ts provides a JSON fallback for `duration`.
+All APIs are part of the [Baseline](https://web.dev/baseline) standard. The oldest required API (`Intl.DurationFormat`) reached Baseline in March 2025. For older browsers, pofile-ts provides a JSON fallback for `duration`.
 
 ### Case-Insensitive Keywords
 
