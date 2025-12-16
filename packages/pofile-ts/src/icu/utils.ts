@@ -175,184 +175,119 @@ export function hasIcuSyntax(message: string): boolean {
 
 // --- Internal helpers ---
 
+/** Node types that have a variable name in the `value` field */
+const VARIABLE_NODE_TYPES = new Set([
+  "argument",
+  "number",
+  "date",
+  "time",
+  "list",
+  "duration",
+  "ago",
+  "name",
+  "plural",
+  "select"
+])
+
+/** Checks if a node type has a variable name */
+function hasVariableName(node: IcuNode): node is IcuNode & { value: string } {
+  return VARIABLE_NODE_TYPES.has(node.type) && "value" in node && typeof node.value === "string"
+}
+
+/** Recursively visits all nodes and calls the callback */
+function forEachNode(nodes: IcuNode[], callback: (node: IcuNode) => void): void {
+  for (const node of nodes) {
+    callback(node)
+    forEachNode(getChildNodes(node), callback)
+  }
+}
+
 function extractVariablesFromAst(nodes: IcuNode[]): string[] {
   const variables = new Set<string>()
 
-  // eslint-disable-next-line complexity -- node type switch
-  function visit(node: IcuNode) {
-    switch (node.type) {
-      case "argument":
-      case "number":
-      case "date":
-      case "time":
-        variables.add(node.value)
-        break
-
-      case "plural":
-      case "select":
-        variables.add(node.value)
-        // Visit nested options
-        for (const option of Object.values(node.options)) {
-          for (const child of option.value) {
-            visit(child)
-          }
-        }
-        break
-
-      case "tag":
-        for (const child of node.children) {
-          visit(child)
-        }
-        break
+  forEachNode(nodes, (node) => {
+    if (hasVariableName(node)) {
+      variables.add(node.value)
     }
-  }
-
-  for (const node of nodes) {
-    visit(node)
-  }
+  })
 
   return [...variables]
+}
+
+/** Maps node types to their variable type */
+const NODE_TYPE_TO_VARIABLE_TYPE: Record<string, IcuVariable["type"] | undefined> = {
+  argument: "argument",
+  number: "number",
+  date: "date",
+  time: "time",
+  list: "argument",
+  duration: "argument",
+  ago: "argument",
+  name: "argument",
+  plural: "plural",
+  select: "select"
+}
+
+/** Node types that have a style property */
+const STYLED_NODE_TYPES = new Set(["number", "date", "time", "list", "duration", "ago", "name"])
+
+/** Extracts variable info from a single node */
+function nodeToVariable(node: IcuNode): IcuVariable | null {
+  const variableType = NODE_TYPE_TO_VARIABLE_TYPE[node.type]
+  if (!variableType || !hasVariableName(node)) {
+    return null
+  }
+
+  const style =
+    STYLED_NODE_TYPES.has(node.type) && "style" in node ? (node.style ?? undefined) : undefined
+  return { name: node.value, type: variableType, style }
 }
 
 function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
   const variables: IcuVariable[] = []
   const seen = new Set<string>()
 
-  // eslint-disable-next-line complexity -- node type switch with type inference
-  function visit(node: IcuNode) {
-    switch (node.type) {
-      case "argument":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "argument" })
-        }
-        break
-
-      case "number":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "number", style: node.style ?? undefined })
-        }
-        break
-
-      case "date":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "date", style: node.style ?? undefined })
-        }
-        break
-
-      case "time":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "time", style: node.style ?? undefined })
-        }
-        break
-
-      case "plural":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "plural" })
-        }
-        // Visit nested options
-        for (const option of Object.values(node.options)) {
-          for (const child of option.value) {
-            visit(child)
-          }
-        }
-        break
-
-      case "select":
-        if (!seen.has(node.value)) {
-          seen.add(node.value)
-          variables.push({ name: node.value, type: "select" })
-        }
-        // Visit nested options
-        for (const option of Object.values(node.options)) {
-          for (const child of option.value) {
-            visit(child)
-          }
-        }
-        break
-
-      case "tag":
-        for (const child of node.children) {
-          visit(child)
-        }
-        break
+  forEachNode(nodes, (node) => {
+    const variable = nodeToVariable(node)
+    if (variable && !seen.has(variable.name)) {
+      seen.add(variable.name)
+      variables.push(variable)
     }
-  }
-
-  for (const node of nodes) {
-    visit(node)
-  }
+  })
 
   return variables
 }
 
-function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
-  function check(node: IcuNode): boolean {
-    if (node.type === type) {
+/** Gets child nodes from a node for recursive traversal */
+function getChildNodes(node: IcuNode): IcuNode[] {
+  switch (node.type) {
+    case "plural":
+    case "select":
+      return Object.values(node.options).flatMap((opt) => opt.value)
+    case "tag":
+      return node.children
+    default:
+      return []
+  }
+}
+
+/** Recursively checks if any node matches the predicate */
+function someNode(nodes: IcuNode[], predicate: (node: IcuNode) => boolean): boolean {
+  for (const node of nodes) {
+    if (predicate(node)) {
       return true
     }
-
-    switch (node.type) {
-      case "plural":
-      case "select":
-        for (const option of Object.values(node.options)) {
-          for (const child of option.value) {
-            if (check(child)) {
-              return true
-            }
-          }
-        }
-        break
-
-      case "tag":
-        for (const child of node.children) {
-          if (check(child)) {
-            return true
-          }
-        }
-        break
+    if (someNode(getChildNodes(node), predicate)) {
+      return true
     }
-
-    return false
   }
+  return false
+}
 
-  return nodes.some(check)
+function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
+  return someNode(nodes, (node) => node.type === type)
 }
 
 function containsOrdinalPlural(nodes: IcuNode[]): boolean {
-  // eslint-disable-next-line complexity
-  function check(node: IcuNode): boolean {
-    if (node.type === "plural" && node.pluralType === "ordinal") {
-      return true
-    }
-
-    switch (node.type) {
-      case "plural":
-      case "select":
-        for (const option of Object.values(node.options)) {
-          for (const child of option.value) {
-            if (check(child)) {
-              return true
-            }
-          }
-        }
-        break
-
-      case "tag":
-        for (const child of node.children) {
-          if (check(child)) {
-            return true
-          }
-        }
-        break
-    }
-
-    return false
-  }
-
-  return nodes.some(check)
+  return someNode(nodes, (node) => node.type === "plural" && node.pluralType === "ordinal")
 }
