@@ -44,6 +44,7 @@
 - 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 2.5× faster than FormatJS)
 - ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (3× faster at runtime)
 - 🔢 **Plural helpers** — Get categories, counts, and selector functions for any locale
+- 🆕 **Extended Intl Formatters** — Lists, durations, relative times, and display names built-in
 
 ### Developer Experience
 
@@ -138,6 +139,32 @@ const code = generateCompiledCode(catalog, { locale: "de" })
 ```
 
 Supports named tags (`<link>`), numeric tags (`<0>`, `<1>` — Lingui-style), and React components (returns array when tag functions return objects).
+
+### Extended Intl Formatters
+
+Go beyond standard ICU with built-in support for modern `Intl` APIs:
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+// Lists — "Alice, Bob, and Charlie" or "Alice, Bob, or Charlie"
+const list = compileIcu("{authors, list}", { locale: "en" })
+list({ authors: ["Alice", "Bob", "Charlie"] }) // → "Alice, Bob, and Charlie"
+
+// Relative time — "in 3 days" or "2 hours ago"
+const ago = compileIcu("{days, ago, day}", { locale: "de" })
+ago({ days: -2 }) // → "vor 2 Tagen"
+
+// Display names — Localized country, language, currency names
+const name = compileIcu("{lang, name, language}", { locale: "de" })
+name({ lang: "en" }) // → "Englisch"
+
+// Durations — "2 hours, 30 minutes" (Baseline 2025)
+const dur = compileIcu("{time, duration, short}", { locale: "en" })
+dur({ time: { hours: 2, minutes: 30 } }) // → "2 hr, 30 min"
+```
+
+All formatters use native browser APIs — zero additional bundle size. See [browser support](https://sebastian-software.github.io/pofile-ts/docs/helpers#browser-support).
 
 ## Documentation
 

@@ -16,7 +16,6 @@ export type IcuListType = "conjunction" | "disjunction" | "unit"
 
 /**
  * Duration format style.
- * Note: Intl.DurationFormat is still a stage 3 proposal.
  */
 export type IcuDurationStyle = "long" | "short" | "narrow" | "digital"
 

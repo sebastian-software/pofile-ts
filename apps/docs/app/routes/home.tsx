@@ -220,6 +220,12 @@ export default function Home() {
               description="~11KB full, ~5KB tree-shaken. No transitive deps, no supply chain bloat. Just pofile-ts."
               gradient="from-rose-500 to-pink-500"
             />
+            <FeatureCard
+              icon={<BoxIcon />}
+              title="Extended Intl Formatters"
+              description="Lists, relative times, display names, and durations. Native Intl APIs — zero bundle cost."
+              gradient="from-teal-500 to-cyan-500"
+            />
           </div>
         </div>
       </section>
@@ -330,7 +336,7 @@ export default function Home() {
             No classes, no side effects — just pure functions that do one thing well
           </p>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-3">
             {/* PO Example */}
             <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
               <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
@@ -342,34 +348,21 @@ export default function Home() {
               <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
                 <code>
                   <span className="text-purple-600 dark:text-purple-400">import</span>
-                  {" { parsePo, stringifyPo } "}
+                  {" { parsePo } "}
                   <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
                   <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
                   {"\n\n"}
-                  <span className="text-fd-muted-foreground">
-                    {"// Parse → modify → serialize"}
-                  </span>
+                  <span className="text-fd-muted-foreground">{"// Parse PO files"}</span>
                   {"\n"}
                   <span className="text-purple-600 dark:text-purple-400">const</span>
                   {" po = "}
                   <span className="text-blue-600 dark:text-blue-400">parsePo</span>
-                  {"(content)\n"}
-                  {"po.items[0].msgstr = ["}
-                  <span className="text-emerald-600 dark:text-emerald-400">"Hallo"</span>
-                  {"]\n"}
-                  <span className="text-purple-600 dark:text-purple-400">const</span>
-                  {" output = "}
-                  <span className="text-blue-600 dark:text-blue-400">stringifyPo</span>
-                  {"(po)\n\n"}
-                  <span className="text-fd-muted-foreground">{"// Full PO support:"}</span>
+                  {"(content)\n\n"}
+                  <span className="text-fd-muted-foreground">{"// Full support:"}</span>
                   {"\n"}
-                  <span className="text-fd-muted-foreground">
-                    {"// headers, plurals, context,"}
-                  </span>
+                  <span className="text-fd-muted-foreground">{"// plurals, context,"}</span>
                   {"\n"}
-                  <span className="text-fd-muted-foreground">
-                    {"// flags, references, comments"}
-                  </span>
+                  <span className="text-fd-muted-foreground">{"// flags, comments"}</span>
                 </code>
               </pre>
             </div>
@@ -389,26 +382,51 @@ export default function Home() {
                   <span className="text-purple-600 dark:text-purple-400">from</span>{" "}
                   <span className="text-emerald-600 dark:text-emerald-400">"pofile-ts"</span>
                   {"\n\n"}
-                  <span className="text-fd-muted-foreground">
-                    {"// Compile ICU → fast JS function"}
-                  </span>
+                  <span className="text-fd-muted-foreground">{"// Compile ICU"}</span>
                   {"\n"}
                   <span className="text-purple-600 dark:text-purple-400">const</span>
                   {" msg = "}
                   <span className="text-blue-600 dark:text-blue-400">compileIcu</span>
                   {"(\n  "}
                   <span className="text-emerald-600 dark:text-emerald-400">
-                    '"{"{"}n, plural, one {"{"}"#" item{"}"} other {"{"}"#" items{"}"}
-                    {"}"}"'
+                    '"{"{"}n, plural, ...{"}"}"'
                   </span>
-                  {",\n  { locale: "}
-                  <span className="text-emerald-600 dark:text-emerald-400">"en"</span>
-                  {" }\n)\n\n"}
-                  {"msg({ n: 1 })  "}
-                  <span className="text-fd-muted-foreground">{'// "1 item"'}</span>
-                  {"\n"}
-                  {"msg({ n: 5 })  "}
+                  {"\n)\n\n"}
+                  {"msg({ n: 5 }) "}
                   <span className="text-fd-muted-foreground">{'// "5 items"'}</span>
+                </code>
+              </pre>
+            </div>
+
+            {/* Extended Formatters Example */}
+            <div className="overflow-hidden rounded-xl border border-fd-border bg-fd-card shadow-xl">
+              <div className="flex items-center gap-2 border-b border-fd-border bg-fd-muted/50 px-4 py-3">
+                <div className="h-3 w-3 rounded-full bg-red-500/60" />
+                <div className="h-3 w-3 rounded-full bg-amber-500/60" />
+                <div className="h-3 w-3 rounded-full bg-green-500/60" />
+                <span className="ml-2 text-sm text-fd-muted-foreground">intl-formats.ts</span>
+              </div>
+              <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
+                <code>
+                  <span className="text-fd-muted-foreground">{"// Extended Intl"}</span>
+                  {"\n"}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    "{"{"}authors, list{"}"}"
+                  </span>
+                  {"\n"}
+                  <span className="text-fd-muted-foreground">{"→ Alice, Bob, and Charlie"}</span>
+                  {"\n\n"}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    "{"{"}days, ago, day{"}"}"
+                  </span>
+                  {"\n"}
+                  <span className="text-fd-muted-foreground">{"→ vor 2 Tagen"}</span>
+                  {"\n\n"}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    "{"{"}lang, name, language{"}"}"
+                  </span>
+                  {"\n"}
+                  <span className="text-fd-muted-foreground">{"→ Englisch"}</span>
                 </code>
               </pre>
             </div>
