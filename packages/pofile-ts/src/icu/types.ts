@@ -1,61 +1,20 @@
 /**
  * ICU MessageFormat AST types.
- *
- * Compatible with @formatjs/icu-messageformat-parser output structure,
- * but simplified for our use case.
  */
 
 /**
  * Node types in the ICU MessageFormat AST.
  */
-export const IcuNodeType = {
-  /** Raw text */
-  literal: 0,
-  /** Simple variable: {name} */
-  argument: 1,
-  /** Number format: {n, number} or {n, number, currency} */
-  number: 2,
-  /** Date format: {d, date} or {d, date, short} */
-  date: 3,
-  /** Time format: {t, time} or {t, time, medium} */
-  time: 4,
-  /** Select: {gender, select, male {...} female {...} other {...}} */
-  select: 5,
-  /** Plural/selectordinal: {n, plural, one {...} other {...}} */
-  plural: 6,
-  /** The # symbol inside plural, replaced with the count */
-  pound: 7,
-  /** XML-like tag: <b>...</b> */
-  tag: 8
-} as const
-
-export type IcuNodeType = (typeof IcuNodeType)[keyof typeof IcuNodeType]
-
-/** Reverse mapping from numeric type to name (for debugging) */
-const nodeTypeNames: Record<IcuNodeType, string> = {
-  [IcuNodeType.literal]: "literal",
-  [IcuNodeType.argument]: "argument",
-  [IcuNodeType.number]: "number",
-  [IcuNodeType.date]: "date",
-  [IcuNodeType.time]: "time",
-  [IcuNodeType.select]: "select",
-  [IcuNodeType.plural]: "plural",
-  [IcuNodeType.pound]: "pound",
-  [IcuNodeType.tag]: "tag"
-}
-
-/**
- * Returns the string name for a node type.
- * Useful for debugging since node types are numeric.
- *
- * @example
- * getNodeTypeName(6)              // → "plural"
- * getNodeTypeName(node.type)      // → "select"
- * getNodeTypeName(IcuNodeType.tag) // → "tag"
- */
-export function getNodeTypeName(type: IcuNodeType): string {
-  return nodeTypeNames[type] ?? "unknown"
-}
+export type IcuNodeType =
+  | "literal"
+  | "argument"
+  | "number"
+  | "date"
+  | "time"
+  | "select"
+  | "plural"
+  | "pound"
+  | "tag"
 
 /**
  * Source location in the message string.
@@ -85,7 +44,7 @@ interface IcuNodeBase {
  * Literal text node.
  */
 export interface IcuLiteralNode extends IcuNodeBase {
-  type: typeof IcuNodeType.literal
+  type: "literal"
   value: string
 }
 
@@ -93,7 +52,7 @@ export interface IcuLiteralNode extends IcuNodeBase {
  * Simple argument: {name}
  */
 export interface IcuArgumentNode extends IcuNodeBase {
-  type: typeof IcuNodeType.argument
+  type: "argument"
   value: string
 }
 
@@ -105,7 +64,7 @@ export interface IcuArgumentNode extends IcuNodeBase {
  * interpretation is up to the runtime.
  */
 export interface IcuNumberNode extends IcuNodeBase {
-  type: typeof IcuNodeType.number
+  type: "number"
   value: string
   style: string | null
 }
@@ -117,7 +76,7 @@ export interface IcuNumberNode extends IcuNodeBase {
  * a skeleton (e.g. "::yyyyMMdd"). The parser treats both as opaque strings.
  */
 export interface IcuDateNode extends IcuNodeBase {
-  type: typeof IcuNodeType.date
+  type: "date"
   value: string
   style: string | null
 }
@@ -128,7 +87,7 @@ export interface IcuDateNode extends IcuNodeBase {
  * Style can be a named format or skeleton. The parser treats both as opaque strings.
  */
 export interface IcuTimeNode extends IcuNodeBase {
-  type: typeof IcuNodeType.time
+  type: "time"
   value: string
   style: string | null
 }
@@ -137,7 +96,7 @@ export interface IcuTimeNode extends IcuNodeBase {
  * Plural or selectordinal argument.
  */
 export interface IcuPluralNode extends IcuNodeBase {
-  type: typeof IcuNodeType.plural
+  type: "plural"
   value: string
   options: Record<string, IcuPluralOption>
   offset: number
@@ -148,7 +107,7 @@ export interface IcuPluralNode extends IcuNodeBase {
  * Select argument.
  */
 export interface IcuSelectNode extends IcuNodeBase {
-  type: typeof IcuNodeType.select
+  type: "select"
   value: string
   options: Record<string, IcuSelectOption>
 }
@@ -168,14 +127,14 @@ export interface IcuSelectOption {
  * The # symbol in plural, replaced with the count.
  */
 export interface IcuPoundNode extends IcuNodeBase {
-  type: typeof IcuNodeType.pound
+  type: "pound"
 }
 
 /**
  * XML-like tag: <b>content</b>
  */
 export interface IcuTagNode extends IcuNodeBase {
-  type: typeof IcuNodeType.tag
+  type: "tag"
   value: string
   children: IcuNode[]
 }
@@ -216,12 +175,7 @@ export interface IcuParserOptions {
 /**
  * Parser error kinds.
  */
-export const IcuErrorKind = {
-  /** Generic syntax error */
-  SYNTAX_ERROR: "SYNTAX_ERROR"
-} as const
-
-export type IcuErrorKind = (typeof IcuErrorKind)[keyof typeof IcuErrorKind]
+export type IcuErrorKind = "SYNTAX_ERROR"
 
 /**
  * Parser error.

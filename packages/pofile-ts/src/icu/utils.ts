@@ -4,8 +4,7 @@
  * Convenience APIs for working with ICU messages.
  */
 
-import type { IcuNode, IcuParseError, IcuParserOptions } from "./types"
-import { IcuNodeType } from "./types"
+import type { IcuNode, IcuNodeType, IcuParseError, IcuParserOptions } from "./types"
 import { parseIcu } from "./parser"
 
 /**
@@ -136,7 +135,7 @@ export function hasPlural(message: string): boolean {
   if (!result.success) {
     return false
   }
-  return containsNodeType(result.ast, IcuNodeType.plural)
+  return containsNodeType(result.ast, "plural")
 }
 
 /**
@@ -159,7 +158,7 @@ export function hasSelect(message: string): boolean {
   if (!result.success) {
     return false
   }
-  return containsNodeType(result.ast, IcuNodeType.select)
+  return containsNodeType(result.ast, "select")
 }
 
 /**
@@ -171,7 +170,7 @@ export function hasIcuSyntax(message: string): boolean {
   if (!result.success) {
     return false
   }
-  return result.ast.some((node) => node.type !== IcuNodeType.literal)
+  return result.ast.some((node) => node.type !== "literal")
 }
 
 // --- Internal helpers ---
@@ -182,15 +181,15 @@ function extractVariablesFromAst(nodes: IcuNode[]): string[] {
   // eslint-disable-next-line complexity -- node type switch
   function visit(node: IcuNode) {
     switch (node.type) {
-      case IcuNodeType.argument:
-      case IcuNodeType.number:
-      case IcuNodeType.date:
-      case IcuNodeType.time:
+      case "argument":
+      case "number":
+      case "date":
+      case "time":
         variables.add(node.value)
         break
 
-      case IcuNodeType.plural:
-      case IcuNodeType.select:
+      case "plural":
+      case "select":
         variables.add(node.value)
         // Visit nested options
         for (const option of Object.values(node.options)) {
@@ -200,7 +199,7 @@ function extractVariablesFromAst(nodes: IcuNode[]): string[] {
         }
         break
 
-      case IcuNodeType.tag:
+      case "tag":
         for (const child of node.children) {
           visit(child)
         }
@@ -222,35 +221,35 @@ function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
   // eslint-disable-next-line complexity -- node type switch with type inference
   function visit(node: IcuNode) {
     switch (node.type) {
-      case IcuNodeType.argument:
+      case "argument":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "argument" })
         }
         break
 
-      case IcuNodeType.number:
+      case "number":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "number", style: node.style ?? undefined })
         }
         break
 
-      case IcuNodeType.date:
+      case "date":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "date", style: node.style ?? undefined })
         }
         break
 
-      case IcuNodeType.time:
+      case "time":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "time", style: node.style ?? undefined })
         }
         break
 
-      case IcuNodeType.plural:
+      case "plural":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "plural" })
@@ -263,7 +262,7 @@ function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
         }
         break
 
-      case IcuNodeType.select:
+      case "select":
         if (!seen.has(node.value)) {
           seen.add(node.value)
           variables.push({ name: node.value, type: "select" })
@@ -276,7 +275,7 @@ function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
         }
         break
 
-      case IcuNodeType.tag:
+      case "tag":
         for (const child of node.children) {
           visit(child)
         }
@@ -298,8 +297,8 @@ function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
     }
 
     switch (node.type) {
-      case IcuNodeType.plural:
-      case IcuNodeType.select:
+      case "plural":
+      case "select":
         for (const option of Object.values(node.options)) {
           for (const child of option.value) {
             if (check(child)) {
@@ -309,7 +308,7 @@ function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
         }
         break
 
-      case IcuNodeType.tag:
+      case "tag":
         for (const child of node.children) {
           if (check(child)) {
             return true
@@ -326,13 +325,13 @@ function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
 
 function containsOrdinalPlural(nodes: IcuNode[]): boolean {
   function check(node: IcuNode): boolean {
-    if (node.type === IcuNodeType.plural && node.pluralType === "ordinal") {
+    if (node.type === "plural" && node.pluralType === "ordinal") {
       return true
     }
 
     switch (node.type) {
-      case IcuNodeType.plural:
-      case IcuNodeType.select:
+      case "plural":
+      case "select":
         for (const option of Object.values(node.options)) {
           for (const child of option.value) {
             if (check(child)) {
@@ -342,7 +341,7 @@ function containsOrdinalPlural(nodes: IcuNode[]): boolean {
         }
         break
 
-      case IcuNodeType.tag:
+      case "tag":
         for (const child of node.children) {
           if (check(child)) {
             return true

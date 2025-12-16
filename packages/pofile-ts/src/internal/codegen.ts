@@ -5,7 +5,6 @@
  */
 
 import type { IcuNode, IcuPluralNode, IcuSelectNode, IcuTagNode } from "../icu/types"
-import { IcuNodeType } from "../icu/types"
 
 /**
  * Context for code generation.
@@ -75,7 +74,7 @@ export function generateNodesCode(nodes: IcuNode[], ctx: CodeGenContext): string
     const firstNode = nodes[0]
     if (firstNode) {
       // For single literal node, just return the quoted string
-      if (firstNode.type === IcuNodeType.literal) {
+      if (firstNode.type === "literal") {
         return JSON.stringify(firstNode.value)
       }
       return generateNodeCode(firstNode, ctx)
@@ -104,7 +103,7 @@ function generateTemplateLiteral(nodes: IcuNode[], ctx: CodeGenContext): string 
   let template = "`"
 
   for (const node of nodes) {
-    if (node.type === IcuNodeType.literal) {
+    if (node.type === "literal") {
       // Escape backticks and ${} in literals
       template += escapeTemplateString(node.value)
     } else {
@@ -121,7 +120,7 @@ function generateTemplateLiteral(nodes: IcuNode[], ctx: CodeGenContext): string 
  * Check if a node is a tag.
  */
 function isTagNode(node: IcuNode, ctx: CodeGenContext): boolean {
-  if (node.type === IcuNodeType.tag) {
+  if (node.type === "tag") {
     ctx.hasTags = true
     return true
   }
@@ -133,31 +132,31 @@ function isTagNode(node: IcuNode, ctx: CodeGenContext): boolean {
  */
 export function generateNodeCode(node: IcuNode, ctx: CodeGenContext): string {
   switch (node.type) {
-    case IcuNodeType.literal:
+    case "literal":
       return JSON.stringify(node.value)
 
-    case IcuNodeType.argument:
+    case "argument":
       return generateArgumentCode(node.value)
 
-    case IcuNodeType.number:
+    case "number":
       return generateNumberCode(node.value, node.style, ctx)
 
-    case IcuNodeType.date:
+    case "date":
       return generateDateCode(node.value, node.style, ctx)
 
-    case IcuNodeType.time:
+    case "time":
       return generateTimeCode(node.value, node.style, ctx)
 
-    case IcuNodeType.plural:
+    case "plural":
       return generatePluralCode(node, ctx)
 
-    case IcuNodeType.select:
+    case "select":
       return generateSelectCode(node, ctx)
 
-    case IcuNodeType.pound:
+    case "pound":
       return generatePoundCode(ctx)
 
-    case IcuNodeType.tag:
+    case "tag":
       return generateTagCode(node, ctx)
 
     default:

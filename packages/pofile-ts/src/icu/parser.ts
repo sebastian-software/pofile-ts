@@ -37,7 +37,6 @@ import type {
   IcuParserOptions,
   IcuParseResult
 } from "./types"
-import { IcuNodeType } from "./types"
 
 // Character classification helpers (clearer than inline regex)
 // Accept undefined for safe indexed access (returns false for undefined)
@@ -127,7 +126,7 @@ export class IcuParser {
         break
       } else if (ch === "#" && inPlural) {
         this.pos++
-        nodes.push({ type: IcuNodeType.pound })
+        nodes.push({ type: "pound" })
       } else if (ch === "<" && !this.ignoreTag) {
         const next = this.msg[this.pos + 1]
         // Support both alphabetic tags (<b>, <link>) and numeric tags (<0>, <1> - Lingui style)
@@ -166,7 +165,7 @@ export class IcuParser {
     // Simple argument: {name}
     if (this.msg[this.pos] === "}") {
       this.pos++
-      return { type: IcuNodeType.argument, value: name }
+      return { type: "argument", value: name }
     }
 
     // Formatted: {name, type, ...}
@@ -218,14 +217,7 @@ export class IcuParser {
 
     this.expectChar("}", start)
 
-    const type =
-      argType === "number"
-        ? IcuNodeType.number
-        : argType === "date"
-          ? IcuNodeType.date
-          : IcuNodeType.time
-
-    return { type, value: name, style } as IcuNumberNode | IcuDateNode | IcuTimeNode
+    return { type: argType, value: name, style } as IcuNumberNode | IcuDateNode | IcuTimeNode
   }
 
   private parsePlural(
@@ -256,7 +248,7 @@ export class IcuParser {
     this.expectChar("}", start)
 
     return {
-      type: IcuNodeType.plural,
+      type: "plural",
       value: name,
       options,
       offset,
@@ -272,7 +264,7 @@ export class IcuParser {
     const options = this.parseSelectOptions(depth)
     this.expectChar("}", start)
 
-    return { type: IcuNodeType.select, value: name, options }
+    return { type: "select", value: name, options }
   }
 
   private parsePluralOptions(depth: number, parentArg: ArgType): Record<string, IcuPluralOption> {
@@ -365,7 +357,7 @@ export class IcuParser {
     // Self-closing: <br/>
     if (this.msg.slice(this.pos, this.pos + 2) === "/>") {
       this.pos += 2
-      return { type: IcuNodeType.literal, value: `<${tagName}/>` }
+      return { type: "literal", value: `<${tagName}/>` }
     }
 
     // Opening tag: <b>
@@ -387,7 +379,7 @@ export class IcuParser {
     this.skipWhitespace()
     this.expectChar(">", start)
 
-    return { type: IcuNodeType.tag, value: tagName, children }
+    return { type: "tag", value: tagName, children }
   }
 
   // eslint-disable-next-line complexity -- quote escaping state machine
@@ -459,7 +451,7 @@ export class IcuParser {
       }
     }
 
-    return { type: IcuNodeType.literal, value }
+    return { type: "literal", value }
   }
 
   private parseStyle(): string {

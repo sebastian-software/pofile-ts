@@ -431,30 +431,27 @@ hasIcuSyntax("Hello world") // false (plain text)
 
 ### AST Node Types
 
-The parser produces an AST with these node types:
+The parser produces an AST with string-based node types:
 
 ```typescript
-import { IcuNodeType } from "pofile-ts"
+import type { IcuNodeType } from "pofile-ts"
 
-IcuNodeType.literal // 0 - Plain text
-IcuNodeType.argument // 1 - {name}
-IcuNodeType.number // 2 - {n, number}
-IcuNodeType.date // 3 - {d, date}
-IcuNodeType.time // 4 - {t, time}
-IcuNodeType.select // 5 - {g, select, ...}
-IcuNodeType.plural // 6 - {n, plural, ...} or {n, selectordinal, ...}
-IcuNodeType.pound // 7 - # in plural
-IcuNodeType.tag // 8 - <b>...</b>
-```
+// Node types are string literals for easy debugging:
+type IcuNodeType =
+  | "literal" // Plain text
+  | "argument" // {name}
+  | "number" // {n, number}
+  | "date" // {d, date}
+  | "time" // {t, time}
+  | "select" // {g, select, ...}
+  | "plural" // {n, plural, ...} or {n, selectordinal, ...}
+  | "pound" // # in plural
+  | "tag" // <b>...</b>
 
-For debugging, use `getNodeTypeName()` to convert numeric types to readable strings:
-
-```typescript
-import { getNodeTypeName, IcuNodeType } from "pofile-ts"
-
-getNodeTypeName(6) // → "plural"
-getNodeTypeName(IcuNodeType.select) // → "select"
-getNodeTypeName(node.type) // → "argument"
+// Type checking is straightforward:
+if (node.type === "plural") {
+  console.log(node.pluralType) // "cardinal" | "ordinal"
+}
 ```
 
 ### Parser Options

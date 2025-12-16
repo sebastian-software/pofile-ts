@@ -42,9 +42,8 @@ export {
 } from "./utils"
 
 export {
-  IcuNodeType,
-  IcuErrorKind,
-  getNodeTypeName,
+  type IcuNodeType,
+  type IcuErrorKind,
   type IcuNode,
   type IcuLiteralNode,
   type IcuArgumentNode,

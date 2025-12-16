@@ -17,7 +17,6 @@
  */
 
 import type { IcuNode, IcuPluralNode, IcuSelectNode, IcuTagNode } from "./types"
-import { IcuNodeType } from "./types"
 import { parseIcu } from "./parser"
 import { getPluralFunction, getPluralCategories } from "../plurals"
 
@@ -205,10 +204,10 @@ function compileNode(
   ctx: CompileContext
 ): string | ((values?: MessageValues) => unknown) {
   switch (node.type) {
-    case IcuNodeType.literal:
+    case "literal":
       return node.value
 
-    case IcuNodeType.argument:
+    case "argument":
       // Return a getter function - will be called with values
       return (values?: MessageValues) => {
         const val = values?.[node.value]
@@ -218,7 +217,7 @@ function compileNode(
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
-    case IcuNodeType.number: {
+    case "number": {
       const formatter = getNumberFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
@@ -232,7 +231,7 @@ function compileNode(
       }
     }
 
-    case IcuNodeType.date: {
+    case "date": {
       const formatter = getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "date")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
@@ -249,7 +248,7 @@ function compileNode(
       }
     }
 
-    case IcuNodeType.time: {
+    case "time": {
       const formatter = getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "time")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
@@ -266,13 +265,13 @@ function compileNode(
       }
     }
 
-    case IcuNodeType.plural:
+    case "plural":
       return compilePlural(node, ctx)
 
-    case IcuNodeType.select:
+    case "select":
       return compileSelect(node, ctx)
 
-    case IcuNodeType.pound:
+    case "pound":
       // # is replaced with the current plural value (minus offset)
       return (values?: MessageValues) => {
         if (ctx.pluralValue === null) {
@@ -289,7 +288,7 @@ function compileNode(
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
-    case IcuNodeType.tag:
+    case "tag":
       ctx.hasTags = true
       return compileTag(node, ctx)
 

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import { parseIcu } from "./parser"
-import { IcuNodeType, getNodeTypeName } from "./types"
 
 describe("parseIcu", () => {
   describe("literals", () => {
@@ -9,7 +8,7 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(1)
       expect(result.ast![0]).toEqual({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "Hello world"
       })
     })
@@ -24,7 +23,7 @@ describe("parseIcu", () => {
       const result = parseIcu("It''s a test")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "It's a test"
       })
     })
@@ -33,7 +32,7 @@ describe("parseIcu", () => {
       const result = parseIcu("This is a '{placeholder}' not a variable")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "This is a {placeholder} not a variable"
       })
     })
@@ -45,11 +44,11 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(2)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "Hello "
       })
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.argument,
+        type: "argument",
         value: "name"
       })
     })
@@ -59,15 +58,15 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(3)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.argument,
+        type: "argument",
         value: "firstName"
       })
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: " "
       })
       expect(result.ast![2]).toMatchObject({
-        type: IcuNodeType.argument,
+        type: "argument",
         value: "lastName"
       })
     })
@@ -76,11 +75,11 @@ describe("parseIcu", () => {
       const result = parseIcu("hi @{there}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "hi @"
       })
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.argument,
+        type: "argument",
         value: "there"
       })
     })
@@ -91,7 +90,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{count, number}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "count",
         style: null
       })
@@ -101,7 +100,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{price, number, currency}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "price",
         style: "currency"
       })
@@ -111,7 +110,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{amount, number, ::currency/EUR}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "amount",
         style: "::currency/EUR"
       })
@@ -121,7 +120,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{num, number, ::compact-short currency/USD}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "num",
         style: "::compact-short currency/USD"
       })
@@ -133,7 +132,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{d, date}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.date,
+        type: "date",
         value: "d",
         style: null
       })
@@ -143,7 +142,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{d, date, short}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.date,
+        type: "date",
         value: "d",
         style: "short"
       })
@@ -153,7 +152,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{d, date, ::yyyyMMdd}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.date,
+        type: "date",
         value: "d",
         style: "::yyyyMMdd"
       })
@@ -163,7 +162,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{t, time, medium}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.time,
+        type: "time",
         value: "t",
         style: "medium"
       })
@@ -175,7 +174,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{count, plural, one {# item} other {# items}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "count",
         pluralType: "cardinal",
         offset: 0
@@ -200,7 +199,7 @@ describe("parseIcu", () => {
       )
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "guests",
         offset: 1
       })
@@ -211,18 +210,18 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
 
       const plural = result.ast![0] as {
-        type: typeof IcuNodeType.plural
-        options: Record<string, { value: { type: number }[] }>
+        type: "plural"
+        options: Record<string, { value: { type: string }[] }>
       }
       const oneOption = plural.options.one!
-      expect(oneOption.value[0]).toMatchObject({ type: IcuNodeType.pound })
+      expect(oneOption.value[0]).toMatchObject({ type: "pound" })
     })
 
     it("parses negative offset", () => {
       const result = parseIcu("{num, plural, offset:-1 =-1 {negative one} one {one} other {other}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         offset: -1
       })
     })
@@ -233,7 +232,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{year, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "year",
         pluralType: "ordinal"
       })
@@ -243,7 +242,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{count, selectOrdinal, one {#st} other {#th}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "count",
         pluralType: "ordinal"
       })
@@ -253,7 +252,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{n, SELECTORDINAL, one {#st} other {#th}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.plural,
+        type: "plural",
         pluralType: "ordinal"
       })
     })
@@ -264,7 +263,7 @@ describe("parseIcu", () => {
       const result = parseIcu("{gender, select, male {He} female {She} other {They}}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.select,
+        type: "select",
         value: "gender"
       })
       const select = result.ast![0] as { options: Record<string, unknown> }
@@ -279,7 +278,7 @@ describe("parseIcu", () => {
       )
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.select,
+        type: "select",
         value: "gender"
       })
     })
@@ -291,11 +290,11 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(2)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "hello "
       })
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "b"
       })
     })
@@ -304,7 +303,7 @@ describe("parseIcu", () => {
       const result = parseIcu("hello <br/>")
       expect(result.success).toBe(true)
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "<br/>"
       })
     })
@@ -315,7 +314,7 @@ describe("parseIcu", () => {
       const tag = result.ast![1] as { children: { type: number }[] }
       expect(tag.children).toHaveLength(2)
       expect(tag.children[1]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "i"
       })
     })
@@ -325,7 +324,7 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(1)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "hello <b>world</b>"
       })
     })
@@ -335,11 +334,11 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       const tag = result.ast![0] as { children: { type: number; value?: string }[] }
       expect(tag).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "a"
       })
       expect(tag.children[0]).toMatchObject({
-        type: IcuNodeType.argument,
+        type: "argument",
         value: "placeholder"
       })
     })
@@ -348,7 +347,7 @@ describe("parseIcu", () => {
       const result = parseIcu("hello '<b>world</b>'")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "hello <b>world</b>"
       })
     })
@@ -358,11 +357,11 @@ describe("parseIcu", () => {
       expect(result.success).toBe(true)
       expect(result.ast).toHaveLength(4)
       expect(result.ast![1]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "0"
       })
       expect(result.ast![3]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "1"
       })
     })
@@ -371,11 +370,11 @@ describe("parseIcu", () => {
       const result = parseIcu("<0>Hello</0> <name>World</name>!")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "0"
       })
       expect(result.ast![2]).toMatchObject({
-        type: IcuNodeType.tag,
+        type: "tag",
         value: "name"
       })
     })
@@ -462,48 +461,5 @@ describe("parseIcu", () => {
       expect(result.success).toBe(false)
       expect(result.errors[0]!.message).toContain("Invalid argument type")
     })
-  })
-})
-
-describe("getNodeTypeName", () => {
-  it("returns correct name for literal", () => {
-    expect(getNodeTypeName(IcuNodeType.literal)).toBe("literal")
-  })
-
-  it("returns correct name for argument", () => {
-    expect(getNodeTypeName(IcuNodeType.argument)).toBe("argument")
-  })
-
-  it("returns correct name for number", () => {
-    expect(getNodeTypeName(IcuNodeType.number)).toBe("number")
-  })
-
-  it("returns correct name for date", () => {
-    expect(getNodeTypeName(IcuNodeType.date)).toBe("date")
-  })
-
-  it("returns correct name for time", () => {
-    expect(getNodeTypeName(IcuNodeType.time)).toBe("time")
-  })
-
-  it("returns correct name for select", () => {
-    expect(getNodeTypeName(IcuNodeType.select)).toBe("select")
-  })
-
-  it("returns correct name for plural", () => {
-    expect(getNodeTypeName(IcuNodeType.plural)).toBe("plural")
-  })
-
-  it("returns correct name for pound", () => {
-    expect(getNodeTypeName(IcuNodeType.pound)).toBe("pound")
-  })
-
-  it("returns correct name for tag", () => {
-    expect(getNodeTypeName(IcuNodeType.tag)).toBe("tag")
-  })
-
-  it("works with numeric literals", () => {
-    expect(getNodeTypeName(6)).toBe("plural")
-    expect(getNodeTypeName(0)).toBe("literal")
   })
 })

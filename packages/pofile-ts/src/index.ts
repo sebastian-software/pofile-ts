@@ -45,9 +45,6 @@ export {
   hasSelect,
   hasSelectOrdinal,
   hasIcuSyntax,
-  IcuNodeType,
-  IcuErrorKind,
-  getNodeTypeName,
   // Conversion (Gettext ↔ ICU)
   gettextToIcu,
   isPluralItem,

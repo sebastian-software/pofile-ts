@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest"
 import { IcuParser, parseIcu } from "./parser"
-import { IcuNodeType } from "./types"
 
 function expectSyntaxError(message: string) {
   const result = parseIcu(message)
@@ -78,7 +77,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("{n, plural, =+1 {one} other {other}}")
       expect(result.success).toBe(true)
       const plural = result.ast?.[0]
-      expect(plural).toMatchObject({ type: IcuNodeType.plural })
+      expect(plural).toMatchObject({ type: "plural" })
       // Selector should normalize to \"=1\"
       const opts = (plural as { options: Record<string, unknown> }).options
       expect(opts).toHaveProperty("=1")
@@ -89,7 +88,7 @@ describe("parseIcu (edge cases)", () => {
     it("treats spaced self-closing tags as literal", () => {
       const result = parseIcu("hello <br />")
       expect(result.success).toBe(true)
-      expect(result.ast?.[1]).toMatchObject({ type: IcuNodeType.literal, value: "<br/>" })
+      expect(result.ast?.[1]).toMatchObject({ type: "literal", value: "<br/>" })
     })
 
     it("errors on mismatched closing tag with whitespace", () => {
@@ -110,7 +109,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("rock 'n' roll")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "rock 'n' roll"
       })
     })
@@ -120,7 +119,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("Hello '{name}")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "Hello {name}"
       })
     })
@@ -129,7 +128,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("This '{''}' end")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "This {'} end"
       })
     })
@@ -138,7 +137,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("a < b")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.literal,
+        type: "literal",
         value: "a < b"
       })
     })
@@ -147,9 +146,9 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("<b>text</b>")
       expect(result.success).toBe(true)
       const tag = result.ast?.[0]
-      expect(tag).toMatchObject({ type: IcuNodeType.tag, value: "b" })
-      expect((tag as { children: { type: number; value?: string }[] }).children[0]).toMatchObject({
-        type: IcuNodeType.literal,
+      expect(tag).toMatchObject({ type: "tag", value: "b" })
+      expect((tag as { children: { type: string; value?: string }[] }).children[0]).toMatchObject({
+        type: "literal",
         value: "text"
       })
     })
@@ -160,7 +159,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("{n, number, style{with}braces}")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "n",
         style: "style{with}braces"
       })
@@ -170,7 +169,7 @@ describe("parseIcu (edge cases)", () => {
       const result = parseIcu("{n, number, 'x{y}' z}")
       expect(result.success).toBe(true)
       expect(result.ast?.[0]).toMatchObject({
-        type: IcuNodeType.number,
+        type: "number",
         value: "n",
         style: "'x{y}' z"
       })

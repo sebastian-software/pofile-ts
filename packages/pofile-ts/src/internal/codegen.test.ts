@@ -12,7 +12,6 @@ import {
   generateNodesCode,
   generateNodeCode
 } from "./codegen"
-import { IcuNodeType } from "../icu/types"
 import type { IcuNode, IcuLiteralNode, IcuArgumentNode } from "../icu/types"
 
 describe("codegen", () => {
@@ -240,21 +239,21 @@ describe("codegen", () => {
   describe("generateNodeCode", () => {
     it("generates code for literal node", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
-      const node: IcuLiteralNode = { type: IcuNodeType.literal, value: "Hello" }
+      const node: IcuLiteralNode = { type: "literal", value: "Hello" }
 
       expect(generateNodeCode(node, ctx)).toBe('"Hello"')
     })
 
     it("generates code for argument node", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
-      const node: IcuArgumentNode = { type: IcuNodeType.argument, value: "name" }
+      const node: IcuArgumentNode = { type: "argument", value: "name" }
 
       expect(generateNodeCode(node, ctx)).toBe('(v?.name ?? "{name}")')
     })
 
     it("generates code for number node", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
-      const node: IcuNode = { type: IcuNodeType.number, value: "count", style: null }
+      const node: IcuNode = { type: "number", value: "count", style: null }
 
       const code = generateNodeCode(node, ctx)
       expect(code).toContain("_nf.format")
@@ -265,7 +264,7 @@ describe("codegen", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       ctx.pluralVar = "count"
 
-      const node: IcuNode = { type: IcuNodeType.pound }
+      const node: IcuNode = { type: "pound" }
       const code = generateNodeCode(node, ctx)
 
       expect(code).toContain("_nf.format")
@@ -274,7 +273,7 @@ describe("codegen", () => {
 
     it("generates code for time node", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
-      const node: IcuNode = { type: IcuNodeType.time, value: "t", style: "short" }
+      const node: IcuNode = { type: "time", value: "t", style: "short" }
       const code = generateNodeCode(node, ctx)
       expect(code).toContain("_tf_short")
       expect(ctx.formatters.time.has("short")).toBe(true)
@@ -283,7 +282,7 @@ describe("codegen", () => {
     it("generates # as literal when no plural context", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
 
-      const node: IcuNode = { type: IcuNodeType.pound }
+      const node: IcuNode = { type: "pound" }
       expect(generateNodeCode(node, ctx)).toBe('"#"')
     })
 
@@ -292,7 +291,7 @@ describe("codegen", () => {
       ctx.pluralVar = "count"
       ctx.pluralOffset = 2
 
-      const node: IcuNode = { type: IcuNodeType.pound }
+      const node: IcuNode = { type: "pound" }
       const code = generateNodeCode(node, ctx)
       expect(code).toContain("- 2")
     })
@@ -311,7 +310,7 @@ describe("codegen", () => {
 
     it("returns simple string for single literal", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
-      const nodes: IcuNode[] = [{ type: IcuNodeType.literal, value: "Hello" }]
+      const nodes: IcuNode[] = [{ type: "literal", value: "Hello" }]
 
       expect(generateNodesCode(nodes, ctx)).toBe('"Hello"')
     })
@@ -319,8 +318,8 @@ describe("codegen", () => {
     it("generates template literal for multiple nodes", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       const nodes: IcuNode[] = [
-        { type: IcuNodeType.literal, value: "Hello " },
-        { type: IcuNodeType.argument, value: "name" }
+        { type: "literal", value: "Hello " },
+        { type: "argument", value: "name" }
       ]
 
       const code = generateNodesCode(nodes, ctx)
@@ -331,11 +330,11 @@ describe("codegen", () => {
     it("generates array for nodes with tags", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       const nodes: IcuNode[] = [
-        { type: IcuNodeType.literal, value: "Click " },
+        { type: "literal", value: "Click " },
         {
-          type: IcuNodeType.tag,
+          type: "tag",
           value: "link",
-          children: [{ type: IcuNodeType.literal, value: "here" }]
+          children: [{ type: "literal", value: "here" }]
         }
       ]
 
@@ -354,12 +353,12 @@ describe("codegen", () => {
     it("adds fallback when plural 'other' is missing in options", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       const node = {
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "count",
         offset: 0,
         pluralType: "cardinal",
         options: {
-          one: { value: [{ type: IcuNodeType.literal, value: "one" }] }
+          one: { value: [{ type: "literal", value: "one" }] }
         }
       } as unknown as import("../icu/types").IcuPluralNode
 
@@ -370,12 +369,12 @@ describe("codegen", () => {
     it("handles plural with only exact matches (no categories)", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       const node = {
-        type: IcuNodeType.plural,
+        type: "plural",
         value: "count",
         offset: 0,
         pluralType: "cardinal",
         options: {
-          "=0": { value: [{ type: IcuNodeType.literal, value: "zero" }] }
+          "=0": { value: [{ type: "literal", value: "zero" }] }
         }
       } as unknown as import("../icu/types").IcuPluralNode
 
@@ -386,10 +385,10 @@ describe("codegen", () => {
     it("adds fallback when select 'other' is missing", () => {
       const ctx = createCodeGenContext("en", ["one", "other"])
       const node = {
-        type: IcuNodeType.select,
+        type: "select",
         value: "gender",
         options: {
-          male: { value: [{ type: IcuNodeType.literal, value: "He" }] }
+          male: { value: [{ type: "literal", value: "He" }] }
         }
       } as unknown as import("../icu/types").IcuSelectNode
 
