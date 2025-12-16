@@ -42,6 +42,14 @@ export {
 } from "./utils"
 
 export {
+  // Style types (aligned with Intl APIs)
+  type IcuListType,
+  type IcuDurationStyle,
+  type IcuRelativeTimeUnit,
+  type IcuRelativeTimeStyle,
+  type IcuAgoStyle,
+  type IcuDisplayNamesType,
+  // Node types
   type IcuNodeType,
   type IcuErrorKind,
   type IcuNode,

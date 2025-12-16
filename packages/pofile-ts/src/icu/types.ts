@@ -2,6 +2,57 @@
  * ICU MessageFormat AST types.
  */
 
+// ============================================================================
+// Style types for extended format nodes (aligned with Intl APIs)
+// ============================================================================
+
+/**
+ * List format type (Intl.ListFormatType).
+ * - conjunction: "A, B, and C"
+ * - disjunction: "A, B, or C"
+ * - unit: "A, B, C"
+ */
+export type IcuListType = "conjunction" | "disjunction" | "unit"
+
+/**
+ * Duration format style.
+ * Note: Intl.DurationFormat is still a stage 3 proposal.
+ */
+export type IcuDurationStyle = "long" | "short" | "narrow" | "digital"
+
+/**
+ * Relative time unit (Intl.RelativeTimeFormatUnit).
+ */
+export type IcuRelativeTimeUnit =
+  | "second"
+  | "minute"
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "quarter"
+  | "year"
+
+/**
+ * Relative time format style (Intl.RelativeTimeFormatStyle).
+ */
+export type IcuRelativeTimeStyle = "long" | "short" | "narrow"
+
+/**
+ * Display names type (Intl.DisplayNamesType).
+ */
+export type IcuDisplayNamesType =
+  | "language"
+  | "region"
+  | "script"
+  | "currency"
+  | "calendar"
+  | "dateTimeField"
+
+// ============================================================================
+// Node types
+// ============================================================================
+
 /**
  * Node types in the ICU MessageFormat AST.
  */
@@ -97,10 +148,9 @@ export interface IcuTimeNode extends IcuNodeBase {
 }
 
 /**
- * List format: {items, list} or {items, list, style}
+ * List format: {items, list} or {items, list, type}
  *
  * Formats arrays using Intl.ListFormat.
- * Style can be: conjunction (default), disjunction, unit
  *
  * @example
  * {items, list} → "Alice, Bob, and Charlie"
@@ -110,14 +160,14 @@ export interface IcuTimeNode extends IcuNodeBase {
 export interface IcuListNode extends IcuNodeBase {
   type: "list"
   value: string
-  style: string | null
+  /** List format type. Default: "conjunction" */
+  style: IcuListType | null
 }
 
 /**
  * Duration format: {d, duration} or {d, duration, style}
  *
  * Formats duration objects using Intl.DurationFormat.
- * Style can be: long, short, narrow, digital
  *
  * @example
  * {time, duration} → "2 hours, 30 minutes"
@@ -127,15 +177,14 @@ export interface IcuListNode extends IcuNodeBase {
 export interface IcuDurationNode extends IcuNodeBase {
   type: "duration"
   value: string
-  style: string | null
+  /** Duration format style. Default: "long" */
+  style: IcuDurationStyle | null
 }
 
 /**
- * Relative time format: {val, ago, unit}
+ * Relative time format: {val, ago, unit} or {val, ago, unit style}
  *
  * Formats relative time using Intl.RelativeTimeFormat.
- * Unit is required: second, minute, hour, day, week, month, quarter, year
- * Style can be appended after unit: day long, day short, day narrow
  *
  * @example
  * {days, ago, day} → "in 3 days" or "3 days ago"
@@ -144,15 +193,22 @@ export interface IcuDurationNode extends IcuNodeBase {
 export interface IcuAgoNode extends IcuNodeBase {
   type: "ago"
   value: string
-  /** The time unit and optional style, e.g. "day", "hour short" */
-  style: string | null
+  /** Unit and optional style, e.g. "day", "hour short" */
+  style: IcuAgoStyle | null
 }
+
+/**
+ * Combined unit and style for ago format.
+ * Format: "unit" or "unit style" (e.g. "day", "hour short")
+ */
+export type IcuAgoStyle =
+  | `${IcuRelativeTimeUnit}`
+  | `${IcuRelativeTimeUnit} ${IcuRelativeTimeStyle}`
 
 /**
  * Display names format: {code, name, type}
  *
  * Formats codes to localized display names using Intl.DisplayNames.
- * Type is required: language, region, script, currency, calendar, dateTimeField
  *
  * @example
  * {lang, name, language} → "English" (for "en")
@@ -162,8 +218,8 @@ export interface IcuAgoNode extends IcuNodeBase {
 export interface IcuNameNode extends IcuNodeBase {
   type: "name"
   value: string
-  /** The display names type, e.g. "language", "region", "currency" */
-  style: string | null
+  /** Display names type. Default: "language" */
+  style: IcuDisplayNamesType | null
 }
 
 /**

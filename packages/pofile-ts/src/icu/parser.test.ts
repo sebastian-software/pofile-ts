@@ -449,7 +449,7 @@ describe("parseIcu", () => {
     it("parses nested tags", () => {
       const result = parseIcu("hello <b>world<i>!</i></b>")
       expect(result.success).toBe(true)
-      const tag = result.ast![1] as { children: { type: number }[] }
+      const tag = result.ast![1] as { children: { type: string }[] }
       expect(tag.children).toHaveLength(2)
       expect(tag.children[1]).toMatchObject({
         type: "tag",
@@ -470,7 +470,7 @@ describe("parseIcu", () => {
     it("parses tag with argument inside", () => {
       const result = parseIcu("<a>{placeholder}</a>")
       expect(result.success).toBe(true)
-      const tag = result.ast![0] as { children: { type: number; value?: string }[] }
+      const tag = result.ast![0] as { children: { type: string; value?: string }[] }
       expect(tag).toMatchObject({
         type: "tag",
         value: "a"
