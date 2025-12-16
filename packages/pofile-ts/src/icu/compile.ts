@@ -151,6 +151,56 @@ function createFormatterCache(): FormatterCache {
 }
 
 /**
+ * Built-in date format styles.
+ * These provide common date formatting patterns.
+ */
+const BUILTIN_DATE_STYLES: Record<string, Intl.DateTimeFormatOptions> = {
+  // Standard ICU styles (short, medium, long, full) handled separately
+
+  // ISO-like formats
+  iso: { year: "numeric", month: "2-digit", day: "2-digit" },
+  isoDate: { year: "numeric", month: "2-digit", day: "2-digit" },
+
+  // Component combinations
+  weekday: { weekday: "long" },
+  weekdayShort: { weekday: "short" },
+  monthYear: { month: "long", year: "numeric" },
+  monthYearShort: { month: "short", year: "numeric" },
+  monthDay: { month: "short", day: "numeric" },
+  monthDayLong: { month: "long", day: "numeric" },
+  yearMonth: { year: "numeric", month: "2-digit" },
+  dayMonth: { day: "numeric", month: "short" },
+  dayMonthYear: { day: "numeric", month: "short", year: "numeric" },
+
+  // With weekday
+  weekdayMonthDay: { weekday: "long", month: "long", day: "numeric" },
+  weekdayShortMonthDay: { weekday: "short", month: "short", day: "numeric" }
+}
+
+/**
+ * Built-in time format styles.
+ * These provide common time formatting patterns.
+ */
+const BUILTIN_TIME_STYLES: Record<string, Intl.DateTimeFormatOptions> = {
+  // Standard ICU styles (short, medium, long, full) handled separately
+
+  // Hour:Minute formats
+  hourMinute: { hour: "2-digit", minute: "2-digit" },
+  hourMinute12: { hour: "numeric", minute: "2-digit", hour12: true },
+  hourMinute24: { hour: "2-digit", minute: "2-digit", hour12: false },
+
+  // With seconds
+  hourMinuteSecond: { hour: "2-digit", minute: "2-digit", second: "2-digit" },
+  hourMinuteSecond12: { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true },
+  hourMinuteSecond24: { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false },
+
+  // Hour only
+  hour: { hour: "numeric" },
+  hour12: { hour: "numeric", hour12: true },
+  hour24: { hour: "2-digit", hour12: false }
+}
+
+/**
  * Maps ICU date/time styles to Intl.DateTimeFormat options.
  */
 function getDateTimeOptions(
@@ -159,6 +209,7 @@ function getDateTimeOptions(
 ): Intl.DateTimeFormatOptions {
   const styleKey = type === "date" ? "dateStyle" : "timeStyle"
 
+  // Standard ICU styles
   switch (style) {
     case "short":
     case "medium":
@@ -167,14 +218,82 @@ function getDateTimeOptions(
       return { [styleKey]: style }
     case null:
       return { [styleKey]: "medium" }
-    default:
-      // Handle skeleton format (::yyyyMMdd)
-      if (style.startsWith("::")) {
-        // For now, fall back to medium - skeleton parsing is complex
-        return { [styleKey]: "medium" }
-      }
-      return { [styleKey]: "medium" }
   }
+
+  // Check built-in styles
+  const builtinStyles = type === "date" ? BUILTIN_DATE_STYLES : BUILTIN_TIME_STYLES
+  const builtin = builtinStyles[style]
+  if (builtin) {
+    return builtin
+  }
+
+  // Handle skeleton format (::yyyyMMdd)
+  if (style.startsWith("::")) {
+    // For now, fall back to medium - skeleton parsing is complex
+    return { [styleKey]: "medium" }
+  }
+
+  return { [styleKey]: "medium" }
+}
+
+/**
+ * Built-in number format styles.
+ * These provide common formatting patterns without needing custom styles.
+ */
+const BUILTIN_NUMBER_STYLES: Record<string, Intl.NumberFormatOptions> = {
+  // Standard ICU styles
+  percent: { style: "percent" },
+  integer: { maximumFractionDigits: 0 },
+
+  // Compact notation (1K, 1M, 1B)
+  compact: { notation: "compact" },
+  compactLong: { notation: "compact", compactDisplay: "long" },
+
+  // Precision control
+  decimal1: { minimumFractionDigits: 1, maximumFractionDigits: 1 },
+  decimal2: { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+  decimal3: { minimumFractionDigits: 3, maximumFractionDigits: 3 },
+
+  // Sign display
+  signAlways: { signDisplay: "always" },
+  signExceptZero: { signDisplay: "exceptZero" },
+
+  // Grouping
+  noGrouping: { useGrouping: false },
+
+  // File size units
+  byte: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+  kilobyte: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
+  megabyte: { style: "unit", unit: "megabyte", unitDisplay: "short" },
+  gigabyte: { style: "unit", unit: "gigabyte", unitDisplay: "short" },
+  terabyte: { style: "unit", unit: "terabyte", unitDisplay: "short" },
+
+  // Distance units
+  meter: { style: "unit", unit: "meter" },
+  kilometer: { style: "unit", unit: "kilometer" },
+  mile: { style: "unit", unit: "mile" },
+
+  // Temperature units
+  celsius: { style: "unit", unit: "celsius" },
+  fahrenheit: { style: "unit", unit: "fahrenheit" },
+
+  // Weight units
+  kilogram: { style: "unit", unit: "kilogram" },
+  gram: { style: "unit", unit: "gram" },
+  pound: { style: "unit", unit: "pound" },
+
+  // Volume units
+  liter: { style: "unit", unit: "liter" },
+  milliliter: { style: "unit", unit: "milliliter" },
+
+  // Duration units (for simple cases; use {x, duration} for complex)
+  second: { style: "unit", unit: "second" },
+  minute: { style: "unit", unit: "minute" },
+  hour: { style: "unit", unit: "hour" },
+  day: { style: "unit", unit: "day" },
+  week: { style: "unit", unit: "week" },
+  month: { style: "unit", unit: "month" },
+  year: { style: "unit", unit: "year" }
 }
 
 /**
@@ -182,25 +301,27 @@ function getDateTimeOptions(
  * Note: "currency" without skeleton is handled separately with runtime currency lookup.
  */
 function getNumberOptions(style: string | null): Intl.NumberFormatOptions {
-  switch (style) {
-    case "percent":
-      return { style: "percent" }
-    case "integer":
-      return { maximumFractionDigits: 0 }
-    case null:
-      return {}
-    default:
-      // Handle skeleton format (::currency/EUR)
-      if (style.startsWith("::")) {
-        const skeleton = style.slice(2)
-        if (skeleton.startsWith("currency/")) {
-          const currency = skeleton.slice(9, 12).toUpperCase()
-          return { style: "currency", currency }
-        }
-        // More skeleton patterns could be added here
-      }
-      return {}
+  if (style == null) {
+    return {}
   }
+
+  // Check built-in styles first
+  const builtin = BUILTIN_NUMBER_STYLES[style]
+  if (builtin) {
+    return builtin
+  }
+
+  // Handle skeleton format (::currency/EUR)
+  if (style.startsWith("::")) {
+    const skeleton = style.slice(2)
+    if (skeleton.startsWith("currency/")) {
+      const currency = skeleton.slice(9, 12).toUpperCase()
+      return { style: "currency", currency }
+    }
+    // More skeleton patterns could be added here
+  }
+
+  return {}
 }
 
 /**
@@ -240,6 +361,28 @@ function getDateTimeFormatter(
 }
 
 /**
+ * Built-in list format styles.
+ * These provide common list formatting patterns.
+ */
+const BUILTIN_LIST_STYLES: Record<string, Intl.ListFormatOptions> = {
+  // Type variations
+  conjunction: { type: "conjunction" },
+  disjunction: { type: "disjunction" },
+  or: { type: "disjunction" },
+  unit: { type: "unit" },
+
+  // Style variations (long is default)
+  short: { type: "conjunction", style: "short" },
+  narrow: { type: "conjunction", style: "narrow" },
+
+  // Combined type + style
+  orShort: { type: "disjunction", style: "short" },
+  orNarrow: { type: "disjunction", style: "narrow" },
+  unitShort: { type: "unit", style: "short" },
+  unitNarrow: { type: "unit", style: "narrow" }
+}
+
+/**
  * Gets or creates a list formatter.
  */
 function getListFormatter(
@@ -250,13 +393,8 @@ function getListFormatter(
   const key = style ?? ""
   let formatter = cache.list.get(key)
   if (!formatter) {
-    const type =
-      style === "disjunction" || style === "or"
-        ? "disjunction"
-        : style === "unit"
-          ? "unit"
-          : "conjunction"
-    formatter = new Intl.ListFormat(locale, { type })
+    const options = style ? BUILTIN_LIST_STYLES[style] : undefined
+    formatter = new Intl.ListFormat(locale, options ?? { type: "conjunction" })
     cache.list.set(key, formatter)
   }
   return formatter

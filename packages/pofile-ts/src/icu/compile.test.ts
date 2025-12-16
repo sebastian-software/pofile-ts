@@ -196,6 +196,83 @@ describe("compileIcu", () => {
       expect(r1).toContain("€")
       expect(r2).toContain("€")
     })
+
+    describe("built-in number styles", () => {
+      it("formats compact numbers (1K, 1M)", () => {
+        const fn = compileIcu("{n, number, compact}", { locale: "en" })
+        expect(fn({ n: 1500 })).toMatch(/1\.?5K/)
+        expect(fn({ n: 2500000 })).toMatch(/2\.?5M/)
+      })
+
+      it("formats compact long numbers", () => {
+        const fn = compileIcu("{n, number, compactLong}", { locale: "en" })
+        expect(fn({ n: 1500 })).toMatch(/1\.?5 thousand/i)
+      })
+
+      it("formats with fixed decimals (decimal2)", () => {
+        const fn = compileIcu("{n, number, decimal2}", { locale: "en" })
+        expect(fn({ n: 42 })).toBe("42.00")
+        expect(fn({ n: 3.1 })).toBe("3.10")
+        expect(fn({ n: 1.234 })).toBe("1.23")
+      })
+
+      it("formats with signAlways", () => {
+        const fn = compileIcu("{n, number, signAlways}", { locale: "en" })
+        expect(fn({ n: 5 })).toMatch(/\+5/)
+        expect(fn({ n: -3 })).toMatch(/-3/)
+      })
+
+      it("formats without grouping", () => {
+        const fn = compileIcu("{n, number, noGrouping}", { locale: "en" })
+        expect(fn({ n: 1000000 })).toBe("1000000")
+      })
+
+      it("formats file size units", () => {
+        const byteFn = compileIcu("{n, number, byte}", { locale: "en" })
+        expect(byteFn({ n: 1024 })).toMatch(/1,?024\s*B/)
+
+        const kbFn = compileIcu("{n, number, kilobyte}", { locale: "en" })
+        expect(kbFn({ n: 512 })).toMatch(/512\s*kB/)
+
+        const mbFn = compileIcu("{n, number, megabyte}", { locale: "en" })
+        expect(mbFn({ n: 1.5 })).toMatch(/1\.5\s*MB/)
+
+        const gbFn = compileIcu("{n, number, gigabyte}", { locale: "en" })
+        expect(gbFn({ n: 2 })).toMatch(/2\s*GB/)
+      })
+
+      it("formats distance units", () => {
+        const meterFn = compileIcu("{n, number, meter}", { locale: "en" })
+        expect(meterFn({ n: 100 })).toMatch(/100\s*m/)
+
+        const kmFn = compileIcu("{n, number, kilometer}", { locale: "en" })
+        expect(kmFn({ n: 5 })).toMatch(/5\s*km/)
+      })
+
+      it("formats temperature units", () => {
+        const celsiusFn = compileIcu("{n, number, celsius}", { locale: "en" })
+        expect(celsiusFn({ n: 22 })).toMatch(/22.*°C/)
+
+        const fahrenheitFn = compileIcu("{n, number, fahrenheit}", { locale: "en" })
+        expect(fahrenheitFn({ n: 72 })).toMatch(/72.*°F/)
+      })
+
+      it("formats weight units", () => {
+        const kgFn = compileIcu("{n, number, kilogram}", { locale: "en" })
+        expect(kgFn({ n: 70 })).toMatch(/70\s*kg/)
+      })
+
+      it("formats duration units", () => {
+        const secFn = compileIcu("{n, number, second}", { locale: "en" })
+        expect(secFn({ n: 30 })).toMatch(/30\s*sec/)
+
+        const minFn = compileIcu("{n, number, minute}", { locale: "en" })
+        expect(minFn({ n: 5 })).toMatch(/5\s*min/)
+
+        const hourFn = compileIcu("{n, number, hour}", { locale: "en" })
+        expect(hourFn({ n: 2 })).toMatch(/2\s*hr/)
+      })
+    })
   })
 
   describe("date formatting", () => {
@@ -262,6 +339,51 @@ describe("compileIcu", () => {
       const fn = compileIcu("{d, date}", { locale: "en" })
       expect(fn({ d: "not a date" })).toBe("not a date")
     })
+
+    describe("built-in date styles", () => {
+      const testDate = new Date(2024, 11, 15) // Dec 15, 2024 (Sunday)
+
+      it("formats ISO date (YYYY-MM-DD like)", () => {
+        const fn = compileIcu("{d, date, iso}", { locale: "en" })
+        const result = fn({ d: testDate })
+        expect(result).toContain("12")
+        expect(result).toContain("15")
+        expect(result).toContain("2024")
+      })
+
+      it("formats weekday only", () => {
+        const fn = compileIcu("{d, date, weekday}", { locale: "en" })
+        expect(fn({ d: testDate })).toBe("Sunday")
+      })
+
+      it("formats weekday short", () => {
+        const fn = compileIcu("{d, date, weekdayShort}", { locale: "en" })
+        expect(fn({ d: testDate })).toBe("Sun")
+      })
+
+      it("formats month and year", () => {
+        const fn = compileIcu("{d, date, monthYear}", { locale: "en" })
+        expect(fn({ d: testDate })).toBe("December 2024")
+      })
+
+      it("formats month and year short", () => {
+        const fn = compileIcu("{d, date, monthYearShort}", { locale: "en" })
+        expect(fn({ d: testDate })).toMatch(/Dec 2024/)
+      })
+
+      it("formats month and day", () => {
+        const fn = compileIcu("{d, date, monthDay}", { locale: "en" })
+        expect(fn({ d: testDate })).toMatch(/Dec 15/)
+      })
+
+      it("formats day, month, year", () => {
+        const fn = compileIcu("{d, date, dayMonthYear}", { locale: "en" })
+        const result = fn({ d: testDate })
+        expect(result).toContain("Dec")
+        expect(result).toContain("15")
+        expect(result).toContain("2024")
+      })
+    })
   })
 
   describe("time formatting", () => {
@@ -310,6 +432,40 @@ describe("compileIcu", () => {
       const fn = compileIcu("{t, time}", { locale: "en" })
       expect(fn({ t: "not a time" })).toBe("not a time")
     })
+
+    describe("built-in time styles", () => {
+      const testTime = new Date(2024, 11, 15, 14, 30, 45) // 14:30:45
+
+      it("formats hour and minute", () => {
+        const fn = compileIcu("{t, time, hourMinute}", { locale: "en" })
+        const result = fn({ t: testTime })
+        expect(result).toMatch(/\d{2}:\d{2}/)
+      })
+
+      it("formats hour, minute, second", () => {
+        const fn = compileIcu("{t, time, hourMinuteSecond}", { locale: "en" })
+        const result = fn({ t: testTime })
+        expect(result).toMatch(/\d{2}:\d{2}:\d{2}/)
+      })
+
+      it("formats 24-hour time", () => {
+        const fn = compileIcu("{t, time, hourMinute24}", { locale: "en" })
+        const result = fn({ t: testTime })
+        expect(result).toBe("14:30")
+      })
+
+      it("formats 12-hour time", () => {
+        const fn = compileIcu("{t, time, hourMinute12}", { locale: "en" })
+        const result = fn({ t: testTime })
+        expect(result).toMatch(/2:30\s*PM/i)
+      })
+
+      it("formats hour only (12-hour)", () => {
+        const fn = compileIcu("{t, time, hour12}", { locale: "en" })
+        const result = fn({ t: testTime })
+        expect(result).toMatch(/2\s*PM/i)
+      })
+    })
   })
 
   describe("list formatting", () => {
@@ -346,6 +502,38 @@ describe("compileIcu", () => {
     it("shows placeholder for missing list value", () => {
       const fn = compileIcu("{items, list}", { locale: "en" })
       expect(fn({})).toBe("{items}")
+    })
+
+    describe("built-in list styles", () => {
+      const items = ["A", "B", "C"]
+
+      it("formats with 'or' alias for disjunction", () => {
+        const fn = compileIcu("{items, list, or}", { locale: "en" })
+        expect(fn({ items })).toBe("A, B, or C")
+      })
+
+      it("formats with narrow style", () => {
+        const fn = compileIcu("{items, list, narrow}", { locale: "en" })
+        // Narrow style typically uses less spacing
+        expect(fn({ items })).toBe("A, B, C")
+      })
+
+      it("formats with short style", () => {
+        const fn = compileIcu("{items, list, short}", { locale: "en" })
+        // Short style may abbreviate "and"
+        const result = fn({ items })
+        expect(result).toContain("A")
+        expect(result).toContain("B")
+        expect(result).toContain("C")
+      })
+
+      it("formats with orNarrow style", () => {
+        const fn = compileIcu("{items, list, orNarrow}", { locale: "en" })
+        const result = fn({ items })
+        expect(result).toContain("A")
+        expect(result).toContain("B")
+        expect(result).toContain("C")
+      })
     })
 
     it("converts non-array to string", () => {
