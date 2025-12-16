@@ -42,6 +42,40 @@ jobs:
       - name: Test
         run: pnpm test
 
+  test-bun:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Enable Corepack (for pnpm)
+        run: corepack enable
+
+      - name: Use Node.js (for pnpm/build tools)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test with Bun
+        working-directory: packages/pofile-ts
+        run: bun run test
+
   coverage:
     runs-on: ubuntu-latest
 
