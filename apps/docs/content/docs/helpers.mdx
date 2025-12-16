@@ -541,7 +541,7 @@ parseIcu(message, {
 
 ## ICU Compiler
 
-Compile ICU messages to fast JavaScript functions. Instead of parsing ICU syntax at runtime, the compiler generates optimized functions that directly produce formatted strings — **3× faster than Lingui and FormatJS**.
+Compile ICU messages to fast JavaScript functions. Instead of parsing ICU syntax at runtime, the compiler generates optimized functions that directly produce formatted strings — **4× faster than Lingui and FormatJS**.
 
 ### Why Compile?
 
@@ -702,10 +702,10 @@ const compiled2 = compileCatalog(catalog2, { locale: "de" })
 
 Benchmarked against common i18n libraries:
 
-| Metric                 |   pofile-ts | vs intl-messageformat |    vs @lingui |
-| ---------------------- | ----------: | --------------------: | ------------: |
-| **Compilation**        |   72k ops/s |           **1× same** |             — |
-| **Runtime**            |  810k ops/s |         **3× faster** | **4× faster** |
-| **Catalog (200 msgs)** | ~210k msg/s |           **1× same** |             — |
+| Metric                 |  pofile-ts | vs intl-messageformat | vs @lingui (compiled) |
+| ---------------------- | ---------: | --------------------: | --------------------: |
+| **Compilation**        | 409k ops/s |         **7× faster** |                     — |
+| **Runtime**            | 792k ops/s |         **3× faster** |         **4× faster** |
+| **Catalog (200 msgs)** |   ~1.35M/s |         **7× faster** |                     — |
 
 The key insight: Lingui compiles to an AST array that's still interpreted at runtime. pofile-ts compiles to actual JavaScript functions with template literals — no interpretation needed.

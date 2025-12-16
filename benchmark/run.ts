@@ -1,6 +1,9 @@
 import { readFileSync, existsSync } from "node:fs"
 import { join } from "node:path"
-import { Bench } from "tinybench"
+import { Bench, type Task } from "tinybench"
+
+// Number of benchmark runs for median calculation (improves stability)
+const MULTI_RUN_COUNT = 3
 
 // pofile-ts (this library)
 import {
@@ -50,6 +53,71 @@ async function run() {
 }
 
 // ============================================================================
+// MULTI-RUN BENCHMARK HELPER
+// ============================================================================
+
+interface MultiRunResult {
+  name: string
+  medianHz: number
+  allHz: number[]
+  rme: number
+}
+
+/**
+ * Run a benchmark multiple times and return median results.
+ * This provides much more stable numbers for slow benchmarks.
+ */
+async function runMultiple(
+  setupBench: () => Bench,
+  runs: number = MULTI_RUN_COUNT
+): Promise<MultiRunResult[]> {
+  const allResults: Map<string, number[]> = new Map()
+
+  for (let i = 0; i < runs; i++) {
+    process.stdout.write(`    Run ${i + 1}/${runs}...`)
+    const bench = setupBench()
+    await bench.run()
+
+    for (const task of bench.tasks) {
+      const existing = allResults.get(task.name) ?? []
+      existing.push(task.result!.hz)
+      allResults.set(task.name, existing)
+    }
+    process.stdout.write(` done\n`)
+  }
+
+  const results: MultiRunResult[] = []
+  for (const [name, hzValues] of allResults) {
+    const sorted = [...hzValues].sort((a, b) => a - b)
+    const medianHz = sorted[Math.floor(sorted.length / 2)]
+    const mean = hzValues.reduce((a, b) => a + b, 0) / hzValues.length
+    const variance = hzValues.reduce((sum, v) => sum + (v - mean) ** 2, 0) / hzValues.length
+    const stdDev = Math.sqrt(variance)
+    const rme = (stdDev / mean) * 100 // Relative margin of error
+
+    results.push({ name, medianHz, allHz: hzValues, rme })
+  }
+
+  return results
+}
+
+function printMultiRunResults(results: MultiRunResult[]): void {
+  const fastest = Math.max(...results.map((r) => r.medianHz))
+
+  for (const result of results) {
+    const relative = (result.medianHz / fastest) * 100
+    const barLength = Math.round(relative / 4)
+    const bar = "█".repeat(barLength) + "░".repeat(25 - barLength)
+    const isFastest = result.medianHz === fastest
+    const rmeStr = result.rme > 2 ? ` ±${result.rme.toFixed(1)}%` : ""
+
+    console.log(
+      `    ${result.name.padEnd(16)} ${bar} ${Math.round(result.medianHz).toLocaleString().padStart(8)} ops/s${rmeStr} ${isFastest ? "⚡" : ""}`
+    )
+  }
+}
+
+// ============================================================================
 // PO FILE BENCHMARK
 // ============================================================================
 
@@ -89,42 +157,45 @@ async function runPoFileBenchmark() {
   const parsedPofile = PO.parse(content)
   const parsedGettextParser = gettextParser.po.parse(content)
 
-  // Parsing
-  console.log("\n  Parsing:")
-  const parseBench = new Bench({ time: 2000, warmupTime: 300 })
-  parseBench
-    .add("pofile-ts", () => parsePo(content))
-    .add("pofile", () => PO.parse(content))
-    .add("gettext-parser", () => gettextParser.po.parse(content))
-
-  await parseBench.run()
-  printCompactResults(parseBench)
+  // Parsing - use multi-run with median for stable results
+  // pofile at ~9 ops/s needs longer time per run to get enough samples
+  console.log("\n  Parsing (median of 3 runs):")
+  const parseResults = await runMultiple(() => {
+    const bench = new Bench({ time: 8000, warmupTime: 500, warmupIterations: 3 })
+    bench
+      .add("pofile-ts", () => parsePo(content))
+      .add("pofile", () => PO.parse(content))
+      .add("gettext-parser", () => gettextParser.po.parse(content))
+    return bench
+  }, MULTI_RUN_COUNT)
+  printMultiRunResults(parseResults)
 
   // Serialization
-  console.log("\n  Serialization:")
-  const serializeBench = new Bench({ time: 2000, warmupTime: 300 })
-  serializeBench
-    .add("pofile-ts", () => stringifyPo(parsedPofileTs))
-    .add("pofile", () => parsedPofile.toString())
-    .add("gettext-parser", () => gettextParser.po.compile(parsedGettextParser))
+  console.log("\n  Serialization (median of 3 runs):")
+  const serializeResults = await runMultiple(() => {
+    const bench = new Bench({ time: 8000, warmupTime: 500, warmupIterations: 3 })
+    bench
+      .add("pofile-ts", () => stringifyPo(parsedPofileTs))
+      .add("pofile", () => parsedPofile.toString())
+      .add("gettext-parser", () => gettextParser.po.compile(parsedGettextParser))
+    return bench
+  }, MULTI_RUN_COUNT)
+  printMultiRunResults(serializeResults)
 
-  await serializeBench.run()
-  printCompactResults(serializeBench)
+  // Summary using median values
+  const pofileTsParse = parseResults.find((r) => r.name === "pofile-ts")!
+  const pofileParse = parseResults.find((r) => r.name === "pofile")!
+  const gpParse = parseResults.find((r) => r.name === "gettext-parser")!
+  const pofileTsSerialize = serializeResults.find((r) => r.name === "pofile-ts")!
+  const pofileSerialize = serializeResults.find((r) => r.name === "pofile")!
+  const gpSerialize = serializeResults.find((r) => r.name === "gettext-parser")!
 
-  // Summary
-  const pofileTsParse = parseBench.tasks.find((t) => t.name === "pofile-ts")!
-  const pofileParse = parseBench.tasks.find((t) => t.name === "pofile")!
-  const gpParse = parseBench.tasks.find((t) => t.name === "gettext-parser")!
-  const pofileTsSerialize = serializeBench.tasks.find((t) => t.name === "pofile-ts")!
-  const pofileSerialize = serializeBench.tasks.find((t) => t.name === "pofile")!
-  const gpSerialize = serializeBench.tasks.find((t) => t.name === "gettext-parser")!
-
-  console.log("\n  Summary:")
+  console.log("\n  Summary (median):")
   console.log(
-    `    vs pofile:         ${(pofileTsParse.result!.hz / pofileParse.result!.hz).toFixed(1)}x parse, ${(pofileTsSerialize.result!.hz / pofileSerialize.result!.hz).toFixed(1)}x serialize`
+    `    vs pofile:         ${(pofileTsParse.medianHz / pofileParse.medianHz).toFixed(1)}x parse, ${(pofileTsSerialize.medianHz / pofileSerialize.medianHz).toFixed(1)}x serialize`
   )
   console.log(
-    `    vs gettext-parser: ${(pofileTsParse.result!.hz / gpParse.result!.hz).toFixed(1)}x parse, ${(pofileTsSerialize.result!.hz / gpSerialize.result!.hz).toFixed(1)}x serialize`
+    `    vs gettext-parser: ${(pofileTsParse.medianHz / gpParse.medianHz).toFixed(1)}x parse, ${(pofileTsSerialize.medianHz / gpSerialize.medianHz).toFixed(1)}x serialize`
   )
 }
 
@@ -142,7 +213,7 @@ async function runIcuBenchmark() {
   // Per-pattern benchmarks
   for (const [name, message] of Object.entries(icuMessages)) {
     console.log(`\n  ${name}:`)
-    const bench = new Bench({ time: 800, warmupTime: 150 })
+    const bench = new Bench({ time: 1500, warmupTime: 300, warmupIterations: 5 })
     bench
       .add("pofile-ts", () => parseIcu(message))
       .add("@formatjs", () => parseFormatJs(message, { ignoreTag: false }))
@@ -158,7 +229,7 @@ async function runIcuBenchmark() {
   // Batch benchmark
   const allMessages = Object.values(icuMessages)
   console.log("\n  batch (all patterns):")
-  const batchBench = new Bench({ time: 2000, warmupTime: 300 })
+  const batchBench = new Bench({ time: 3000, warmupTime: 500, warmupIterations: 5 })
   batchBench
     .add("pofile-ts", () => {
       for (const msg of allMessages) {
@@ -250,7 +321,7 @@ async function runCompilerBenchmark() {
 
   // 1. Compilation speed (one-time cost)
   console.log("\n  Compilation (one-time):")
-  const compileBench = new Bench({ time: 1000, warmupTime: 200 })
+  const compileBench = new Bench({ time: 2000, warmupTime: 400, warmupIterations: 5 })
 
   compileBench
     .add("pofile-ts compileIcu", () => {
@@ -269,7 +340,7 @@ async function runCompilerBenchmark() {
 
   // 2. Runtime formatting speed (hot path)
   console.log("\n  Runtime formatting (hot path):")
-  const runtimeBench = new Bench({ time: 2000, warmupTime: 300 })
+  const runtimeBench = new Bench({ time: 3000, warmupTime: 500, warmupIterations: 10 })
 
   runtimeBench
     .add("pofile-ts (compiled)", () => {
@@ -313,7 +384,7 @@ async function runCompilerBenchmark() {
   }
 
   // Also build equivalent intl-messageformat catalog for comparison
-  const catalogBench = new Bench({ time: 2000, warmupTime: 500 })
+  const catalogBench = new Bench({ time: 3000, warmupTime: 500, warmupIterations: 5 })
 
   catalogBench
     .add("pofile-ts", () => {
@@ -464,13 +535,16 @@ function printCompactResults(bench: Bench): void {
 
   for (const task of bench.tasks) {
     const hz = task.result!.hz
+    const rme = task.result!.rme // Relative Margin of Error (%)
     const relative = (hz / fastest) * 100
     const barLength = Math.round(relative / 4)
     const bar = "█".repeat(barLength) + "░".repeat(25 - barLength)
     const isFastest = hz === fastest
 
+    // Show RME if > 2% (indicates less stable measurement)
+    const rmeStr = rme > 2 ? ` ±${rme.toFixed(1)}%` : ""
     console.log(
-      `    ${task.name.padEnd(16)} ${bar} ${Math.round(hz).toLocaleString().padStart(8)} ops/s ${isFastest ? "⚡" : ""}`
+      `    ${task.name.padEnd(16)} ${bar} ${Math.round(hz).toLocaleString().padStart(8)} ops/s${rmeStr} ${isFastest ? "⚡" : ""}`
     )
   }
 }

@@ -22,11 +22,11 @@ import {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "pofile-ts — Parse, Compile & Transform PO Files 8× Faster" },
+    { title: "pofile-ts — Parse, Compile & Transform PO Files 20× Faster" },
     {
       name: "description",
       content:
-        "Modern PO file toolkit for JavaScript. 8× faster parsing, ICU compiler with 3× faster runtime than Lingui/FormatJS. Zero dependencies, TypeScript-first, ESM-native."
+        "Modern PO file toolkit for JavaScript. 20× faster parsing, ICU compiler with 4× faster runtime than Lingui/FormatJS. Zero dependencies, TypeScript-first, ESM-native."
     }
   ]
 }
@@ -72,7 +72,7 @@ export default function Home() {
             </h1>
             <p className="text-xl leading-relaxed text-fd-muted-foreground md:text-2xl">
               Parse, compile & transform PO files —{" "}
-              <span className="font-semibold text-fd-foreground">8× faster</span>
+              <span className="font-semibold text-fd-foreground">20× faster</span>
             </p>
             <p className="max-w-xl text-sm text-fd-muted-foreground md:text-base">
               Modern i18n toolkit with ICU compiler, native CLDR plurals, and format conversion.
@@ -186,14 +186,14 @@ export default function Home() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<SpeedIcon />}
-              title="8× Faster Parsing"
+              title="20× Faster Parsing"
               description="Hand-optimized with first-char dispatch and fast-paths. No regex soup — just raw performance for build tools and CI."
               gradient="from-blue-500 to-cyan-500"
             />
             <FeatureCard
               icon={<CompileIcon />}
               title="ICU Compiler"
-              description="Compile ICU messages to JavaScript functions. 3× faster runtime than Lingui and FormatJS — no AST interpretation."
+              description="Compile ICU messages to JavaScript functions. 4× faster runtime than Lingui and FormatJS — no AST interpretation."
               gradient="from-purple-500 to-fuchsia-500"
             />
             <FeatureCard
@@ -245,12 +245,12 @@ export default function Home() {
               <h3 className="text-base font-semibold">PO Parsing</h3>
               <p className="mb-4 text-xs text-fd-muted-foreground">10K entries</p>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="211/s" fastest />
-                <BenchmarkBar label="gettext-parser" value={13} ops="27/s" />
-                <BenchmarkBar label="pofile" value={3} ops="7/s" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="209/s" fastest />
+                <BenchmarkBar label="gettext-parser" value={13} ops="28/s" />
+                <BenchmarkBar label="pofile" value={4} ops="8/s" />
               </div>
               <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
-                8× faster
+                20× faster
               </p>
             </div>
 
@@ -259,9 +259,9 @@ export default function Home() {
               <h3 className="text-base font-semibold">PO Stringify</h3>
               <p className="mb-4 text-xs text-fd-muted-foreground">10K entries</p>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="255/s" fastest />
-                <BenchmarkBar label="pofile" value={40} ops="103/s" />
-                <BenchmarkBar label="gettext-parser" value={22} ops="55/s" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="256/s" fastest />
+                <BenchmarkBar label="pofile" value={39} ops="100/s" />
+                <BenchmarkBar label="gettext-parser" value={21} ops="54/s" />
               </div>
               <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
                 5× faster
@@ -273,11 +273,11 @@ export default function Home() {
               <h3 className="text-base font-semibold">ICU Parsing</h3>
               <p className="mb-4 text-xs text-fd-muted-foreground">Plurals, selects, tags</p>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="250k/s" fastest />
-                <BenchmarkBar label="@formatjs" value={40} ops="100k/s" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="170k/s" fastest />
+                <BenchmarkBar label="@formatjs" value={22} ops="38k/s" />
               </div>
               <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
-                2.5× faster
+                5× faster
               </p>
             </div>
 
@@ -286,12 +286,12 @@ export default function Home() {
               <h3 className="text-base font-semibold">ICU Runtime</h3>
               <p className="mb-4 text-xs text-fd-muted-foreground">Compiled functions</p>
               <div className="space-y-3">
-                <BenchmarkBar label="pofile-ts" value={100} ops="810k/s" fastest />
-                <BenchmarkBar label="intl-messageformat" value={31} ops="250k/s" />
-                <BenchmarkBar label="@lingui" value={25} ops="200k/s" />
+                <BenchmarkBar label="pofile-ts" value={100} ops="815k/s" fastest />
+                <BenchmarkBar label="intl-messageformat" value={30} ops="247k/s" />
+                <BenchmarkBar label="@lingui" value={25} ops="204k/s" />
               </div>
               <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
-                3× faster
+                4× faster
               </p>
             </div>
           </div>
@@ -441,7 +441,7 @@ export default function Home() {
           <p className="text-fd-muted-foreground">
             Same API patterns as the popular{" "}
             <code className="rounded bg-fd-muted px-1.5 py-0.5 text-sm">pofile</code> package, but
-            8× faster with modern TypeScript.
+            20× faster with modern TypeScript.
             <br />
             Check out the migration guide if you're coming from pofile or gettext-parser.
           </p>

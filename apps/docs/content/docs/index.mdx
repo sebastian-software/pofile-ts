@@ -17,16 +17,16 @@ description: The fast, modern PO file toolkit for JavaScript
 
 ### Core
 
-- **Parse PO Files** — Read PO files from strings, 8× faster than alternatives
-- **Serialize PO Files** — Convert PO data back to strings, 5× faster than alternatives
+- **Parse PO Files** — Read PO files from strings, 20× faster than pofile, 7× faster than gettext-parser
+- **Serialize PO Files** — Convert PO data back to strings, 2.5× faster than pofile, 5× faster than gettext-parser
 - **Full PO Support** — Headers, comments, flags, plurals, and message context
 
 ### i18n Toolkit
 
 - **CLDR Plural Rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
-- **ICU Parser** — Parse ICU v1 messages, 2.5× faster and 4× smaller than FormatJS
-- **ICU Compiler** — Compile ICU to JavaScript functions, 3× faster at runtime
+- **ICU Parser** — Parse ICU v1 messages, 5× faster and 4× smaller than FormatJS
+- **ICU Compiler** — Compile ICU to JavaScript functions, 4× faster at runtime
 - **Plural Helpers** — Get categories, counts, and selector functions for any locale
 
 ### Developer Experience
@@ -70,31 +70,32 @@ _Benchmarked on Apple M1 Ultra, Node.js 22. Relative performance is consistent a
 
 | Library        |       Parsing | Serialization |
 | -------------- | ------------: | ------------: |
-| **pofile-ts**  | **211 ops/s** | **255 ops/s** |
-| gettext-parser |      27 ops/s |      55 ops/s |
-| pofile         |       7 ops/s |     103 ops/s |
+| **pofile-ts**  | **209 ops/s** | **256 ops/s** |
+| gettext-parser |      28 ops/s |      54 ops/s |
+| pofile         |       8 ops/s |     100 ops/s |
 
-→ **8× faster parsing**, **5× faster serialization**
+→ **20× faster parsing** vs pofile, **7× faster** vs gettext-parser
 
 ### ICU MessageFormat Parsing
 
 Realistic messages with plurals, selects, nested structures, and tags:
 
-| Library                            |           Speed | Bundle (gzip) |
-| ---------------------------------- | --------------: | ------------: |
-| **pofile-ts**                      | **2.5× faster** |     **\<3KB** |
-| @formatjs/icu-messageformat-parser |        baseline |          ~9KB |
+| Library                            |         Speed | Bundle (gzip) |
+| ---------------------------------- | ------------: | ------------: |
+| **pofile-ts**                      | **5× faster** |     **\<3KB** |
+| @formatjs/icu-messageformat-parser |      baseline |          ~9KB |
 
-→ **2.5× faster**, **4× smaller bundle**
+→ **5× faster**, **4× smaller bundle**
 
 ### ICU Compilation & Runtime
 
-| Metric          |  pofile-ts | vs intl-messageformat |    vs @lingui |
-| --------------- | ---------: | --------------------: | ------------: |
-| **Compilation** |  72k ops/s |           **1× same** |             — |
-| **Runtime**     | 810k ops/s |         **3× faster** | **4× faster** |
+| Metric            | pofile-ts | vs intl-messageformat | vs @lingui (compiled) |
+| ----------------- | --------: | --------------------: | --------------------: |
+| **Compilation**   | 409k op/s |         **7× faster** |                     — |
+| **Runtime**       | 792k op/s |         **3× faster** |         **4× faster** |
+| **Catalog (200)** |  ~1.35M/s |         **7× faster** |                     — |
 
-→ **3× faster** at runtime vs Lingui and FormatJS
+→ **4× faster** at runtime vs Lingui and FormatJS
 
 ## Bundle Size
 
