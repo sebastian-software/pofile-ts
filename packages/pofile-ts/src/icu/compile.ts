@@ -221,7 +221,7 @@ function parseRelativeTimeStyle(style: string | null): {
   }
   const parts = style.split(/\s+/)
   const unit = (parts[0] ?? "day") as Intl.RelativeTimeFormatUnit
-  const formatStyle = (parts[1] as Intl.RelativeTimeFormatStyle) ?? "long"
+  const formatStyle = (parts[1] ?? "long") as Intl.RelativeTimeFormatStyle
   return { unit, formatStyle }
 }
 
@@ -280,6 +280,7 @@ function compileNodes(nodes: IcuNode[], ctx: CompileContext): unknown[] {
 /**
  * Compiles a single AST node.
  */
+// eslint-disable-next-line complexity
 function compileNode(
   node: IcuNode,
   ctx: CompileContext
@@ -356,7 +357,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return String(val)
+        return typeof val === "string" ? val : JSON.stringify(val)
       }
     }
 
@@ -370,8 +371,9 @@ function compileNode(
         // Intl.DurationFormat is still a stage 3 proposal, so we provide a fallback
         if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
           const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           const formatter = new (Intl as any).DurationFormat(ctx.locale, { style })
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
           return formatter.format(val)
         }
         // Fallback: just stringify the object
@@ -389,7 +391,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return String(val)
+        return typeof val === "string" ? val : JSON.stringify(val)
       }
     }
 
@@ -403,7 +405,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return String(val)
+        return typeof val === "string" ? val : JSON.stringify(val)
       }
     }
 

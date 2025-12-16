@@ -139,6 +139,7 @@ function isTagNode(node: IcuNode, ctx: CodeGenContext): boolean {
 /**
  * Generates code for a single node.
  */
+// eslint-disable-next-line complexity
 export function generateNodeCode(node: IcuNode, ctx: CodeGenContext): string {
   switch (node.type) {
     case "literal":
@@ -537,6 +538,7 @@ function getListTypeFromStyle(style: string): "conjunction" | "disjunction" | "u
 /**
  * Generates Intl formatter declarations.
  */
+// eslint-disable-next-line complexity
 export function generateFormatterDeclarations(
   locale: string,
   used: {

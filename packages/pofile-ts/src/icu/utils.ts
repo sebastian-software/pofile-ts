@@ -324,6 +324,7 @@ function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
 }
 
 function containsOrdinalPlural(nodes: IcuNode[]): boolean {
+  // eslint-disable-next-line complexity
   function check(node: IcuNode): boolean {
     if (node.type === "plural" && node.pluralType === "ordinal") {
       return true
