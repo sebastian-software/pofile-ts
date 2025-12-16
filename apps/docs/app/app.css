@@ -116,6 +116,20 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Pretty text wrapping for better typography */
+p {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
 /* Selection color */
 ::selection {
   background-color: oklch(0.72 0.18 265 / 0.3);
