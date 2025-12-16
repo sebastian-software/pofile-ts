@@ -572,184 +572,41 @@ const price = compileIcu("{amount, number, ::currency/EUR}", { locale: "de" })
 price({ amount: 1234.5 }) // → "1.234,50 €" (German formatting)
 ```
 
-### Dynamic Currency
+### Format Styles
 
-Currency can be provided at runtime via `values.currency`:
-
-```typescript
-const price = compileIcu("{amount, number, currency}", { locale: "de" })
-
-price({ amount: 99.99, currency: "EUR" }) // → "99,99 €"
-price({ amount: 99.99, currency: "USD" }) // → "99,99 $"
-price({ amount: 99.99 }) // → "99,99 $" (USD fallback)
-```
-
-This is useful when the currency varies per user or transaction. Formatters are cached per currency for optimal performance.
-
-### Custom Format Styles
-
-Register custom format styles with full `Intl` API options. This allows domain-specific formatting without changing ICU message syntax:
+pofile-ts includes **50+ built-in format styles** for numbers, dates, times, and lists, plus support for **custom styles** with full `Intl` API options.
 
 ```typescript
-const fn = compileIcu("{size, number, bytes} uploaded on {d, date, iso}", {
-  locale: "en",
-
-  // Custom number styles (Intl.NumberFormat options)
-  numberStyles: {
-    bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
-    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
-    percent2: { style: "percent", minimumFractionDigits: 2 },
-    precise: { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  },
-
-  // Custom date styles (Intl.DateTimeFormat options)
-  dateStyles: {
-    iso: { year: "numeric", month: "2-digit", day: "2-digit" },
-    monthYear: { month: "long", year: "numeric" },
-    weekday: { weekday: "long" }
-  },
-
-  // Custom time styles (Intl.DateTimeFormat options)
-  timeStyles: {
-    precise: { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false },
-    hourOnly: { hour: "numeric", hour12: true }
-  },
-
-  // Custom list styles (Intl.ListFormat options)
-  listStyles: {
-    narrow: { type: "conjunction", style: "narrow" },
-    or: { type: "disjunction" }
-  }
-})
-
-fn({ size: 1024, d: new Date() })
-// → "1,024B uploaded on 12/16/2024"
-```
-
-Custom styles fall back to built-in styles when no match is found. This allows gradual migration — add custom styles as needed without breaking existing messages.
-
-### Pre-configured Compiler (Factory Pattern)
-
-For real-world apps, define your custom styles once and reuse them everywhere:
-
-```typescript
-import { createIcuCompiler } from "pofile-ts"
-
-// Define once in your i18n config (e.g., src/i18n/compiler.ts)
-export const compile = createIcuCompiler({
-  locale: "de",
-  numberStyles: {
-    bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
-    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
-    percent2: { style: "percent", minimumFractionDigits: 2 }
-  },
-  dateStyles: {
-    iso: { year: "numeric", month: "2-digit", day: "2-digit" },
-    monthYear: { month: "long", year: "numeric" }
-  }
-})
-
-// Use everywhere in your app
-const sizeMsg = compile("{size, number, bytes}")
-const dateMsg = compile("{d, date, iso}")
-
-sizeMsg({ size: 1024 }) // → "1.024B"
-dateMsg({ d: new Date() }) // → "16.12.2024"
-```
-
-This pattern is:
-
-- **DRY** — styles defined once, no repetition
-- **Testable** — inject different configs for tests
-- **SSR-safe** — no global state, each request can have its own compiler
-
-### Built-in Format Styles
-
-pofile-ts includes 50+ built-in styles for common formatting needs. No configuration required:
-
-#### Number Styles
-
-```typescript
-// Compact notation (social media, dashboards)
-compileIcu("{n, number, compact}", { locale: "en" })({ n: 1500 }) // → "1.5K"
+// Built-in styles — no configuration needed
 compileIcu("{n, number, compact}", { locale: "en" })({ n: 2500000 }) // → "2.5M"
-compileIcu("{n, number, compactLong}", { locale: "en" })({ n: 1500 }) // → "1.5 thousand"
+compileIcu("{size, number, megabyte}", { locale: "en" })({ size: 1.5 }) // → "1.5 MB"
+compileIcu("{d, date, weekday}", { locale: "en" })({ d: new Date() }) // → "Monday"
 
-// Fixed decimals
-compileIcu("{n, number, decimal2}", { locale: "en" })({ n: 3.1 }) // → "3.10"
-compileIcu("{n, number, decimal3}", { locale: "en" })({ n: 3.14 }) // → "3.140"
+// Dynamic currency
+compileIcu("{price, number, currency}", { locale: "en" })({ price: 99.99, currency: "EUR" })
+// → "€99.99"
 
-// Sign display
-compileIcu("{n, number, signAlways}", { locale: "en" })({ n: 5 }) // → "+5"
-compileIcu("{n, number, signExceptZero}", { locale: "en" })({ n: 0 }) // → "0"
+// Custom styles with Intl options
+compileIcu("{n, number, precise}", {
+  locale: "en",
+  numberStyles: { precise: { minimumFractionDigits: 2, maximumFractionDigits: 2 } }
+})({ n: 3.1 })
+// → "3.10"
 
-// File sizes
-compileIcu("{n, number, byte}", { locale: "en" })({ n: 1024 }) // → "1,024 B"
-compileIcu("{n, number, kilobyte}", { locale: "en" })({ n: 512 }) // → "512 kB"
-compileIcu("{n, number, megabyte}", { locale: "en" })({ n: 1.5 }) // → "1.5 MB"
-compileIcu("{n, number, gigabyte}", { locale: "en" })({ n: 2 }) // → "2 GB"
-compileIcu("{n, number, terabyte}", { locale: "en" })({ n: 1 }) // → "1 TB"
-
-// Distance
-compileIcu("{n, number, meter}", { locale: "en" })({ n: 100 }) // → "100 m"
-compileIcu("{n, number, kilometer}", { locale: "en" })({ n: 5 }) // → "5 km"
-compileIcu("{n, number, mile}", { locale: "en" })({ n: 3 }) // → "3 mi"
-
-// Temperature
-compileIcu("{n, number, celsius}", { locale: "en" })({ n: 22 }) // → "22°C"
-compileIcu("{n, number, fahrenheit}", { locale: "en" })({ n: 72 }) // → "72°F"
-
-// Weight & Volume
-compileIcu("{n, number, kilogram}", { locale: "en" })({ n: 70 }) // → "70 kg"
-compileIcu("{n, number, liter}", { locale: "en" })({ n: 1.5 }) // → "1.5 L"
-
-// Duration units
-compileIcu("{n, number, second}", { locale: "en" })({ n: 30 }) // → "30 sec"
-compileIcu("{n, number, minute}", { locale: "en" })({ n: 5 }) // → "5 min"
-compileIcu("{n, number, hour}", { locale: "en" })({ n: 2 }) // → "2 hr"
+// Pre-configured compiler for reuse
+const compile = createIcuCompiler({
+  locale: "de",
+  numberStyles: { bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" } }
+})
+compile("{size, number, bytes}")({ size: 1024 }) // → "1.024B"
 ```
 
-#### Date Styles
+<Callout type="info">
+  **[→ Complete Format Styles Reference](/docs/format-styles)**
 
-```typescript
-// ISO-like
-compileIcu("{d, date, iso}", { locale: "en" })({ d: date }) // → "12/15/2024"
+See all 50+ built-in styles, custom style options, and examples in English, German, and Spanish.
 
-// Components
-compileIcu("{d, date, weekday}", { locale: "en" })({ d: date }) // → "Sunday"
-compileIcu("{d, date, weekdayShort}", { locale: "en" })({ d: date }) // → "Sun"
-compileIcu("{d, date, monthYear}", { locale: "en" })({ d: date }) // → "December 2024"
-compileIcu("{d, date, monthDay}", { locale: "en" })({ d: date }) // → "Dec 15"
-compileIcu("{d, date, dayMonthYear}", { locale: "en" })({ d: date }) // → "Dec 15, 2024"
-```
-
-#### Time Styles
-
-```typescript
-compileIcu("{t, time, hourMinute}", { locale: "en" })({ t: time }) // → "14:30"
-compileIcu("{t, time, hourMinute24}", { locale: "en" })({ t: time }) // → "14:30"
-compileIcu("{t, time, hourMinute12}", { locale: "en" })({ t: time }) // → "2:30 PM"
-compileIcu("{t, time, hourMinuteSecond}", { locale: "en" })({ t: time }) // → "14:30:45"
-compileIcu("{t, time, hour12}", { locale: "en" })({ t: time }) // → "2 PM"
-```
-
-#### List Styles
-
-```typescript
-compileIcu("{items, list}", { locale: "en" })({ items: ["A", "B", "C"] })
-// → "A, B, and C"
-
-compileIcu("{items, list, or}", { locale: "en" })({ items: ["A", "B", "C"] })
-// → "A, B, or C"
-
-compileIcu("{items, list, narrow}", { locale: "en" })({ items: ["A", "B", "C"] })
-// → "A, B, C"
-
-compileIcu("{items, list, short}", { locale: "en" })({ items: ["A", "B", "C"] })
-// → "A, B, & C"
-```
-
-All built-in styles work with any locale and can be combined with custom styles.
+</Callout>
 
 ### Tags (Named, Numeric, React)
 

@@ -1,0 +1,771 @@
+---
+title: Format Styles
+description: Built-in and custom format styles for numbers, dates, times, and lists
+---
+
+import { Tabs, Tab } from "fumadocs-ui/components/tabs"
+
+pofile-ts extends ICU MessageFormat with **50+ built-in format styles** and supports **custom styles** for full control over formatting. All styles use native `Intl` APIs — zero additional bundle size, full localization support.
+
+## Quick Reference
+
+<Tabs items={["English", "Deutsch", "Español"]}>
+<Tab value="English">
+
+### How It Works
+
+ICU MessageFormat uses the syntax `{variable, type, style}`:
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+// Basic: {variable, type}
+compileIcu("{n, number}", { locale: "en" })({ n: 1234.5 })
+// → "1,234.5"
+
+// With style: {variable, type, style}
+compileIcu("{n, number, compact}", { locale: "en" })({ n: 1500 })
+// → "1.5K"
+```
+
+**Types available:** `number`, `date`, `time`, `list`, `plural`, `select`, `duration`, `ago`, `name`
+
+</Tab>
+<Tab value="Deutsch">
+
+### Wie es funktioniert
+
+ICU MessageFormat nutzt die Syntax `{variable, typ, stil}`:
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+// Einfach: {variable, typ}
+compileIcu("{n, number}", { locale: "de" })({ n: 1234.5 })
+// → "1.234,5"
+
+// Mit Stil: {variable, typ, stil}
+compileIcu("{n, number, compact}", { locale: "de" })({ n: 1500 })
+// → "1500" (oder "1,5 Tsd." je nach Browser)
+```
+
+**Verfügbare Typen:** `number`, `date`, `time`, `list`, `plural`, `select`, `duration`, `ago`, `name`
+
+</Tab>
+<Tab value="Español">
+
+### Cómo funciona
+
+ICU MessageFormat usa la sintaxis `{variable, tipo, estilo}`:
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+// Básico: {variable, tipo}
+compileIcu("{n, number}", { locale: "es" })({ n: 1234.5 })
+// → "1.234,5"
+
+// Con estilo: {variable, tipo, estilo}
+compileIcu("{n, number, compact}", { locale: "es" })({ n: 1500 })
+// → "1,5 mil"
+```
+
+**Tipos disponibles:** `number`, `date`, `time`, `list`, `plural`, `select`, `duration`, `ago`, `name`
+
+</Tab>
+</Tabs>
+
+---
+
+## Number Styles
+
+### Standard ICU Styles
+
+These are part of the ICU MessageFormat specification:
+
+| Style       | Description                             | Example (en) |
+| ----------- | --------------------------------------- | ------------ |
+| _(default)_ | Locale-aware decimal                    | `1,234.5`    |
+| `integer`   | No decimal places                       | `1,235`      |
+| `percent`   | Percentage                              | `42%`        |
+| `currency`  | Dynamic currency from `values.currency` | `$99.99`     |
+
+```typescript
+compileIcu("{rate, number, percent}", { locale: "en" })({ rate: 0.42 })
+// → "42%"
+
+compileIcu("{price, number, currency}", { locale: "en" })({ price: 99.99, currency: "EUR" })
+// → "€99.99"
+```
+
+### Built-in Extended Styles (pofile-ts)
+
+<Tabs items={["English", "Deutsch", "Español"]}>
+<Tab value="English">
+
+#### Compact Notation
+
+Perfect for dashboards, social media counts, and anywhere space is limited:
+
+| Style         | Description          | Example                       |
+| ------------- | -------------------- | ----------------------------- |
+| `compact`     | Short form (K, M, B) | `1.5K`, `2.5M`                |
+| `compactLong` | Long form            | `1.5 thousand`, `2.5 million` |
+
+```typescript
+compileIcu("{followers, number, compact}", { locale: "en" })({ followers: 2500000 })
+// → "2.5M"
+
+compileIcu("{views, number, compactLong}", { locale: "en" })({ views: 1500 })
+// → "1.5 thousand"
+```
+
+#### Precision Control
+
+| Style        | Description            | Example   |
+| ------------ | ---------------------- | --------- |
+| `decimal1`   | 1 decimal place        | `3.1`     |
+| `decimal2`   | 2 decimal places       | `3.14`    |
+| `decimal3`   | 3 decimal places       | `3.142`   |
+| `noGrouping` | No thousand separators | `1000000` |
+
+```typescript
+compileIcu("{price, number, decimal2}", { locale: "en" })({ price: 19.9 })
+// → "19.90"
+```
+
+#### Sign Display
+
+| Style            | Description           | Example         |
+| ---------------- | --------------------- | --------------- |
+| `signAlways`     | Always show +/-       | `+5`, `-3`      |
+| `signExceptZero` | Show +/- except for 0 | `+5`, `0`, `-3` |
+
+```typescript
+compileIcu("{change, number, signAlways}", { locale: "en" })({ change: 5 })
+// → "+5"
+```
+
+</Tab>
+<Tab value="Deutsch">
+
+#### Kompakte Notation
+
+Perfekt für Dashboards, Social-Media-Zahlen und überall wo Platz begrenzt ist:
+
+| Stil          | Beschreibung          | Beispiel                       |
+| ------------- | --------------------- | ------------------------------ |
+| `compact`     | Kurzform (Tsd., Mio.) | `1,5 Tsd.`, `2,5 Mio.`         |
+| `compactLong` | Langform              | `1,5 Tausend`, `2,5 Millionen` |
+
+```typescript
+compileIcu("{followers, number, compact}", { locale: "de" })({ followers: 2500000 })
+// → "2,5 Mio."
+
+compileIcu("{views, number, compactLong}", { locale: "de" })({ views: 1500 })
+// → "1,5 Tausend"
+```
+
+#### Präzisionskontrolle
+
+| Stil         | Beschreibung                | Beispiel  |
+| ------------ | --------------------------- | --------- |
+| `decimal1`   | 1 Dezimalstelle             | `3,1`     |
+| `decimal2`   | 2 Dezimalstellen            | `3,14`    |
+| `decimal3`   | 3 Dezimalstellen            | `3,142`   |
+| `noGrouping` | Keine Tausendertrennzeichen | `1000000` |
+
+```typescript
+compileIcu("{price, number, decimal2}", { locale: "de" })({ price: 19.9 })
+// → "19,90"
+```
+
+#### Vorzeichenanzeige
+
+| Stil             | Beschreibung       | Beispiel        |
+| ---------------- | ------------------ | --------------- |
+| `signAlways`     | Immer +/- anzeigen | `+5`, `-3`      |
+| `signExceptZero` | +/- außer bei 0    | `+5`, `0`, `-3` |
+
+```typescript
+compileIcu("{change, number, signAlways}", { locale: "de" })({ change: 5 })
+// → "+5"
+```
+
+</Tab>
+<Tab value="Español">
+
+#### Notación Compacta
+
+Perfecto para dashboards, redes sociales y cualquier lugar con espacio limitado:
+
+| Estilo        | Descripción          | Ejemplo                   |
+| ------------- | -------------------- | ------------------------- |
+| `compact`     | Forma corta (mil, M) | `1,5 mil`, `2,5 M`        |
+| `compactLong` | Forma larga          | `1,5 mil`, `2,5 millones` |
+
+```typescript
+compileIcu("{followers, number, compact}", { locale: "es" })({ followers: 2500000 })
+// → "2,5 M"
+
+compileIcu("{views, number, compactLong}", { locale: "es" })({ views: 1500 })
+// → "1,5 mil"
+```
+
+#### Control de Precisión
+
+| Estilo       | Descripción              | Ejemplo   |
+| ------------ | ------------------------ | --------- |
+| `decimal1`   | 1 decimal                | `3,1`     |
+| `decimal2`   | 2 decimales              | `3,14`    |
+| `decimal3`   | 3 decimales              | `3,142`   |
+| `noGrouping` | Sin separadores de miles | `1000000` |
+
+```typescript
+compileIcu("{price, number, decimal2}", { locale: "es" })({ price: 19.9 })
+// → "19,90"
+```
+
+#### Visualización de Signo
+
+| Estilo           | Descripción           | Ejemplo         |
+| ---------------- | --------------------- | --------------- |
+| `signAlways`     | Siempre mostrar +/-   | `+5`, `-3`      |
+| `signExceptZero` | Mostrar +/- excepto 0 | `+5`, `0`, `-3` |
+
+```typescript
+compileIcu("{change, number, signAlways}", { locale: "es" })({ change: 5 })
+// → "+5"
+```
+
+</Tab>
+</Tabs>
+
+### Unit Styles (pofile-ts)
+
+<Tabs items={["File Sizes", "Distance", "Temperature", "Weight/Volume", "Duration"]}>
+<Tab value="File Sizes">
+
+| Style      | Example (en) |
+| ---------- | ------------ |
+| `byte`     | `1,024 B`    |
+| `kilobyte` | `512 kB`     |
+| `megabyte` | `1.5 MB`     |
+| `gigabyte` | `2 GB`       |
+| `terabyte` | `1 TB`       |
+
+```typescript
+compileIcu("File size: {size, number, megabyte}", { locale: "en" })({ size: 1.5 })
+// → "File size: 1.5 MB"
+```
+
+</Tab>
+<Tab value="Distance">
+
+| Style       | Example (en) |
+| ----------- | ------------ |
+| `meter`     | `100 m`      |
+| `kilometer` | `5 km`       |
+| `mile`      | `3 mi`       |
+
+```typescript
+compileIcu("Distance: {d, number, kilometer}", { locale: "en" })({ d: 42.195 })
+// → "Distance: 42.195 km"
+```
+
+</Tab>
+<Tab value="Temperature">
+
+| Style        | Example (en) |
+| ------------ | ------------ |
+| `celsius`    | `22°C`       |
+| `fahrenheit` | `72°F`       |
+
+```typescript
+compileIcu("Temperature: {temp, number, celsius}", { locale: "en" })({ temp: 22 })
+// → "Temperature: 22°C"
+```
+
+</Tab>
+<Tab value="Weight/Volume">
+
+| Style        | Example (en) |
+| ------------ | ------------ |
+| `kilogram`   | `70 kg`      |
+| `gram`       | `500 g`      |
+| `pound`      | `154 lb`     |
+| `liter`      | `1.5 L`      |
+| `milliliter` | `250 mL`     |
+
+```typescript
+compileIcu("Weight: {w, number, kilogram}", { locale: "en" })({ w: 70 })
+// → "Weight: 70 kg"
+```
+
+</Tab>
+<Tab value="Duration">
+
+| Style    | Example (en) |
+| -------- | ------------ |
+| `second` | `30 sec`     |
+| `minute` | `5 min`      |
+| `hour`   | `2 hr`       |
+| `day`    | `3 days`     |
+| `week`   | `2 wk`       |
+| `month`  | `6 mo`       |
+| `year`   | `1 yr`       |
+
+```typescript
+compileIcu("Duration: {t, number, minute}", { locale: "en" })({ t: 45 })
+// → "Duration: 45 min"
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## Date Styles
+
+### Standard ICU Styles
+
+| Style       | Example (en)                | Example (de)                 |
+| ----------- | --------------------------- | ---------------------------- |
+| _(default)_ | `Dec 15, 2024`              | `15.12.2024`                 |
+| `short`     | `12/15/24`                  | `15.12.24`                   |
+| `medium`    | `Dec 15, 2024`              | `15.12.2024`                 |
+| `long`      | `December 15, 2024`         | `15. Dezember 2024`          |
+| `full`      | `Sunday, December 15, 2024` | `Sonntag, 15. Dezember 2024` |
+
+### Built-in Extended Styles (pofile-ts)
+
+<Tabs items={["English", "Deutsch", "Español"]}>
+<Tab value="English">
+
+| Style             | Description          | Example               |
+| ----------------- | -------------------- | --------------------- |
+| `iso`             | ISO-like format      | `12/15/2024`          |
+| `weekday`         | Weekday only         | `Sunday`              |
+| `weekdayShort`    | Short weekday        | `Sun`                 |
+| `monthYear`       | Month and year       | `December 2024`       |
+| `monthYearShort`  | Short month and year | `Dec 2024`            |
+| `monthDay`        | Month and day        | `Dec 15`              |
+| `monthDayLong`    | Long month and day   | `December 15`         |
+| `dayMonth`        | Day and month        | `15 Dec`              |
+| `dayMonthYear`    | Day, month, year     | `Dec 15, 2024`        |
+| `weekdayMonthDay` | Weekday, month, day  | `Sunday, December 15` |
+
+```typescript
+compileIcu("Published: {d, date, monthYear}", { locale: "en" })({ d: new Date(2024, 11, 15) })
+// → "Published: December 2024"
+
+compileIcu("Today is {d, date, weekday}", { locale: "en" })({ d: new Date() })
+// → "Today is Monday"
+```
+
+</Tab>
+<Tab value="Deutsch">
+
+| Stil              | Beschreibung          | Beispiel                |
+| ----------------- | --------------------- | ----------------------- |
+| `iso`             | ISO-ähnliches Format  | `15.12.2024`            |
+| `weekday`         | Nur Wochentag         | `Sonntag`               |
+| `weekdayShort`    | Kurzer Wochentag      | `So`                    |
+| `monthYear`       | Monat und Jahr        | `Dezember 2024`         |
+| `monthYearShort`  | Kurzer Monat und Jahr | `Dez. 2024`             |
+| `monthDay`        | Monat und Tag         | `15. Dez.`              |
+| `monthDayLong`    | Langer Monat und Tag  | `15. Dezember`          |
+| `dayMonth`        | Tag und Monat         | `15. Dez.`              |
+| `dayMonthYear`    | Tag, Monat, Jahr      | `15. Dez. 2024`         |
+| `weekdayMonthDay` | Wochentag, Monat, Tag | `Sonntag, 15. Dezember` |
+
+```typescript
+compileIcu("Veröffentlicht: {d, date, monthYear}", { locale: "de" })({ d: new Date(2024, 11, 15) })
+// → "Veröffentlicht: Dezember 2024"
+
+compileIcu("Heute ist {d, date, weekday}", { locale: "de" })({ d: new Date() })
+// → "Heute ist Montag"
+```
+
+</Tab>
+<Tab value="Español">
+
+| Estilo            | Descripción           | Ejemplo                    |
+| ----------------- | --------------------- | -------------------------- |
+| `iso`             | Formato tipo ISO      | `15/12/2024`               |
+| `weekday`         | Solo día de la semana | `domingo`                  |
+| `weekdayShort`    | Día corto             | `dom`                      |
+| `monthYear`       | Mes y año             | `diciembre de 2024`        |
+| `monthYearShort`  | Mes corto y año       | `dic 2024`                 |
+| `monthDay`        | Mes y día             | `15 dic`                   |
+| `monthDayLong`    | Mes largo y día       | `15 de diciembre`          |
+| `dayMonth`        | Día y mes             | `15 dic`                   |
+| `dayMonthYear`    | Día, mes, año         | `15 dic 2024`              |
+| `weekdayMonthDay` | Día semana, mes, día  | `domingo, 15 de diciembre` |
+
+```typescript
+compileIcu("Publicado: {d, date, monthYear}", { locale: "es" })({ d: new Date(2024, 11, 15) })
+// → "Publicado: diciembre de 2024"
+
+compileIcu("Hoy es {d, date, weekday}", { locale: "es" })({ d: new Date() })
+// → "Hoy es lunes"
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## Time Styles
+
+### Standard ICU Styles
+
+| Style       | Example (en)                       | Example (de)                      |
+| ----------- | ---------------------------------- | --------------------------------- |
+| _(default)_ | `2:30:00 PM`                       | `14:30:00`                        |
+| `short`     | `2:30 PM`                          | `14:30`                           |
+| `medium`    | `2:30:00 PM`                       | `14:30:00`                        |
+| `long`      | `2:30:00 PM GMT+1`                 | `14:30:00 MEZ`                    |
+| `full`      | `2:30:00 PM Central European Time` | `14:30:00 Mitteleuropäische Zeit` |
+
+### Built-in Extended Styles (pofile-ts)
+
+| Style                | Description          | Example (en) |
+| -------------------- | -------------------- | ------------ |
+| `hourMinute`         | HH:MM                | `14:30`      |
+| `hourMinute12`       | 12-hour format       | `2:30 PM`    |
+| `hourMinute24`       | 24-hour format       | `14:30`      |
+| `hourMinuteSecond`   | HH:MM:SS             | `14:30:45`   |
+| `hourMinuteSecond12` | 12-hour with seconds | `2:30:45 PM` |
+| `hourMinuteSecond24` | 24-hour with seconds | `14:30:45`   |
+| `hour`               | Hour only            | `2 PM`       |
+| `hour12`             | 12-hour              | `2 PM`       |
+| `hour24`             | 24-hour              | `14`         |
+
+```typescript
+compileIcu("Meeting at {t, time, hourMinute24}", { locale: "en" })({ t: new Date() })
+// → "Meeting at 14:30"
+
+compileIcu("Alarm: {t, time, hour12}", { locale: "en" })({ t: new Date(2024, 0, 1, 7, 0) })
+// → "Alarm: 7 AM"
+```
+
+---
+
+## List Styles
+
+### Standard ICU Styles
+
+| Style         | Description              | Example (en)  |
+| ------------- | ------------------------ | ------------- |
+| _(default)_   | Conjunction (and)        | `A, B, and C` |
+| `conjunction` | Conjunction (and)        | `A, B, and C` |
+| `disjunction` | Disjunction (or)         | `A, B, or C`  |
+| `unit`        | Unit list (no connector) | `A, B, C`     |
+
+### Built-in Extended Styles (pofile-ts)
+
+| Style        | Description           | Example (en) |
+| ------------ | --------------------- | ------------ |
+| `or`         | Alias for disjunction | `A, B, or C` |
+| `short`      | Short conjunction     | `A, B, & C`  |
+| `narrow`     | Narrow (minimal)      | `A, B, C`    |
+| `orShort`    | Short disjunction     | `A, B, or C` |
+| `orNarrow`   | Narrow disjunction    | `A, B, or C` |
+| `unitShort`  | Short unit            | `A, B, C`    |
+| `unitNarrow` | Narrow unit           | `A B C`      |
+
+<Tabs items={["English", "Deutsch", "Español"]}>
+<Tab value="English">
+
+```typescript
+compileIcu("Choose: {options, list, or}", { locale: "en" })({ options: ["red", "blue", "green"] })
+// → "Choose: red, blue, or green"
+
+compileIcu("Authors: {names, list}", { locale: "en" })({ names: ["Alice", "Bob", "Charlie"] })
+// → "Authors: Alice, Bob, and Charlie"
+
+compileIcu("Tags: {tags, list, narrow}", { locale: "en" })({
+  tags: ["react", "typescript", "vite"]
+})
+// → "Tags: react, typescript, vite"
+```
+
+</Tab>
+<Tab value="Deutsch">
+
+```typescript
+compileIcu("Wähle: {options, list, or}", { locale: "de" })({ options: ["rot", "blau", "grün"] })
+// → "Wähle: rot, blau oder grün"
+
+compileIcu("Autoren: {names, list}", { locale: "de" })({ names: ["Alice", "Bob", "Charlie"] })
+// → "Autoren: Alice, Bob und Charlie"
+
+compileIcu("Tags: {tags, list, narrow}", { locale: "de" })({
+  tags: ["react", "typescript", "vite"]
+})
+// → "Tags: react, typescript, vite"
+```
+
+</Tab>
+<Tab value="Español">
+
+```typescript
+compileIcu("Elige: {options, list, or}", { locale: "es" })({ options: ["rojo", "azul", "verde"] })
+// → "Elige: rojo, azul o verde"
+
+compileIcu("Autores: {names, list}", { locale: "es" })({ names: ["Alice", "Bob", "Charlie"] })
+// → "Autores: Alice, Bob y Charlie"
+
+compileIcu("Tags: {tags, list, narrow}", { locale: "es" })({
+  tags: ["react", "typescript", "vite"]
+})
+// → "Tags: react, typescript, vite"
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## Custom Styles
+
+When built-in styles aren't enough, define your own with full `Intl` API options:
+
+<Tabs items={["English", "Deutsch", "Español"]}>
+<Tab value="English">
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+const fn = compileIcu("{amount, number, priceEur}", {
+  locale: "en",
+  numberStyles: {
+    priceEur: {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2
+    }
+  }
+})
+
+fn({ amount: 1234.5 })
+// → "€1,234.50"
+```
+
+### Available Options
+
+| Option         | Intl API              | Example Options                                                        |
+| -------------- | --------------------- | ---------------------------------------------------------------------- |
+| `numberStyles` | `Intl.NumberFormat`   | `style`, `currency`, `notation`, `minimumFractionDigits`, `unit`, etc. |
+| `dateStyles`   | `Intl.DateTimeFormat` | `weekday`, `year`, `month`, `day`, `era`, etc.                         |
+| `timeStyles`   | `Intl.DateTimeFormat` | `hour`, `minute`, `second`, `hour12`, `timeZone`, etc.                 |
+| `listStyles`   | `Intl.ListFormat`     | `type`, `style`                                                        |
+
+### Complex Example
+
+```typescript
+const compile = createIcuCompiler({
+  locale: "en",
+  numberStyles: {
+    // Scientific notation for large numbers
+    scientific: { notation: "scientific" },
+    // Accounting format (negative in parentheses)
+    accounting: { style: "currency", currency: "USD", currencySign: "accounting" },
+    // Speed in km/h
+    speed: { style: "unit", unit: "kilometer-per-hour" }
+  },
+  dateStyles: {
+    // Quarter + Year
+    quarter: { year: "numeric", month: "long" },
+    // Relative date context
+    relative: { weekday: "long", month: "short", day: "numeric" }
+  }
+})
+```
+
+</Tab>
+<Tab value="Deutsch">
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+const fn = compileIcu("{amount, number, preisEur}", {
+  locale: "de",
+  numberStyles: {
+    preisEur: {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2
+    }
+  }
+})
+
+fn({ amount: 1234.5 })
+// → "1.234,50 €"
+```
+
+### Verfügbare Optionen
+
+| Option         | Intl API              | Beispiel-Optionen                                                      |
+| -------------- | --------------------- | ---------------------------------------------------------------------- |
+| `numberStyles` | `Intl.NumberFormat`   | `style`, `currency`, `notation`, `minimumFractionDigits`, `unit`, etc. |
+| `dateStyles`   | `Intl.DateTimeFormat` | `weekday`, `year`, `month`, `day`, `era`, etc.                         |
+| `timeStyles`   | `Intl.DateTimeFormat` | `hour`, `minute`, `second`, `hour12`, `timeZone`, etc.                 |
+| `listStyles`   | `Intl.ListFormat`     | `type`, `style`                                                        |
+
+### Komplexes Beispiel
+
+```typescript
+const compile = createIcuCompiler({
+  locale: "de",
+  numberStyles: {
+    // Wissenschaftliche Notation für große Zahlen
+    wissenschaftlich: { notation: "scientific" },
+    // Buchhaltungsformat (negativ in Klammern)
+    buchhaltung: { style: "currency", currency: "EUR", currencySign: "accounting" },
+    // Geschwindigkeit in km/h
+    geschwindigkeit: { style: "unit", unit: "kilometer-per-hour" }
+  },
+  dateStyles: {
+    // Quartal + Jahr
+    quartal: { year: "numeric", month: "long" },
+    // Relativer Datumskontext
+    relativ: { weekday: "long", month: "short", day: "numeric" }
+  }
+})
+```
+
+</Tab>
+<Tab value="Español">
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+const fn = compileIcu("{amount, number, precioEur}", {
+  locale: "es",
+  numberStyles: {
+    precioEur: {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 2
+    }
+  }
+})
+
+fn({ amount: 1234.5 })
+// → "1.234,50 €"
+```
+
+### Opciones Disponibles
+
+| Opción         | Intl API              | Opciones de Ejemplo                                                    |
+| -------------- | --------------------- | ---------------------------------------------------------------------- |
+| `numberStyles` | `Intl.NumberFormat`   | `style`, `currency`, `notation`, `minimumFractionDigits`, `unit`, etc. |
+| `dateStyles`   | `Intl.DateTimeFormat` | `weekday`, `year`, `month`, `day`, `era`, etc.                         |
+| `timeStyles`   | `Intl.DateTimeFormat` | `hour`, `minute`, `second`, `hour12`, `timeZone`, etc.                 |
+| `listStyles`   | `Intl.ListFormat`     | `type`, `style`                                                        |
+
+### Ejemplo Complejo
+
+```typescript
+const compile = createIcuCompiler({
+  locale: "es",
+  numberStyles: {
+    // Notación científica para números grandes
+    cientifico: { notation: "scientific" },
+    // Formato contable (negativo entre paréntesis)
+    contable: { style: "currency", currency: "EUR", currencySign: "accounting" },
+    // Velocidad en km/h
+    velocidad: { style: "unit", unit: "kilometer-per-hour" }
+  },
+  dateStyles: {
+    // Trimestre + Año
+    trimestre: { year: "numeric", month: "long" },
+    // Contexto de fecha relativa
+    relativo: { weekday: "long", month: "short", day: "numeric" }
+  }
+})
+```
+
+</Tab>
+</Tabs>
+
+---
+
+## Pre-configured Compiler
+
+For real-world apps, use `createIcuCompiler` to define styles once and reuse everywhere:
+
+```typescript
+import { createIcuCompiler } from "pofile-ts"
+
+// Define once in your i18n config (e.g., src/i18n/compiler.ts)
+export const compile = createIcuCompiler({
+  locale: "en",
+  numberStyles: {
+    bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
+    percent2: { style: "percent", minimumFractionDigits: 2 }
+  },
+  dateStyles: {
+    iso: { year: "numeric", month: "2-digit", day: "2-digit" },
+    monthYear: { month: "long", year: "numeric" }
+  },
+  timeStyles: {
+    clock: { hour: "2-digit", minute: "2-digit", hour12: false }
+  }
+})
+
+// Use everywhere in your app
+const sizeMsg = compile("{size, number, bytes}")
+const dateMsg = compile("{d, date, iso}")
+const timeMsg = compile("{t, time, clock}")
+
+sizeMsg({ size: 1024 }) // → "1,024B"
+dateMsg({ d: new Date() }) // → "12/16/2024"
+timeMsg({ t: new Date() }) // → "14:30"
+```
+
+**Benefits:**
+
+- **DRY** — Styles defined once, no repetition
+- **Testable** — Inject different configs for tests
+- **SSR-safe** — No global state, each request can have its own compiler
+- **Tree-shakeable** — Only included in bundle when used
+
+---
+
+## Dynamic Currency
+
+For apps where currency varies per user or transaction:
+
+```typescript
+compileIcu("{price, number, currency}", { locale: "en" })({
+  price: 99.99,
+  currency: "EUR" // Read from values at runtime
+})
+// → "€99.99"
+```
+
+The currency is:
+
+1. Read from `values.currency` at runtime
+2. Cached per currency for performance
+3. Falls back to `USD` if not provided
+
+---
+
+## Style Categories Summary
+
+| Category               | Type           | Styles                                                                                                                                                                                                                        |
+| ---------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard ICU**       | number         | `integer`, `percent`, `currency`                                                                                                                                                                                              |
+| **Standard ICU**       | date/time      | `short`, `medium`, `long`, `full`                                                                                                                                                                                             |
+| **Standard ICU**       | list           | `conjunction`, `disjunction`, `unit`                                                                                                                                                                                          |
+| **pofile-ts Built-in** | number         | `compact`, `compactLong`, `decimal1-3`, `signAlways`, `signExceptZero`, `noGrouping`                                                                                                                                          |
+| **pofile-ts Built-in** | number (units) | `byte`, `kilobyte`, `megabyte`, `gigabyte`, `terabyte`, `meter`, `kilometer`, `mile`, `celsius`, `fahrenheit`, `kilogram`, `gram`, `pound`, `liter`, `milliliter`, `second`, `minute`, `hour`, `day`, `week`, `month`, `year` |
+| **pofile-ts Built-in** | date           | `iso`, `weekday`, `weekdayShort`, `monthYear`, `monthYearShort`, `monthDay`, `monthDayLong`, `dayMonth`, `dayMonthYear`, `weekdayMonthDay`                                                                                    |
+| **pofile-ts Built-in** | time           | `hourMinute`, `hourMinute12`, `hourMinute24`, `hourMinuteSecond`, `hourMinuteSecond12`, `hourMinuteSecond24`, `hour`, `hour12`, `hour24`                                                                                      |
+| **pofile-ts Built-in** | list           | `or`, `short`, `narrow`, `orShort`, `orNarrow`, `unitShort`, `unitNarrow`                                                                                                                                                     |
+| **Custom**             | all            | Any `Intl` options via `numberStyles`, `dateStyles`, `timeStyles`, `listStyles`                                                                                                                                               |
