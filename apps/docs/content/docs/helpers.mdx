@@ -107,6 +107,23 @@ createReference("src\\components\\Button.tsx", 10)
 // → { file: "src/components/Button.tsx", line: 10 }
 ```
 
+## Plural-Forms Header
+
+Get the Plural-Forms header string directly for a locale:
+
+```typescript
+import { getPluralFormsHeader } from "pofile-ts"
+
+getPluralFormsHeader("de") // → "nplurals=2; plural=(n != 1);"
+getPluralFormsHeader("pl") // → "nplurals=4; plural=(n != 1);"
+getPluralFormsHeader("ar") // → "nplurals=6; plural=(n != 1);"
+getPluralFormsHeader("zh") // → "nplurals=1; plural=0;"
+```
+
+This is a convenience wrapper around `createDefaultHeaders({ language })["Plural-Forms"]`.
+
+> **Note:** The plural expression is a simplified fallback. For runtime plural selection, use `getPluralFunction(locale)` which uses `Intl.PluralRules` for CLDR-accurate results.
+
 ## Plural Categories (CLDR)
 
 Get CLDR plural categories for any locale — useful for building ICU messages or validating translations.
@@ -232,6 +249,36 @@ icuToGettextSource("{count, plural, one {# item} other {# items}}")
 // → { msgid: "{count} item", msgid_plural: "{count} items", pluralVariable: "count" }
 ```
 
+### Round-Trip Conversions
+
+When converting ICU → Gettext → ICU, use `expandOctothorpe: false` on both sides to preserve the `#` placeholder:
+
+```typescript
+import { gettextToIcu, icuToGettextSource } from "pofile-ts"
+
+const originalIcu = "{count, plural, one {# item} other {# items}}"
+
+// ICU → Gettext (for TMS export)
+const gettext = icuToGettextSource(originalIcu, { expandOctothorpe: false })
+// → { msgid: "# item", msgid_plural: "# items", pluralVariable: "count" }
+
+// Gettext → ICU (for catalog import)
+const backToIcu = gettextToIcu(
+  { msgid: gettext.msgid, msgid_plural: gettext.msgid_plural, msgstr: ["# Artikel", "# Artikel"] },
+  { locale: "de", pluralVariable: gettext.pluralVariable, expandOctothorpe: false }
+)
+// → "{count, plural, one {# Artikel} other {# Artikel}}"
+```
+
+**Why `expandOctothorpe`?**
+
+| Option                    | `#` becomes...     | Use case                            |
+| ------------------------- | ------------------ | ----------------------------------- |
+| `expandOctothorpe: true`  | `{count}` explicit | TMS tools that don't understand `#` |
+| `expandOctothorpe: false` | `#` preserved      | Round-trips, Lingui-style catalogs  |
+
+The default is `true` because most Translation Management Systems display `#` as literal text, which confuses translators.
+
 ### Complex Locales
 
 Works with all CLDR locales, including complex Slavic and Arabic plurals:
@@ -325,6 +372,20 @@ parseIcu("Click <link>here</link> to continue")
 parseIcu("It''s {name}''s turn") // "It's {name}'s turn"
 ```
 
+### Case-Insensitive Keywords
+
+ICU keywords are case-insensitive per the spec. All of these are valid:
+
+```typescript
+parseIcu("{n, plural, one {#} other {#}}") // ✅ lowercase
+parseIcu("{n, PLURAL, one {#} other {#}}") // ✅ uppercase
+parseIcu("{n, selectOrdinal, one {#st} other {#th}}") // ✅ camelCase
+parseIcu("{n, SelectOrdinal, one {#st} other {#th}}") // ✅ PascalCase
+parseIcu("{d, DATE, short}") // ✅ also works
+```
+
+This matches the ICU4J / ICU4C reference implementations.
+
 ### Variable Analysis
 
 Extract detailed information about variables in a message:
@@ -352,13 +413,21 @@ compareVariables(
 Quick checks without full parsing:
 
 ```typescript
-import { hasPlural, hasSelect, hasIcuSyntax } from "pofile-ts"
+import { hasPlural, hasSelect, hasSelectOrdinal, hasIcuSyntax } from "pofile-ts"
 
 hasPlural("{n, plural, one {#} other {#}}") // true
+hasPlural("{n, selectordinal, one {#st} other {#th}}") // true (ordinal is also plural)
+
 hasSelect("{g, select, male {He} other {They}}") // true
+
+hasSelectOrdinal("{n, selectordinal, one {#st} other {#th}}") // true
+hasSelectOrdinal("{n, plural, one {#} other {#}}") // false (cardinal, not ordinal)
+
 hasIcuSyntax("{name}") // true (has argument)
 hasIcuSyntax("Hello world") // false (plain text)
 ```
+
+> **Note:** `selectordinal` is internally stored as a plural node with `pluralType: "ordinal"`. Use `hasSelectOrdinal()` to specifically detect ordinal plurals, or `hasPlural()` to detect both cardinal and ordinal.
 
 ### AST Node Types
 
@@ -367,15 +436,25 @@ The parser produces an AST with these node types:
 ```typescript
 import { IcuNodeType } from "pofile-ts"
 
-IcuNodeType.literal // Plain text
-IcuNodeType.argument // {name}
-IcuNodeType.number // {n, number}
-IcuNodeType.date // {d, date}
-IcuNodeType.time // {t, time}
-IcuNodeType.plural // {n, plural, ...}
-IcuNodeType.select // {g, select, ...}
-IcuNodeType.pound // # in plural
-IcuNodeType.tag // <b>...</b>
+IcuNodeType.literal // 0 - Plain text
+IcuNodeType.argument // 1 - {name}
+IcuNodeType.number // 2 - {n, number}
+IcuNodeType.date // 3 - {d, date}
+IcuNodeType.time // 4 - {t, time}
+IcuNodeType.select // 5 - {g, select, ...}
+IcuNodeType.plural // 6 - {n, plural, ...} or {n, selectordinal, ...}
+IcuNodeType.pound // 7 - # in plural
+IcuNodeType.tag // 8 - <b>...</b>
+```
+
+For debugging, use `getNodeTypeName()` to convert numeric types to readable strings:
+
+```typescript
+import { getNodeTypeName, IcuNodeType } from "pofile-ts"
+
+getNodeTypeName(6) // → "plural"
+getNodeTypeName(IcuNodeType.select) // → "select"
+getNodeTypeName(node.type) // → "argument"
 ```
 
 ### Parser Options
