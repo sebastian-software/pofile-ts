@@ -628,6 +628,41 @@ fn({ size: 1024, d: new Date() })
 
 Custom styles fall back to built-in styles when no match is found. This allows gradual migration — add custom styles as needed without breaking existing messages.
 
+### Pre-configured Compiler (Factory Pattern)
+
+For real-world apps, define your custom styles once and reuse them everywhere:
+
+```typescript
+import { createIcuCompiler } from "pofile-ts"
+
+// Define once in your i18n config (e.g., src/i18n/compiler.ts)
+export const compile = createIcuCompiler({
+  locale: "de",
+  numberStyles: {
+    bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
+    percent2: { style: "percent", minimumFractionDigits: 2 }
+  },
+  dateStyles: {
+    iso: { year: "numeric", month: "2-digit", day: "2-digit" },
+    monthYear: { month: "long", year: "numeric" }
+  }
+})
+
+// Use everywhere in your app
+const sizeMsg = compile("{size, number, bytes}")
+const dateMsg = compile("{d, date, iso}")
+
+sizeMsg({ size: 1024 }) // → "1.024B"
+dateMsg({ d: new Date() }) // → "16.12.2024"
+```
+
+This pattern is:
+
+- **DRY** — styles defined once, no repetition
+- **Testable** — inject different configs for tests
+- **SSR-safe** — no global state, each request can have its own compiler
+
 ### Tags (Named, Numeric, React)
 
 Tags are treated as functions that receive children and return formatted content:

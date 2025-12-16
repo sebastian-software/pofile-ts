@@ -10,6 +10,7 @@ export { parseIcu, IcuParser, IcuSyntaxError } from "./parser"
 
 export {
   compileIcu,
+  createIcuCompiler,
   type CompileIcuOptions,
   type CompiledMessageFunction,
   type MessageValues,

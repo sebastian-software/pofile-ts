@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { compileIcu } from "./compile"
+import { compileIcu, createIcuCompiler } from "./compile"
 
 describe("compileIcu", () => {
   describe("literals", () => {
@@ -655,5 +655,59 @@ describe("compileIcu", () => {
         expect(result).toContain("12/15/2024")
       })
     })
+  })
+})
+
+describe("createIcuCompiler", () => {
+  it("creates a reusable compiler with pre-configured options", () => {
+    const compile = createIcuCompiler({
+      locale: "en",
+      numberStyles: {
+        bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" }
+      }
+    })
+
+    const msg1 = compile("{size, number, bytes}")
+    const msg2 = compile("{count, number, bytes}")
+
+    expect(msg1({ size: 1024 })).toBe("1,024B")
+    expect(msg2({ count: 512 })).toBe("512B")
+  })
+
+  it("preserves all options across compiled messages", () => {
+    const compile = createIcuCompiler({
+      locale: "de",
+      numberStyles: {
+        precise: { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      },
+      dateStyles: {
+        monthYear: { month: "long", year: "numeric" }
+      }
+    })
+
+    const numMsg = compile("{value, number, precise}")
+    const dateMsg = compile("{d, date, monthYear}")
+
+    expect(numMsg({ value: 42 })).toBe("42,00")
+    expect(dateMsg({ d: new Date(2024, 11, 15) })).toBe("Dezember 2024")
+  })
+
+  it("supports dynamic currency in pre-configured compiler", () => {
+    const compile = createIcuCompiler({ locale: "de" })
+    const price = compile("{amount, number, currency}")
+
+    expect(price({ amount: 99.99, currency: "EUR" })).toMatch(/99,99\s*€/)
+    expect(price({ amount: 99.99, currency: "USD" })).toMatch(/99,99\s*\$/)
+  })
+
+  it("allows different locales in separate compilers", () => {
+    const compileEn = createIcuCompiler({ locale: "en" })
+    const compileDe = createIcuCompiler({ locale: "de" })
+
+    const msgEn = compileEn("{count, plural, one {# item} other {# items}}")
+    const msgDe = compileDe("{count, plural, one {# Artikel} other {# Artikel}}")
+
+    expect(msgEn({ count: 1 })).toBe("1 item")
+    expect(msgDe({ count: 1 })).toBe("1 Artikel")
   })
 })

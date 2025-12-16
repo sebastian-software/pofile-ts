@@ -52,7 +52,8 @@ export {
   normalizeToIcu,
   icuToGettextSource,
   // Compilation
-  compileIcu
+  compileIcu,
+  createIcuCompiler
 } from "./icu/index"
 
 // Serialization utilities

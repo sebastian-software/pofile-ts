@@ -770,3 +770,33 @@ function resolveWithTags(parts: unknown[], values?: MessageValues): unknown[] {
 
   return result
 }
+
+/**
+ * Creates a pre-configured ICU compiler with custom styles.
+ *
+ * Use this factory when you want to define format styles once and reuse them
+ * across your application. This avoids passing the same options to every
+ * `compileIcu` call.
+ *
+ * @example
+ * // Define once in your i18n config
+ * export const compile = createIcuCompiler({
+ *   locale: "de",
+ *   numberStyles: {
+ *     bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+ *     filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" }
+ *   },
+ *   dateStyles: {
+ *     iso: { year: "numeric", month: "2-digit", day: "2-digit" }
+ *   }
+ * })
+ *
+ * // Use everywhere
+ * const msg = compile("{size, number, bytes}")
+ * msg({ size: 1024 }) // → "1,024B"
+ */
+export function createIcuCompiler(
+  options: CompileIcuOptions
+): (message: string) => CompiledMessageFunction {
+  return (message: string) => compileIcu(message, options)
+}
