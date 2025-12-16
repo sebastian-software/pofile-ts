@@ -568,9 +568,65 @@ msg({ count: 1 }) // → "1 item"
 msg({ count: 5 }) // → "5 items"
 
 // Number and date formatting via Intl
-const price = compileIcu("{amount, number, currency}", { locale: "de" })
-price({ amount: 1234.5 }) // → "1.234,50" (German formatting)
+const price = compileIcu("{amount, number, ::currency/EUR}", { locale: "de" })
+price({ amount: 1234.5 }) // → "1.234,50 €" (German formatting)
 ```
+
+### Dynamic Currency
+
+Currency can be provided at runtime via `values.currency`:
+
+```typescript
+const price = compileIcu("{amount, number, currency}", { locale: "de" })
+
+price({ amount: 99.99, currency: "EUR" }) // → "99,99 €"
+price({ amount: 99.99, currency: "USD" }) // → "99,99 $"
+price({ amount: 99.99 }) // → "99,99 $" (USD fallback)
+```
+
+This is useful when the currency varies per user or transaction. Formatters are cached per currency for optimal performance.
+
+### Custom Format Styles
+
+Register custom format styles with full `Intl` API options. This allows domain-specific formatting without changing ICU message syntax:
+
+```typescript
+const fn = compileIcu("{size, number, bytes} uploaded on {d, date, iso}", {
+  locale: "en",
+
+  // Custom number styles (Intl.NumberFormat options)
+  numberStyles: {
+    bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" },
+    percent2: { style: "percent", minimumFractionDigits: 2 },
+    precise: { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  },
+
+  // Custom date styles (Intl.DateTimeFormat options)
+  dateStyles: {
+    iso: { year: "numeric", month: "2-digit", day: "2-digit" },
+    monthYear: { month: "long", year: "numeric" },
+    weekday: { weekday: "long" }
+  },
+
+  // Custom time styles (Intl.DateTimeFormat options)
+  timeStyles: {
+    precise: { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false },
+    hourOnly: { hour: "numeric", hour12: true }
+  },
+
+  // Custom list styles (Intl.ListFormat options)
+  listStyles: {
+    narrow: { type: "conjunction", style: "narrow" },
+    or: { type: "disjunction" }
+  }
+})
+
+fn({ size: 1024, d: new Date() })
+// → "1,024B uploaded on 12/16/2024"
+```
+
+Custom styles fall back to built-in styles when no match is found. This allows gradual migration — add custom styles as needed without breaking existing messages.
 
 ### Tags (Named, Numeric, React)
 

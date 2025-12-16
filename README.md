@@ -129,6 +129,20 @@ const msg = compileIcu("{count, plural, one {# item} other {# items}} in <link>c
 msg({ count: 5, link: (text) => `<a>${text}</a>` })
 // → "5 items in <a>cart</a>"
 
+// Dynamic currency from values
+const price = compileIcu("{amount, number, currency}", { locale: "de" })
+price({ amount: 99.99, currency: "EUR" }) // → "99,99 €"
+price({ amount: 99.99, currency: "USD" }) // → "99,99 $"
+
+// Custom format styles with full Intl options
+const size = compileIcu("{bytes, number, filesize}", {
+  locale: "en",
+  numberStyles: {
+    filesize: { style: "unit", unit: "kilobyte", unitDisplay: "short" }
+  }
+})
+size({ bytes: 512 }) // → "512 kB"
+
 // Compile an entire catalog at runtime
 const compiled = compileCatalog(catalog, { locale: "de" })
 compiled.format("messageId", { name: "Sebastian" })
