@@ -266,16 +266,13 @@ export class IcuParser {
 
     let offset = 0
 
-    // Check for offset:N
-    const maybeOffset = this.parseIdentifier()
-    if (maybeOffset === "offset") {
+    // Check for offset:N using lookahead to avoid position rewind
+    if (this.peekIdentifier() === "offset") {
+      this.parseIdentifier() // consume "offset"
       this.expectChar(":", start)
       this.skipWhitespace()
       offset = this.parseInteger()
       this.skipWhitespace()
-    } else if (maybeOffset) {
-      // Not offset, rewind
-      this.pos -= maybeOffset.length
     }
 
     const options = this.parsePluralOptions(depth, argType)
@@ -569,6 +566,14 @@ export class IcuParser {
     while (this.pos < this.msg.length && isWhitespace(this.msg[this.pos])) {
       this.pos++
     }
+  }
+
+  /** Lookahead for identifier without consuming input */
+  private peekIdentifier(): string {
+    const start = this.pos
+    const id = this.parseIdentifier()
+    this.pos = start
+    return id
   }
 
   private expectChar(ch: string, errorPos?: number): void {
