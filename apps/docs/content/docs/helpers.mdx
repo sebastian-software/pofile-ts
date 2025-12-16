@@ -421,6 +421,22 @@ nameFn({ lang: "en" })
   single-codebase i18n setup).
 </Callout>
 
+#### Browser Support
+
+These formatters require native `Intl` APIs. Check browser compatibility:
+
+| Format          | Intl API                  | Support                                                                                                              |
+| --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `{x, list}`     | `Intl.ListFormat`         | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_listformat) — Chrome 72+, Firefox 78+, Safari 14.1+       |
+| `{x, duration}` | `Intl.DurationFormat`     | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_durationformat) — Chrome 129+, Firefox 131+ ⚠️            |
+| `{x, ago}`      | `Intl.RelativeTimeFormat` | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_relativetimeformat) — Chrome 71+, Firefox 65+, Safari 14+ |
+| `{x, name}`     | `Intl.DisplayNames`       | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_displaynames) — Chrome 81+, Firefox 86+, Safari 14.1+     |
+
+<Callout type="warn">
+  `Intl.DurationFormat` is a **Stage 3 proposal** and not yet widely supported. pofile-ts provides a
+  JSON fallback when the API is unavailable.
+</Callout>
+
 ### Case-Insensitive Keywords
 
 ICU keywords are case-insensitive per the spec. All of these are valid:

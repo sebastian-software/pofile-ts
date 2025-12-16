@@ -201,9 +201,7 @@ export interface IcuAgoNode extends IcuNodeBase {
  * Combined unit and style for ago format.
  * Format: "unit" or "unit style" (e.g. "day", "hour short")
  */
-export type IcuAgoStyle =
-  | `${IcuRelativeTimeUnit}`
-  | `${IcuRelativeTimeUnit} ${IcuRelativeTimeStyle}`
+export type IcuAgoStyle = IcuRelativeTimeUnit | `${IcuRelativeTimeUnit} ${IcuRelativeTimeStyle}`
 
 /**
  * Display names format: {code, name, type}
