@@ -130,7 +130,8 @@ function getNumberOptions(style: string | null): Intl.NumberFormatOptions {
     case "percent":
       return { style: "percent" }
     case "currency":
-      // Currency code should come from skeleton or be provided separately
+      // FIXME: Currency should be extracted from skeleton (::currency/EUR) or locale
+      // For now, defaults to USD as a fallback
       return { style: "currency", currency: "USD" }
     case "integer":
       return { maximumFractionDigits: 0 }

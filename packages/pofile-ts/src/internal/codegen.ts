@@ -482,6 +482,7 @@ export function getNumberOptionsForStyle(style: string): Intl.NumberFormatOption
     case "percent":
       return { style: "percent" }
     case "currency":
+      // FIXME: Currency should be extracted from skeleton (::currency/EUR) or locale
       return { style: "currency", currency: "USD" }
     default:
       return {}
