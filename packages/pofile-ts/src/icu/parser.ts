@@ -84,7 +84,13 @@ function isTagChar(ch: string | undefined): boolean {
   return isAlpha(ch) || isDigit(ch) || ch === "-" || ch === "." || ch === ":" || ch === "_"
 }
 
-type ArgType = "plural" | "selectordinal" | ""
+/**
+ * Parent argument type for context-sensitive parsing.
+ * Used to determine if # (pound) is valid and how to handle it.
+ * - "plural" | "selectordinal": # substitutes the plural value
+ * - "none": # is treated as literal text
+ */
+type ParentArgType = "plural" | "selectordinal" | "none"
 
 /**
  * ICU syntax error thrown during parsing.
@@ -115,7 +121,7 @@ export class IcuParser {
   }
 
   parse(): IcuNode[] {
-    const result = this.parseMessage(0, "")
+    const result = this.parseMessage(0, "none")
     if (this.pos < this.msg.length) {
       this.error("Unexpected character")
     }
@@ -123,7 +129,7 @@ export class IcuParser {
   }
 
   // eslint-disable-next-line complexity -- parser dispatch logic
-  private parseMessage(depth: number, parentArg: ArgType): IcuNode[] {
+  private parseMessage(depth: number, parentArg: ParentArgType): IcuNode[] {
     const nodes: IcuNode[] = []
     const inPlural = parentArg === "plural" || parentArg === "selectordinal"
 
@@ -295,7 +301,10 @@ export class IcuParser {
     return { type: "select", value: name, options }
   }
 
-  private parsePluralOptions(depth: number, parentArg: ArgType): Record<string, IcuPluralOption> {
+  private parsePluralOptions(
+    depth: number,
+    parentArg: ParentArgType
+  ): Record<string, IcuPluralOption> {
     const options: Record<string, IcuPluralOption> = {}
     const seen = new Set<string>()
 
@@ -358,7 +367,7 @@ export class IcuParser {
 
       this.skipWhitespace()
       this.expectChar("{")
-      const value = this.parseMessage(depth + 1, "")
+      const value = this.parseMessage(depth + 1, "none")
       this.expectChar("}")
 
       options[selector] = { value }
@@ -375,7 +384,7 @@ export class IcuParser {
     return options
   }
 
-  private parseTag(depth: number, parentArg: ArgType): IcuTagNode | IcuLiteralNode {
+  private parseTag(depth: number, parentArg: ParentArgType): IcuTagNode | IcuLiteralNode {
     const start = this.pos
     this.pos++ // skip <
 
