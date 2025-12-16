@@ -15,6 +15,7 @@ import {
   FeatherIcon,
   CompileIcon,
   ModernIcon,
+  PaletteIcon,
   ArrowIcon,
   GitHubIcon,
   CopyIcon
@@ -237,6 +238,12 @@ export default function Home() {
               title="Extended Intl Formatters"
               description="Lists, relative times, display names, and durations. Native Intl APIs — zero bundle cost."
               gradient="from-teal-500 to-cyan-500"
+            />
+            <FeatureCard
+              icon={<PaletteIcon />}
+              title="50+ Format Styles"
+              description="Built-in styles like compact, percent, bytes, iso. Register custom Intl options. Dynamic currency at runtime."
+              gradient="from-amber-500 to-orange-500"
             />
           </div>
         </div>

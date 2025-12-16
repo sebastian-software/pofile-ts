@@ -47,6 +47,13 @@
 - 🔢 **Plural helpers** — Get categories, counts, and selector functions for any locale
 - 🆕 **Extended Intl Formatters** — Lists, durations, relative times, and display names built-in
 
+### Format Styles
+
+- 🎨 **50+ built-in styles** — `compact`, `percent`, `bytes`, `iso`, `relative`, and more
+- 🔧 **Custom styles** — Register your own `Intl.NumberFormat`, `DateTimeFormat`, `ListFormat` options
+- 💱 **Dynamic currency** — Currency code read from message values at runtime
+- 🏭 **Factory pattern** — `createIcuCompiler()` for pre-configured, reusable compilers
+
 ### Developer Experience
 
 - 📦 **Zero dependencies** — No bloat, no supply chain risk
