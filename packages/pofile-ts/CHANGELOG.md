@@ -1,5 +1,79 @@
 # Changelog
 
+## [4.0.0](///compare/v3.7.1...v4.0.0) (2025-12-16)
+
+### ⚠ BREAKING CHANGES
+
+- IcuNodeType is now a string union type instead of a const object with numeric values.
+
+Before:
+import { IcuNodeType } from 'pofile-ts'
+if (node.type === IcuNodeType.plural) { ... } // 6
+
+After:
+if (node.type === 'plural') { ... }
+
+Changes:
+
+- IcuNodeType is now: 'literal' | 'argument' | 'number' | 'date' | 'time' | 'select' | 'plural' | 'pound' | 'tag'
+- IcuErrorKind is now just 'SYNTAX_ERROR' string type
+- Removed getNodeTypeName() helper (no longer needed - types are self-documenting)
+- Updated all internal code and tests to use string literals
+- Updated documentation
+
+Benefits:
+
+- More idiomatic TypeScript
+- Better readability (no need to look up numeric values)
+- Simpler type checking
+- No runtime const object needed
+
+### Features
+
+- add 50+ built-in format styles for number, date, time, list 3593863
+- add createIcuCompiler factory for pre-configured compilers ddf34ce
+- add custom format styles for number, date, time, list 0efcfcb
+- add extended Intl format types (list, duration, relativeTime, displayNames) 5a8fa0c
+- add hasSelectOrdinal, getPluralFormsHeader, getNodeTypeName + fix case-sensitivity a8c66db
+- add metadata support for translation items 505d100
+- add typed style properties aligned with Intl APIs af13544
+- refactor IcuNodeType from numeric enum to string union c8199b0
+- support dynamic currency from values.currency 1bfb3ed
+
+### Bug Fixes
+
+- remove unnecessary type assertion 7575a0f
+- resolve ESLint errors in compile.ts, utils.ts, and codegen.ts 9a89aa1
+
+### Refactoring
+
+- extract DEFAULT_PLURAL_VAR constant 9c513cb
+- extract FormatterUsage type to reduce duplication f04421b
+- reduce complexity in compileIcu and buildCategoryMatchCode b991303
+- remove eslint-disable directives in utils.ts 463d3dd
+- rename ArgType to ParentArgType with documentation 7cb7de6
+- rename extended format types for brevity cd735cf
+- replace position rewind with peekIdentifier lookahead 55531b1
+- simplify mergeFormatters with generic iteration 94b6dc2
+- split buildPluralCondition into smaller helpers 3e900ee
+
+### Documentation
+
+- add browser compatibility info for extended format types 52ac1bf
+- add comprehensive Format Styles documentation page 3a32680
+- add custom format styles and dynamic currency documentation 515cfd5
+- add documentation for new features and round-trip patterns 3cecf64
+- add FIXME for hardcoded USD currency fallback 11e3351
+- add Format Styles feature to documentation 73189b8
+- add marketing content for extended Intl formatters 3298db5
+- add Node and Bun badges to homepage 1144d65
+- improve JSDoc for internal parser functions 88d29e9
+- list all Intl APIs in browser support table 66e42e4
+- mention Bun support in all runtime descriptions 4acd83e
+- update benchmark numbers for v4.0 release b488f40
+- update DurationFormat comments (now Baseline 2025) 560bda9
+- update Intl.DurationFormat to Baseline 2025 status 5df31e7
+
 ## [3.7.1](///compare/v3.7.0...v3.7.1) (2025-12-15)
 
 ## [3.7.0](///compare/v3.6.1...v3.7.0) (2025-12-15)
