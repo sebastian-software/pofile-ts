@@ -15,6 +15,9 @@ export interface CodeGenContext {
     number: Set<string>
     date: Set<string>
     time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
   }
   pluralCategories: readonly string[]
   /** Current plural variable for # substitution */
@@ -34,6 +37,9 @@ export interface MessageCodeResult {
     number: Set<string>
     date: Set<string>
     time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
   }
   needsPluralFn: boolean
   hasTags: boolean
@@ -51,7 +57,10 @@ export function createCodeGenContext(
     formatters: {
       number: new Set<string>(),
       date: new Set<string>(),
-      time: new Set<string>()
+      time: new Set<string>(),
+      list: new Set<string>(),
+      relativeTime: new Set<string>(),
+      displayNames: new Set<string>()
     },
     pluralCategories,
     pluralVar: null,
@@ -147,6 +156,18 @@ export function generateNodeCode(node: IcuNode, ctx: CodeGenContext): string {
     case "time":
       return generateTimeCode(node.value, node.style, ctx)
 
+    case "list":
+      return generateListCode(node.value, node.style, ctx)
+
+    case "duration":
+      return generateDurationCode(node.value, node.style, ctx)
+
+    case "relativeTime":
+      return generateRelativeTimeCode(node.value, node.style, ctx)
+
+    case "displayNames":
+      return generateDisplayNamesCode(node.value, node.style, ctx)
+
     case "plural":
       return generatePluralCode(node, ctx)
 
@@ -207,6 +228,79 @@ function generateTimeCode(varValue: string, style: string | null, ctx: CodeGenCo
   const varName = safeVarName(varValue)
   const fallback = JSON.stringify(`{${varValue}}`)
   return `(v?.${varName} instanceof Date ? ${formatterName}.format(v.${varName}) : typeof v?.${varName} === "number" ? ${formatterName}.format(new Date(v.${varName})) : v?.${varName} ?? ${fallback})`
+}
+
+/**
+ * Generates code for {items, list, style}.
+ */
+function generateListCode(varValue: string, style: string | null, ctx: CodeGenContext): string {
+  const styleKey = style ?? ""
+  ctx.formatters.list.add(styleKey)
+  const formatterName = styleKey ? `_lf_${sanitizeStyle(styleKey)}` : "_lf"
+  const varName = safeVarName(varValue)
+  const fallback = JSON.stringify(`{${varValue}}`)
+  return `(Array.isArray(v?.${varName}) ? ${formatterName}.format(v.${varName}.map(String)) : v?.${varName} ?? ${fallback})`
+}
+
+/**
+ * Generates code for {d, duration, style}.
+ */
+function generateDurationCode(varValue: string, style: string | null, ctx: CodeGenContext): string {
+  const varName = safeVarName(varValue)
+  const fallback = JSON.stringify(`{${varValue}}`)
+  const styleStr = JSON.stringify(style ?? "long")
+  // DurationFormat is still a stage 3 proposal, generate runtime check
+  return `(v?.${varName} != null && typeof Intl !== "undefined" && "DurationFormat" in Intl ? new Intl.DurationFormat(${JSON.stringify(ctx.locale)}, { style: ${styleStr} }).format(v.${varName}) : v?.${varName} ?? ${fallback})`
+}
+
+/**
+ * Parses relative time style: "day", "hour short"
+ */
+function parseRelativeTimeStyleForCodegen(style: string | null): {
+  unit: string
+  formatStyle: string
+} {
+  if (!style) {
+    return { unit: "day", formatStyle: "long" }
+  }
+  const parts = style.split(/\s+/)
+  return {
+    unit: parts[0] ?? "day",
+    formatStyle: parts[1] ?? "long"
+  }
+}
+
+/**
+ * Generates code for {n, relativeTime, unit style}.
+ */
+function generateRelativeTimeCode(
+  varValue: string,
+  style: string | null,
+  ctx: CodeGenContext
+): string {
+  const { unit, formatStyle } = parseRelativeTimeStyleForCodegen(style)
+  const styleKey = `${unit}_${formatStyle}`
+  ctx.formatters.relativeTime.add(styleKey)
+  const formatterName = `_rtf_${sanitizeStyle(styleKey)}`
+  const varName = safeVarName(varValue)
+  const fallback = JSON.stringify(`{${varValue}}`)
+  return `(typeof v?.${varName} === "number" ? ${formatterName}.format(v.${varName}, ${JSON.stringify(unit)}) : v?.${varName} ?? ${fallback})`
+}
+
+/**
+ * Generates code for {code, displayNames, type}.
+ */
+function generateDisplayNamesCode(
+  varValue: string,
+  style: string | null,
+  ctx: CodeGenContext
+): string {
+  const type = style ?? "language"
+  ctx.formatters.displayNames.add(type)
+  const formatterName = `_dn_${sanitizeStyle(type)}`
+  const varName = safeVarName(varValue)
+  const fallback = JSON.stringify(`{${varValue}}`)
+  return `(typeof v?.${varName} === "string" ? (${formatterName}.of(v.${varName}) ?? v.${varName}) : v?.${varName} ?? ${fallback})`
 }
 
 /**
@@ -434,11 +528,33 @@ const _pf = (n) => { const i = _pc.indexOf(_pr.select(n)); return i >= 0 ? i : _
 }
 
 /**
+ * Gets Intl.ListFormat type from style.
+ */
+function getListTypeFromStyle(style: string): "conjunction" | "disjunction" | "unit" {
+  switch (style) {
+    case "disjunction":
+    case "or":
+      return "disjunction"
+    case "unit":
+      return "unit"
+    default:
+      return "conjunction"
+  }
+}
+
+/**
  * Generates Intl formatter declarations.
  */
 export function generateFormatterDeclarations(
   locale: string,
-  used: { number: Set<string>; date: Set<string>; time: Set<string> }
+  used: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  }
 ): string | null {
   const decls: string[] = []
 
@@ -456,6 +572,27 @@ export function generateFormatterDeclarations(
   for (const style of used.time) {
     const name = `_tf_${sanitizeStyle(style)}`
     decls.push(`const ${name} = new Intl.DateTimeFormat("${locale}", { timeStyle: "${style}" })`)
+  }
+
+  for (const style of used.list) {
+    const name = style ? `_lf_${sanitizeStyle(style)}` : "_lf"
+    const type = getListTypeFromStyle(style)
+    decls.push(`const ${name} = new Intl.ListFormat("${locale}", { type: "${type}" })`)
+  }
+
+  for (const styleKey of used.relativeTime) {
+    // styleKey is "unit_formatStyle" e.g. "day_long", "hour_short"
+    const parts = styleKey.split("_")
+    const formatStyle = parts[1] ?? "long"
+    const name = `_rtf_${sanitizeStyle(styleKey)}`
+    decls.push(
+      `const ${name} = new Intl.RelativeTimeFormat("${locale}", { style: "${formatStyle}" })`
+    )
+  }
+
+  for (const type of used.displayNames) {
+    const name = `_dn_${sanitizeStyle(type)}`
+    decls.push(`const ${name} = new Intl.DisplayNames("${locale}", { type: "${type}" })`)
   }
 
   return decls.length > 0 ? decls.join("\n") : null

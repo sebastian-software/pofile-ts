@@ -169,6 +169,144 @@ describe("parseIcu", () => {
     })
   })
 
+  describe("list format", () => {
+    it("parses list without style", () => {
+      const result = parseIcu("{items, list}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "list",
+        value: "items",
+        style: null
+      })
+    })
+
+    it("parses list with disjunction style", () => {
+      const result = parseIcu("{options, list, disjunction}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "list",
+        value: "options",
+        style: "disjunction"
+      })
+    })
+
+    it("parses list with unit style", () => {
+      const result = parseIcu("{parts, list, unit}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "list",
+        value: "parts",
+        style: "unit"
+      })
+    })
+  })
+
+  describe("duration format", () => {
+    it("parses duration without style", () => {
+      const result = parseIcu("{elapsed, duration}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "duration",
+        value: "elapsed",
+        style: null
+      })
+    })
+
+    it("parses duration with short style", () => {
+      const result = parseIcu("{time, duration, short}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "duration",
+        value: "time",
+        style: "short"
+      })
+    })
+
+    it("parses duration with digital style", () => {
+      const result = parseIcu("{playback, duration, digital}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "duration",
+        value: "playback",
+        style: "digital"
+      })
+    })
+  })
+
+  describe("relativeTime format", () => {
+    it("parses relativeTime with unit", () => {
+      const result = parseIcu("{days, relativeTime, day}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "relativeTime",
+        value: "days",
+        style: "day"
+      })
+    })
+
+    it("parses relativeTime with unit and style", () => {
+      const result = parseIcu("{hours, relativeTime, hour short}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "relativeTime",
+        value: "hours",
+        style: "hour short"
+      })
+    })
+
+    it("handles case-insensitive keyword", () => {
+      const result = parseIcu("{n, RelativeTime, day}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "relativeTime",
+        value: "n",
+        style: "day"
+      })
+    })
+  })
+
+  describe("displayNames format", () => {
+    it("parses displayNames with language type", () => {
+      const result = parseIcu("{lang, displayNames, language}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "displayNames",
+        value: "lang",
+        style: "language"
+      })
+    })
+
+    it("parses displayNames with region type", () => {
+      const result = parseIcu("{country, displayNames, region}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "displayNames",
+        value: "country",
+        style: "region"
+      })
+    })
+
+    it("parses displayNames with currency type", () => {
+      const result = parseIcu("{code, displayNames, currency}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "displayNames",
+        value: "code",
+        style: "currency"
+      })
+    })
+
+    it("handles case-insensitive keyword", () => {
+      const result = parseIcu("{code, DISPLAYNAMES, language}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: "displayNames",
+        value: "code",
+        style: "language"
+      })
+    })
+  })
+
   describe("plural", () => {
     it("parses simple plural", () => {
       const result = parseIcu("{count, plural, one {# item} other {# items}}")

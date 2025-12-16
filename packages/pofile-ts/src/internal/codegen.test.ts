@@ -154,56 +154,79 @@ describe("codegen", () => {
   })
 
   describe("generateFormatterDeclarations", () => {
+    const emptyFormatters = {
+      number: new Set<string>(),
+      date: new Set<string>(),
+      time: new Set<string>(),
+      list: new Set<string>(),
+      relativeTime: new Set<string>(),
+      displayNames: new Set<string>()
+    }
+
     it("returns null when no formatters used", () => {
-      const used = { number: new Set<string>(), date: new Set<string>(), time: new Set<string>() }
-      expect(generateFormatterDeclarations("en", used)).toBeNull()
+      expect(generateFormatterDeclarations("en", emptyFormatters)).toBeNull()
     })
 
     it("generates number formatter without style", () => {
-      const used = {
-        number: new Set<string>([""]),
-        date: new Set<string>(),
-        time: new Set<string>()
-      }
+      const used = { ...emptyFormatters, number: new Set<string>([""]) }
       const code = generateFormatterDeclarations("en", used)
       expect(code).toContain('const _nf = new Intl.NumberFormat("en")')
     })
 
     it("generates number formatter with style", () => {
-      const used = {
-        number: new Set<string>(["percent"]),
-        date: new Set<string>(),
-        time: new Set<string>()
-      }
+      const used = { ...emptyFormatters, number: new Set<string>(["percent"]) }
       const code = generateFormatterDeclarations("en", used)
       expect(code).toContain("_nf_percent")
       expect(code).toContain('"style":"percent"')
     })
 
     it("generates date formatter", () => {
-      const used = {
-        number: new Set<string>(),
-        date: new Set<string>(["short"]),
-        time: new Set<string>()
-      }
+      const used = { ...emptyFormatters, date: new Set<string>(["short"]) }
       const code = generateFormatterDeclarations("de", used)
       expect(code).toContain("_df_short")
       expect(code).toContain('dateStyle: "short"')
     })
 
     it("generates time formatter", () => {
-      const used = {
-        number: new Set<string>(),
-        date: new Set<string>(),
-        time: new Set<string>(["medium"])
-      }
+      const used = { ...emptyFormatters, time: new Set<string>(["medium"]) }
       const code = generateFormatterDeclarations("de", used)
       expect(code).toContain("_tf_medium")
       expect(code).toContain('timeStyle: "medium"')
     })
 
+    it("generates list formatter", () => {
+      const used = { ...emptyFormatters, list: new Set<string>([""]) }
+      const code = generateFormatterDeclarations("en", used)
+      expect(code).toContain('const _lf = new Intl.ListFormat("en"')
+      expect(code).toContain('type: "conjunction"')
+    })
+
+    it("generates list formatter with disjunction style", () => {
+      const used = { ...emptyFormatters, list: new Set<string>(["disjunction"]) }
+      const code = generateFormatterDeclarations("en", used)
+      expect(code).toContain("_lf_disjunction")
+      expect(code).toContain('type: "disjunction"')
+    })
+
+    it("generates relativeTime formatter", () => {
+      const used = { ...emptyFormatters, relativeTime: new Set<string>(["day_long"]) }
+      const code = generateFormatterDeclarations("en", used)
+      expect(code).toContain("_rtf_day_long")
+      expect(code).toContain('new Intl.RelativeTimeFormat("en"')
+      expect(code).toContain('style: "long"')
+    })
+
+    it("generates displayNames formatter", () => {
+      const used = { ...emptyFormatters, displayNames: new Set<string>(["language"]) }
+      const code = generateFormatterDeclarations("en", used)
+      expect(code).toContain("_dn_language")
+      expect(code).toContain('new Intl.DisplayNames("en"')
+      expect(code).toContain('type: "language"')
+    })
+
     it("generates multiple formatters", () => {
       const used = {
+        ...emptyFormatters,
         number: new Set<string>([""]),
         date: new Set<string>(["short"]),
         time: new Set<string>(["medium"])

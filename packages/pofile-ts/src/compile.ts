@@ -298,14 +298,24 @@ function processCatalogEntries(
   useMessageId: boolean
 ): {
   entries: CompiledEntry[]
-  usedFormatters: { number: Set<string>; date: Set<string>; time: Set<string> }
+  usedFormatters: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  }
   needsPluralFn: boolean
 } {
   const entries: CompiledEntry[] = []
   const usedFormatters = {
     number: new Set<string>(),
     date: new Set<string>(),
-    time: new Set<string>()
+    time: new Set<string>(),
+    list: new Set<string>(),
+    relativeTime: new Set<string>(),
+    displayNames: new Set<string>()
   }
   let needsPluralFn = false
 
@@ -359,7 +369,10 @@ function generateGettextPluralCode(
   const formatters = {
     number: new Set<string>(),
     date: new Set<string>(),
-    time: new Set<string>()
+    time: new Set<string>(),
+    list: new Set<string>(),
+    relativeTime: new Set<string>(),
+    displayNames: new Set<string>()
   }
 
   // Extract the plural variable name from msgid or pluralSource
@@ -395,7 +408,14 @@ function compileGettextForms(
   translations: string[],
   locale: string,
   pluralCategories: readonly string[],
-  formatters: { number: Set<string>; date: Set<string>; time: Set<string> }
+  formatters: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  }
 ): string[] {
   const compiledForms: string[] = []
 
@@ -437,8 +457,22 @@ function buildGettextPluralSwitch(varName: string, compiledForms: string[]): str
  * Merges formatter sets from a result into the accumulated set.
  */
 function mergeFormatters(
-  target: { number: Set<string>; date: Set<string>; time: Set<string> },
-  source: { number: Set<string>; date: Set<string>; time: Set<string> }
+  target: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  },
+  source: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  }
 ): void {
   for (const style of source.number) {
     target.number.add(style)
@@ -448,6 +482,15 @@ function mergeFormatters(
   }
   for (const style of source.time) {
     target.time.add(style)
+  }
+  for (const style of source.list) {
+    target.list.add(style)
+  }
+  for (const style of source.relativeTime) {
+    target.relativeTime.add(style)
+  }
+  for (const style of source.displayNames) {
+    target.displayNames.add(style)
   }
 }
 
@@ -462,7 +505,10 @@ function generateMessageCodeFromString(
   const formatters = {
     number: new Set<string>(),
     date: new Set<string>(),
-    time: new Set<string>()
+    time: new Set<string>(),
+    list: new Set<string>(),
+    relativeTime: new Set<string>(),
+    displayNames: new Set<string>()
   }
 
   // Static string - no placeholders
@@ -515,7 +561,14 @@ interface BuildOutputOptions {
   exportName: string
   includeSourceComments: boolean
   entries: CompiledEntry[]
-  usedFormatters: { number: Set<string>; date: Set<string>; time: Set<string> }
+  usedFormatters: {
+    number: Set<string>
+    date: Set<string>
+    time: Set<string>
+    list: Set<string>
+    relativeTime: Set<string>
+    displayNames: Set<string>
+  }
   needsPluralFn: boolean
   pluralCategories: readonly string[]
 }

@@ -372,6 +372,55 @@ parseIcu("Click <link>here</link> to continue")
 parseIcu("It''s {name}''s turn") // "It's {name}'s turn"
 ```
 
+### Extended Format Types (pofile-ts Extensions)
+
+Beyond standard ICU MessageFormat, pofile-ts supports additional `Intl` formatters:
+
+```typescript
+// List formatting (Intl.ListFormat)
+parseIcu("{items, list}") // conjunction: "Alice, Bob, and Charlie"
+parseIcu("{options, list, disjunction}") // "red, blue, or green"
+parseIcu("{parts, list, unit}") // "1, 2, 3"
+
+// Duration formatting (Intl.DurationFormat)
+parseIcu("{elapsed, duration}") // "2 hours, 30 minutes"
+parseIcu("{time, duration, short}") // "2 hr, 30 min"
+parseIcu("{playback, duration, digital}") // "2:30:00"
+
+// Relative time formatting (Intl.RelativeTimeFormat)
+parseIcu("{days, relativeTime, day}") // "in 3 days" or "3 days ago"
+parseIcu("{hours, relativeTime, hour short}") // "in 2 hr."
+
+// Display names (Intl.DisplayNames)
+parseIcu("{lang, displayNames, language}") // "en" → "English"
+parseIcu("{country, displayNames, region}") // "DE" → "Germany"
+parseIcu("{code, displayNames, currency}") // "EUR" → "Euro"
+```
+
+**Runtime compilation** for these types uses native `Intl` APIs:
+
+```typescript
+import { compileIcu } from "pofile-ts"
+
+const listFn = compileIcu("{authors, list}", { locale: "en" })
+listFn({ authors: ["Alice", "Bob", "Charlie"] })
+// → "Alice, Bob, and Charlie"
+
+const relativeFn = compileIcu("{days, relativeTime, day}", { locale: "de" })
+relativeFn({ days: -2 })
+// → "vor 2 Tagen"
+
+const displayFn = compileIcu("{lang, displayNames, language}", { locale: "de" })
+displayFn({ lang: "en" })
+// → "Englisch"
+```
+
+<Callout type="info">
+  These are **pofile-ts extensions** to ICU MessageFormat. Other ICU implementations may not
+  recognize these types. Use them when you control both parsing and compilation (e.g., in a
+  single-codebase i18n setup).
+</Callout>
+
 ### Case-Insensitive Keywords
 
 ICU keywords are case-insensitive per the spec. All of these are valid:

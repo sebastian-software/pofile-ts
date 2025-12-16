@@ -11,6 +11,10 @@ export type IcuNodeType =
   | "number"
   | "date"
   | "time"
+  | "list"
+  | "duration"
+  | "relativeTime"
+  | "displayNames"
   | "select"
   | "plural"
   | "pound"
@@ -93,6 +97,76 @@ export interface IcuTimeNode extends IcuNodeBase {
 }
 
 /**
+ * List format: {items, list} or {items, list, style}
+ *
+ * Formats arrays using Intl.ListFormat.
+ * Style can be: conjunction (default), disjunction, unit
+ *
+ * @example
+ * {items, list} → "Alice, Bob, and Charlie"
+ * {items, list, disjunction} → "Alice, Bob, or Charlie"
+ * {items, list, unit} → "Alice, Bob, Charlie"
+ */
+export interface IcuListNode extends IcuNodeBase {
+  type: "list"
+  value: string
+  style: string | null
+}
+
+/**
+ * Duration format: {d, duration} or {d, duration, style}
+ *
+ * Formats duration objects using Intl.DurationFormat.
+ * Style can be: long, short, narrow, digital
+ *
+ * @example
+ * {time, duration} → "2 hours, 30 minutes"
+ * {time, duration, short} → "2 hr, 30 min"
+ * {time, duration, narrow} → "2h 30m"
+ */
+export interface IcuDurationNode extends IcuNodeBase {
+  type: "duration"
+  value: string
+  style: string | null
+}
+
+/**
+ * Relative time format: {val, relativeTime, unit}
+ *
+ * Formats relative time using Intl.RelativeTimeFormat.
+ * Unit is required: second, minute, hour, day, week, month, quarter, year
+ * Style can be appended after unit: day long, day short, day narrow
+ *
+ * @example
+ * {days, relativeTime, day} → "in 3 days" or "3 days ago"
+ * {hours, relativeTime, hour short} → "in 2 hr."
+ */
+export interface IcuRelativeTimeNode extends IcuNodeBase {
+  type: "relativeTime"
+  value: string
+  /** The time unit and optional style, e.g. "day", "hour short" */
+  style: string | null
+}
+
+/**
+ * Display names format: {code, displayNames, type}
+ *
+ * Formats codes to localized display names using Intl.DisplayNames.
+ * Type is required: language, region, script, currency, calendar, dateTimeField
+ *
+ * @example
+ * {lang, displayNames, language} → "English" (for "en")
+ * {country, displayNames, region} → "Germany" (for "DE")
+ * {cur, displayNames, currency} → "Euro" (for "EUR")
+ */
+export interface IcuDisplayNamesNode extends IcuNodeBase {
+  type: "displayNames"
+  value: string
+  /** The display names type, e.g. "language", "region", "currency" */
+  style: string | null
+}
+
+/**
  * Plural or selectordinal argument.
  */
 export interface IcuPluralNode extends IcuNodeBase {
@@ -148,6 +222,10 @@ export type IcuNode =
   | IcuNumberNode
   | IcuDateNode
   | IcuTimeNode
+  | IcuListNode
+  | IcuDurationNode
+  | IcuRelativeTimeNode
+  | IcuDisplayNamesNode
   | IcuSelectNode
   | IcuPluralNode
   | IcuPoundNode

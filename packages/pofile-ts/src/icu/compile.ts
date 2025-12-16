@@ -76,6 +76,9 @@ interface FormatterCache {
   number: Map<string, Intl.NumberFormat>
   date: Map<string, Intl.DateTimeFormat>
   time: Map<string, Intl.DateTimeFormat>
+  list: Map<string, Intl.ListFormat>
+  relativeTime: Map<string, Intl.RelativeTimeFormat>
+  displayNames: Map<string, Intl.DisplayNames>
 }
 
 /**
@@ -85,7 +88,10 @@ function createFormatterCache(): FormatterCache {
   return {
     number: new Map(),
     date: new Map(),
-    time: new Map()
+    time: new Map(),
+    list: new Map(),
+    relativeTime: new Map(),
+    displayNames: new Map()
   }
 }
 
@@ -181,6 +187,81 @@ function getDateTimeFormatter(
 }
 
 /**
+ * Gets or creates a list formatter.
+ */
+function getListFormatter(
+  cache: FormatterCache,
+  locale: string,
+  style: string | null
+): Intl.ListFormat {
+  const key = style ?? ""
+  let formatter = cache.list.get(key)
+  if (!formatter) {
+    const type =
+      style === "disjunction" || style === "or"
+        ? "disjunction"
+        : style === "unit"
+          ? "unit"
+          : "conjunction"
+    formatter = new Intl.ListFormat(locale, { type })
+    cache.list.set(key, formatter)
+  }
+  return formatter
+}
+
+/**
+ * Parses relative time style: "day", "hour short", "minute narrow"
+ */
+function parseRelativeTimeStyle(style: string | null): {
+  unit: Intl.RelativeTimeFormatUnit
+  formatStyle: Intl.RelativeTimeFormatStyle
+} {
+  if (!style) {
+    return { unit: "day", formatStyle: "long" }
+  }
+  const parts = style.split(/\s+/)
+  const unit = (parts[0] ?? "day") as Intl.RelativeTimeFormatUnit
+  const formatStyle = (parts[1] as Intl.RelativeTimeFormatStyle) ?? "long"
+  return { unit, formatStyle }
+}
+
+/**
+ * Gets or creates a relative time formatter.
+ */
+function getRelativeTimeFormatter(
+  cache: FormatterCache,
+  locale: string,
+  style: string | null
+): { formatter: Intl.RelativeTimeFormat; unit: Intl.RelativeTimeFormatUnit } {
+  const { unit, formatStyle } = parseRelativeTimeStyle(style)
+  const key = `${unit}:${formatStyle}`
+  let formatter = cache.relativeTime.get(key)
+  if (!formatter) {
+    formatter = new Intl.RelativeTimeFormat(locale, { style: formatStyle })
+    cache.relativeTime.set(key, formatter)
+  }
+  return { formatter, unit }
+}
+
+/**
+ * Gets or creates a display names formatter.
+ */
+function getDisplayNamesFormatter(
+  cache: FormatterCache,
+  locale: string,
+  style: string | null
+): Intl.DisplayNames {
+  const type = (style ?? "language") as Intl.DisplayNamesType
+  const key = type
+  let formatter = cache.displayNames.get(key)
+  if (!formatter) {
+    formatter = new Intl.DisplayNames(locale, { type })
+    cache.displayNames.set(key, formatter)
+  }
+  return formatter
+}
+
+/**
  * Compiles an array of AST nodes into parts.
  */
 function compileNodes(nodes: IcuNode[], ctx: CompileContext): unknown[] {
@@ -262,6 +343,67 @@ function compileNode(
           return `{${node.value}}`
         }
         return typeof val === "string" ? val : String(val as string | number | boolean)
+      }
+    }
+
+    case "list": {
+      const formatter = getListFormatter(ctx.formatters, ctx.locale, node.style)
+      return (values?: MessageValues) => {
+        const val = values?.[node.value]
+        if (Array.isArray(val)) {
+          return formatter.format(val.map((v) => String(v)))
+        }
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return String(val)
+      }
+    }
+
+    case "duration": {
+      return (values?: MessageValues) => {
+        const val = values?.[node.value]
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        // Duration can be a DurationLike object or we format it manually
+        // Intl.DurationFormat is still a stage 3 proposal, so we provide a fallback
+        if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
+          const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const formatter = new (Intl as any).DurationFormat(ctx.locale, { style })
+          return formatter.format(val)
+        }
+        // Fallback: just stringify the object
+        return JSON.stringify(val)
+      }
+    }
+
+    case "relativeTime": {
+      const { formatter, unit } = getRelativeTimeFormatter(ctx.formatters, ctx.locale, node.style)
+      return (values?: MessageValues) => {
+        const val = values?.[node.value]
+        if (typeof val === "number") {
+          return formatter.format(val, unit)
+        }
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return String(val)
+      }
+    }
+
+    case "displayNames": {
+      const formatter = getDisplayNamesFormatter(ctx.formatters, ctx.locale, node.style)
+      return (values?: MessageValues) => {
+        const val = values?.[node.value]
+        if (typeof val === "string") {
+          return formatter.of(val) ?? val
+        }
+        if (val == null) {
+          return `{${node.value}}`
+        }
+        return String(val)
       }
     }
 

@@ -285,6 +285,120 @@ describe("compileIcu", () => {
     })
   })
 
+  describe("list formatting", () => {
+    it("formats list with default (conjunction) style", () => {
+      const fn = compileIcu("{items, list}", { locale: "en" })
+      expect(fn({ items: ["Alice", "Bob", "Charlie"] })).toBe("Alice, Bob, and Charlie")
+    })
+
+    it("formats list with disjunction style", () => {
+      const fn = compileIcu("{options, list, disjunction}", { locale: "en" })
+      expect(fn({ options: ["red", "blue", "green"] })).toBe("red, blue, or green")
+    })
+
+    it("formats list with unit style", () => {
+      const fn = compileIcu("{parts, list, unit}", { locale: "en" })
+      expect(fn({ parts: ["1", "2", "3"] })).toBe("1, 2, 3")
+    })
+
+    it("formats list with two items", () => {
+      const fn = compileIcu("{items, list}", { locale: "en" })
+      expect(fn({ items: ["Alice", "Bob"] })).toBe("Alice and Bob")
+    })
+
+    it("formats list with one item", () => {
+      const fn = compileIcu("{items, list}", { locale: "en" })
+      expect(fn({ items: ["Alice"] })).toBe("Alice")
+    })
+
+    it("formats list with German locale", () => {
+      const fn = compileIcu("{items, list}", { locale: "de" })
+      expect(fn({ items: ["Alice", "Bob", "Charlie"] })).toBe("Alice, Bob und Charlie")
+    })
+
+    it("shows placeholder for missing list value", () => {
+      const fn = compileIcu("{items, list}", { locale: "en" })
+      expect(fn({})).toBe("{items}")
+    })
+
+    it("converts non-array to string", () => {
+      const fn = compileIcu("{items, list}", { locale: "en" })
+      expect(fn({ items: "not an array" })).toBe("not an array")
+    })
+  })
+
+  describe("relativeTime formatting", () => {
+    it("formats positive relative time", () => {
+      const fn = compileIcu("{days, relativeTime, day}", { locale: "en" })
+      expect(fn({ days: 3 })).toBe("in 3 days")
+    })
+
+    it("formats negative relative time", () => {
+      const fn = compileIcu("{days, relativeTime, day}", { locale: "en" })
+      expect(fn({ days: -2 })).toBe("2 days ago")
+    })
+
+    it("formats hour with short style", () => {
+      const fn = compileIcu("{hours, relativeTime, hour short}", { locale: "en" })
+      const result = fn({ hours: 1 })
+      expect(result).toContain("1")
+      expect(result).toMatch(/hr|hour/i)
+    })
+
+    it("formats with German locale", () => {
+      const fn = compileIcu("{days, relativeTime, day}", { locale: "de" })
+      const result = fn({ days: -1 })
+      expect(result).toContain("Tag")
+    })
+
+    it("shows placeholder for missing value", () => {
+      const fn = compileIcu("{n, relativeTime, day}", { locale: "en" })
+      expect(fn({})).toBe("{n}")
+    })
+
+    it("converts non-number to string", () => {
+      const fn = compileIcu("{n, relativeTime, day}", { locale: "en" })
+      expect(fn({ n: "text" })).toBe("text")
+    })
+  })
+
+  describe("displayNames formatting", () => {
+    it("formats language code", () => {
+      const fn = compileIcu("{lang, displayNames, language}", { locale: "en" })
+      expect(fn({ lang: "en" })).toBe("English")
+      expect(fn({ lang: "de" })).toBe("German")
+    })
+
+    it("formats region code", () => {
+      const fn = compileIcu("{country, displayNames, region}", { locale: "en" })
+      expect(fn({ country: "US" })).toBe("United States")
+      expect(fn({ country: "DE" })).toBe("Germany")
+    })
+
+    it("formats currency code", () => {
+      const fn = compileIcu("{code, displayNames, currency}", { locale: "en" })
+      expect(fn({ code: "EUR" })).toBe("Euro")
+      expect(fn({ code: "USD" })).toBe("US Dollar")
+    })
+
+    it("formats with German locale", () => {
+      const fn = compileIcu("{lang, displayNames, language}", { locale: "de" })
+      expect(fn({ lang: "en" })).toBe("Englisch")
+    })
+
+    it("shows placeholder for missing value", () => {
+      const fn = compileIcu("{code, displayNames, language}", { locale: "en" })
+      expect(fn({})).toBe("{code}")
+    })
+
+    it("returns original value for unknown code", () => {
+      const fn = compileIcu("{code, displayNames, language}", { locale: "en" })
+      // Unknown codes may return undefined, which should fall back to the original value
+      const result = fn({ code: "xyz" })
+      expect(result).toBe("xyz")
+    })
+  })
+
   describe("tags", () => {
     it("calls tag function with children", () => {
       const fn = compileIcu("Hello <b>World</b>!", { locale: "en" })
