@@ -284,9 +284,7 @@ function parseMetadata(line: string, item: PoItem): void {
   const key = content.substring(0, colonIndex).trim()
   const value = content.substring(colonIndex + 1).trim()
   if (key) {
-    // Cast to allow access - item.metadata is always initialized by createItem
-    const metadata = item.metadata as Record<string, string>
-    metadata[key] = value
+    item.metadata[key] = value
   }
 }
 
