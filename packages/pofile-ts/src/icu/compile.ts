@@ -833,22 +833,12 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
  * const fn = compileIcu("Created on {date, date, medium}", { locale: "de" })
  * fn({ date: new Date() }) // → "Created on 15. Dez. 2024"
  */
-export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
-  const { locale, strict = true, numberStyles, dateStyles, timeStyles, listStyles } = options
-
-  // Parse the ICU message
-  const result = parseIcu(message)
-
-  if (!result.success) {
-    if (strict) {
-      throw new Error(`Failed to parse ICU message: ${result.errors[0]?.message}`)
-    }
-    // Return a function that returns the original message
-    return () => message
-  }
-
-  // Create compilation context
-  const ctx: CompileContext = {
+/**
+ * Creates the compilation context from options.
+ */
+function createCompileContext(options: CompileIcuOptions): CompileContext {
+  const { locale, numberStyles, dateStyles, timeStyles, listStyles } = options
+  return {
     locale,
     pluralFn: getPluralFunction(locale),
     pluralCategories: getPluralCategories(locale),
@@ -863,24 +853,22 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
       list: listStyles ?? {}
     }
   }
+}
 
-  // Compile the AST
-  const parts = compileNodes(result.ast, ctx)
-
+/**
+ * Creates the final message function from compiled parts.
+ */
+function createMessageFunction(parts: unknown[], ctx: CompileContext): CompiledMessageFunction {
   // If no dynamic parts, return static string
   if (parts.every((p) => typeof p === "string")) {
     const staticResult = parts.join("")
     return () => staticResult
   }
 
-  // Create the final resolver
-  const resolver = createResolver(parts)
-
   // If tags were used, we might return an array
   if (ctx.hasTags) {
     return (values?: MessageValues) => {
       const result = resolveWithTags(parts, values)
-      // If result is all strings, join them
       if (result.every((r) => typeof r === "string")) {
         return result.join("")
       }
@@ -888,7 +876,27 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
     }
   }
 
-  return resolver
+  return createResolver(parts)
+}
+
+export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
+  const { strict = true } = options
+
+  // Parse the ICU message
+  const result = parseIcu(message)
+
+  if (!result.success) {
+    if (strict) {
+      throw new Error(`Failed to parse ICU message: ${result.errors[0]?.message}`)
+    }
+    return () => message
+  }
+
+  // Create compilation context and compile
+  const ctx = createCompileContext(options)
+  const parts = compileNodes(result.ast, ctx)
+
+  return createMessageFunction(parts, ctx)
 }
 
 /**

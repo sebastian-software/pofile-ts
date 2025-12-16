@@ -381,6 +381,16 @@ function buildExactMatchCode(
   return code
 }
 
+/** Gets the adjusted variable expression for offset handling */
+function getAdjustedVar(varName: string, offset: number): string {
+  return offset > 0 ? `((v?.${varName} ?? 0) - ${offset})` : `(v?.${varName} ?? 0)`
+}
+
+/** Gets the fallback code for unmatched categories */
+function getCategoryFallback(varName: string, categoryMatches: Record<string, string>): string {
+  return categoryMatches.other ?? `"{${varName}}"`
+}
+
 /** Builds ternary chain for CLDR category matches using plural function */
 function buildCategoryMatchCode(
   varName: string,
@@ -388,33 +398,34 @@ function buildCategoryMatchCode(
   categoryMatches: Record<string, string>,
   ctx: CodeGenContext
 ): string {
-  const categories = ctx.pluralCategories
-
   if (Object.keys(categoryMatches).length === 0) {
     return `"{${varName}}"`
   }
 
-  const adjustedVar = offset > 0 ? `((v?.${varName} ?? 0) - ${offset})` : `(v?.${varName} ?? 0)`
-  let code = ""
+  const categories = ctx.pluralCategories
+  const adjustedVar = getAdjustedVar(varName, offset)
+  const fallback = getCategoryFallback(varName, categoryMatches)
+  const parts: string[] = []
 
   for (let i = 0; i < categories.length; i++) {
     const category = categories[i]
-    if (category && categoryMatches[category]) {
-      // Last category or "other" is the fallback (no condition needed)
-      if (i === categories.length - 1 || category === "other") {
-        code += categoryMatches[category]
-      } else {
-        code += `_pf(${adjustedVar}) === ${i} ? ${categoryMatches[category]} : `
-      }
+    const matchCode = category ? categoryMatches[category] : undefined
+    if (!matchCode) {
+      continue
+    }
+
+    // Last category or "other" is the fallback (no condition needed)
+    const isLast = i === categories.length - 1 || category === "other"
+    if (isLast) {
+      parts.push(matchCode)
+    } else {
+      parts.push(`_pf(${adjustedVar}) === ${i} ? ${matchCode} : `)
     }
   }
 
+  const code = parts.join("")
   // Ensure we have a fallback
-  if (!code.endsWith(categoryMatches.other ?? '""')) {
-    code += categoryMatches.other ?? `"{${varName}}"`
-  }
-
-  return code
+  return code.endsWith(fallback) ? code : code + fallback
 }
 
 /**
