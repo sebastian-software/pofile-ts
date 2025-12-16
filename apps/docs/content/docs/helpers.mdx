@@ -425,17 +425,14 @@ nameFn({ lang: "en" })
 
 These formatters require native `Intl` APIs. Check browser compatibility:
 
-| Format          | Intl API                  | Support                                                                                                              |
-| --------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `{x, list}`     | `Intl.ListFormat`         | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_listformat) — Chrome 72+, Firefox 78+, Safari 14.1+       |
-| `{x, duration}` | `Intl.DurationFormat`     | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_durationformat) — Chrome 129+, Firefox 131+ ⚠️            |
-| `{x, ago}`      | `Intl.RelativeTimeFormat` | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_relativetimeformat) — Chrome 71+, Firefox 65+, Safari 14+ |
-| `{x, name}`     | `Intl.DisplayNames`       | [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_displaynames) — Chrome 81+, Firefox 86+, Safari 14.1+     |
+| Format          | Intl API                  | Baseline | Links                                                                                                                                                                                            |
+| --------------- | ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `{x, list}`     | `Intl.ListFormat`         | 2021     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_listformat)                 |
+| `{x, ago}`      | `Intl.RelativeTimeFormat` | 2020     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_relativetimeformat) |
+| `{x, name}`     | `Intl.DisplayNames`       | 2021     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_displaynames)             |
+| `{x, duration}` | `Intl.DurationFormat`     | 2025     | [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DurationFormat) · [CanIUse](https://caniuse.com/mdn-javascript_builtins_intl_durationformat)         |
 
-<Callout type="warn">
-  `Intl.DurationFormat` is a **Stage 3 proposal** and not yet widely supported. pofile-ts provides a
-  JSON fallback when the API is unavailable.
-</Callout>
+All APIs are part of the [Baseline](https://web.dev/baseline) standard, meaning they work across the latest versions of Chrome, Firefox, Safari, and Edge. For older browsers, pofile-ts provides a JSON fallback for `duration`.
 
 ### Case-Insensitive Keywords
 
