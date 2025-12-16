@@ -170,6 +170,18 @@ export default function Home() {
               alt="ESM & CJS"
               className="h-5"
             />
+            <img
+              src="https://img.shields.io/badge/node-20%2B-brightgreen"
+              alt="Node 20+"
+              className="h-5"
+            />
+            <a href="https://bun.sh/" target="_blank" rel="noopener noreferrer">
+              <img
+                src="https://img.shields.io/badge/bun-compatible-f472b6"
+                alt="Bun compatible"
+                className="h-5"
+              />
+            </a>
           </div>
         </div>
       </section>
