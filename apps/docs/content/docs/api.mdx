@@ -215,3 +215,35 @@ splitMultilineComments(["Line1\nLine2", "Line3"])
 splitMultilineComments(["  First\r\n  Second  "])
 // → ["First", "Second"]
 ```
+
+## Item Metadata
+
+Store custom key-value metadata on translation items. Useful for tracking translation sources, timestamps, and tool integration.
+
+```typescript
+import { createItem, parsePo, stringifyPo } from "pofile-ts"
+
+// Add metadata to items
+const item = createItem()
+item.msgid = "Welcome"
+item.msgstr = ["Willkommen"]
+item.metadata = {
+  origin: "LLM",
+  modified: "2024-01-15",
+  confidence: "0.95",
+  model: "gpt-4"
+}
+
+// Serializes as #@ comments
+stringifyPo(po)
+// #@ origin: LLM
+// #@ modified: 2024-01-15
+// #@ confidence: 0.95
+// #@ model: gpt-4
+// msgid "Welcome"
+// msgstr "Willkommen"
+
+// Parse metadata from PO files
+const parsed = parsePo(content)
+console.log(parsed.items[0]?.metadata.origin) // "LLM"
+```

@@ -1,0 +1,27 @@
+# Test file for metadata comments
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: de\n"
+
+# Translator comment
+#. Extracted comment
+#@ origin: LLM
+#@ modified: 2024-01-15
+#@ confidence: 0.95
+#: src/app.ts:42
+#, fuzzy
+msgid "Hello"
+msgstr "Hallo"
+
+#@ origin: TMS
+#@ modified: 2024-01-10
+msgid "Goodbye"
+msgstr "Auf Wiedersehen"
+
+#@ origin: manual
+#@ reviewer: john.doe
+#@ timestamp: 2024-01-15T10:30:00Z
+msgid "Welcome"
+msgstr "Willkommen"
+

@@ -186,7 +186,7 @@ function parseLine(
 }
 
 /**
- * Parses comment lines (#: #, # #.)
+ * Parses comment lines (#: #, # #. #@)
  * Assumes line starts with '#' (checked by caller).
  */
 function parseCommentLine(
@@ -209,6 +209,10 @@ function parseCommentLine(
     // Extracted comment: #.
     finishItem(state, po, nplurals)
     state.item.extractedComments.push(line.slice(2).trim())
+  } else if (secondChar === "@") {
+    // Metadata comment: #@ key: value
+    finishItem(state, po, nplurals)
+    parseMetadata(line, state.item)
   } else if (secondChar === undefined || secondChar === " ") {
     // Translator comment: # or #<space>
     finishItem(state, po, nplurals)
@@ -265,6 +269,24 @@ function parseFlags(line: string, item: PoItem): void {
   const flags = line.slice(2).trim().split(",")
   for (const flag of flags) {
     item.flags[flag.trim()] = true
+  }
+}
+
+/**
+ * Parses metadata comment line (#@ key: value) and adds to item.
+ */
+function parseMetadata(line: string, item: PoItem): void {
+  const content = line.slice(2).trim()
+  const colonIndex = content.indexOf(":")
+  if (colonIndex === -1) {
+    return
+  }
+  const key = content.substring(0, colonIndex).trim()
+  const value = content.substring(colonIndex + 1).trim()
+  if (key) {
+    // Cast to allow access - item.metadata is always initialized by createItem
+    const metadata = item.metadata as Record<string, string>
+    metadata[key] = value
   }
 }
 

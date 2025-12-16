@@ -14,6 +14,7 @@ The [PO (Portable Object) format](https://www.gnu.org/software/gettext/manual/ht
 | Message context                                                                         |    ✅     | `msgctxt`                                      |
 | Comments                                                                                |    ✅     | `#`, `#.`, `#:`, `#,`                          |
 | Flags                                                                                   |    ✅     | `fuzzy`, `no-wrap`, etc.                       |
+| Metadata                                                                                |    ✅     | `#@ key: value`                                |
 | Obsolete entries                                                                        |    ✅     | `#~`                                           |
 | All UTF-8 content                                                                       |    ✅     | —                                              |
 
@@ -90,3 +91,57 @@ msgstr "{count, plural, one {# Element} other {# Elemente}}"
 | Translator UX     |    ✅ Simple    | ⚠️ Must understand ICU syntax |
 
 **TL;DR:** Use native Gettext plurals for simple pluralization. Use ICU when you need select, selectordinal, or nested constructs.
+
+## Metadata Comments
+
+pofile-ts supports custom metadata as key-value pairs on each translation entry. This is useful for tracking translation sources, timestamps, confidence scores, and other tool-specific data.
+
+### Format
+
+Metadata uses the `#@` comment prefix:
+
+```po
+#@ origin: LLM
+#@ modified: 2024-01-15
+#@ confidence: 0.95
+#@ reviewer: john.doe
+msgid "Welcome"
+msgstr "Willkommen"
+```
+
+### Usage
+
+```typescript
+import { createItem, parsePo } from "pofile-ts"
+
+// Create item with metadata
+const item = createItem()
+item.msgid = "Welcome"
+item.msgstr = ["Willkommen"]
+item.metadata = {
+  origin: "LLM",
+  modified: "2024-01-15",
+  confidence: "0.95"
+}
+
+// Parse existing metadata
+const po = parsePo(poContent)
+const origin = po.items[0]?.metadata.origin // "LLM"
+```
+
+### Common Use Cases
+
+| Key          | Example Value          | Description                    |
+| ------------ | ---------------------- | ------------------------------ |
+| `origin`     | `LLM`, `TMS`, `manual` | Translation source             |
+| `modified`   | `2024-01-15`           | Last modification date         |
+| `confidence` | `0.95`                 | Machine translation confidence |
+| `reviewer`   | `john.doe`             | Human reviewer                 |
+| `timestamp`  | `2024-01-15T10:30:00Z` | ISO timestamp                  |
+| `model`      | `gpt-4`                | LLM model used                 |
+| `version`    | `2`                    | Translation revision number    |
+
+<Callout type="info">
+  **Note:** The `#@` prefix is a pofile-ts extension. While valid PO syntax, other tools may not
+  recognize these comments as structured metadata.
+</Callout>

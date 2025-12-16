@@ -58,6 +58,21 @@ export interface PoItem {
   /** Flags like "fuzzy", "no-wrap", etc. */
   flags: Record<string, boolean>
 
+  /**
+   * Custom metadata as key-value pairs.
+   *
+   * Useful for tool integration, tracking translation sources, timestamps, etc.
+   * Serialized as `#@ key: value` comments in PO files.
+   *
+   * @example
+   * metadata: {
+   *   origin: "LLM",
+   *   modified: "2024-01-15",
+   *   confidence: "0.95"
+   * }
+   */
+  metadata: Record<string, string>
+
   /** Whether this entry is marked as obsolete (#~) */
   obsolete: boolean
 

@@ -18,6 +18,7 @@ export function createItem(options?: CreateItemOptions): PoItem {
     comments: [],
     extractedComments: [],
     flags: {},
+    metadata: {},
     obsolete: false,
     nplurals: isNaN(npluralsNumber) ? 2 : npluralsNumber
   }
@@ -34,10 +35,11 @@ export function stringifyItem(item: PoItem, options?: SerializeOptions): string 
   const lines: string[] = []
   const obsoletePrefix = item.obsolete ? "#~ " : ""
 
-  // Comments (order: translator, extracted, references, flags)
+  // Comments (order: translator, extracted, metadata, references, flags)
   // Cast to allow undefined - handles incomplete items created manually
   const comments = item.comments as string[] | undefined
   const extractedComments = item.extractedComments as string[] | undefined
+  const metadata = item.metadata as Record<string, string> | undefined
   const references = item.references as string[] | undefined
   const flags = item.flags as Record<string, boolean> | undefined
 
@@ -46,6 +48,12 @@ export function stringifyItem(item: PoItem, options?: SerializeOptions): string 
   }
   for (const c of extractedComments ?? []) {
     lines.push(c ? "#. " + c : "#.")
+  }
+  for (const key in metadata ?? {}) {
+    const value = metadata?.[key]
+    if (value !== undefined) {
+      lines.push("#@ " + key + ": " + value)
+    }
   }
   for (const ref of references ?? []) {
     lines.push("#: " + ref)

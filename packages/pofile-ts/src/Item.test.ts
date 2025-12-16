@@ -87,6 +87,75 @@ describe("stringifyItem", () => {
     })
   })
 
+  describe("metadata", () => {
+    it("writes metadata comments", () => {
+      const item = createItem()
+      item.msgid = "test"
+      item.metadata = {
+        origin: "LLM",
+        modified: "2024-01-15"
+      }
+      const str = stringifyItem(item)
+      assertHasLine(str, "#@ origin: LLM")
+      assertHasLine(str, "#@ modified: 2024-01-15")
+    })
+
+    it("handles empty metadata", () => {
+      const item = createItem()
+      item.msgid = "test"
+      const str = stringifyItem(item)
+      expect(str).not.toContain("#@")
+    })
+
+    it("handles metadata with colons in value", () => {
+      const item = createItem()
+      item.msgid = "test"
+      item.metadata = {
+        timestamp: "2024-01-15T10:30:00Z"
+      }
+      const str = stringifyItem(item)
+      assertHasLine(str, "#@ timestamp: 2024-01-15T10:30:00Z")
+    })
+
+    it("writes metadata in correct position (after extracted comments, before references)", () => {
+      const item = createItem()
+      item.msgid = "test"
+      item.extractedComments = ["extracted"]
+      item.metadata = { origin: "TMS" }
+      item.references = ["file.ts:1"]
+      const str = stringifyItem(item)
+      const lines = str.split("\n")
+      const extractedIdx = lines.findIndex((l) => l.includes("#. extracted"))
+      const metadataIdx = lines.findIndex((l) => l.includes("#@ origin"))
+      const refIdx = lines.findIndex((l) => l.includes("#: file.ts"))
+      expect(extractedIdx).toBeLessThan(metadataIdx)
+      expect(metadataIdx).toBeLessThan(refIdx)
+    })
+
+    it("parses metadata from fixture file", () => {
+      const po = parsePo(readFixture("metadata.po"))
+
+      expect(po.items[0]?.metadata).toEqual({
+        origin: "LLM",
+        modified: "2024-01-15",
+        confidence: "0.95"
+      })
+      expect(po.items[0]?.flags.fuzzy).toBe(true)
+      expect(po.items[0]?.comments).toEqual(["Translator comment"])
+
+      expect(po.items[1]?.metadata).toEqual({
+        origin: "TMS",
+        modified: "2024-01-10"
+      })
+
+      expect(po.items[2]?.metadata).toEqual({
+        origin: "manual",
+        reviewer: "john.doe",
+        timestamp: "2024-01-15T10:30:00Z"
+      })
+    })
+  })
+
   describe("obsolete items", () => {
     it("writes obsolete items", () => {
       const po = parsePo(readFixture("commented.po"))
@@ -454,5 +523,67 @@ describe("roundtrip", () => {
 
     expect(parsed.items[0]?.obsolete).toBe(true)
     expect(parsed.items[0]?.msgid).toBe("old text")
+  })
+
+  it("roundtrips metadata", () => {
+    const original = createPoFile()
+    const item = createItem()
+    item.msgid = "test"
+    item.msgstr = ["Test"]
+    item.metadata = {
+      origin: "LLM",
+      modified: "2024-01-15",
+      confidence: "0.95",
+      reviewer: "human"
+    }
+    original.items.push(item)
+
+    const serialized = stringifyPo(original)
+    const parsed = parsePo(serialized)
+
+    expect(parsed.items[0]?.metadata).toEqual({
+      origin: "LLM",
+      modified: "2024-01-15",
+      confidence: "0.95",
+      reviewer: "human"
+    })
+  })
+
+  it("roundtrips metadata with colons in values", () => {
+    const original = createPoFile()
+    const item = createItem()
+    item.msgid = "test"
+    item.msgstr = ["Test"]
+    item.metadata = {
+      timestamp: "2024-01-15T10:30:00Z",
+      url: "https://example.com"
+    }
+    original.items.push(item)
+
+    const serialized = stringifyPo(original)
+    const parsed = parsePo(serialized)
+
+    expect(parsed.items[0]?.metadata).toEqual({
+      timestamp: "2024-01-15T10:30:00Z",
+      url: "https://example.com"
+    })
+  })
+
+  it("roundtrips empty metadata values", () => {
+    const original = createPoFile()
+    const item = createItem()
+    item.msgid = "test"
+    item.msgstr = ["Test"]
+    item.metadata = {
+      notes: ""
+    }
+    original.items.push(item)
+
+    const serialized = stringifyPo(original)
+    const parsed = parsePo(serialized)
+
+    expect(parsed.items[0]?.metadata).toEqual({
+      notes: ""
+    })
   })
 })
