@@ -240,7 +240,7 @@ function generateDurationCode(varValue: string, style: string | null, ctx: CodeG
   const varName = safeVarName(varValue)
   const fallback = JSON.stringify(`{${varValue}}`)
   const styleStr = JSON.stringify(style ?? "long")
-  // DurationFormat is still a stage 3 proposal, generate runtime check
+  // DurationFormat (Baseline 2025) - generate runtime check for older environments
   return `(v?.${varName} != null && typeof Intl !== "undefined" && "DurationFormat" in Intl ? new Intl.DurationFormat(${JSON.stringify(ctx.locale)}, { style: ${styleStr} }).format(v.${varName}) : v?.${varName} ?? ${fallback})`
 }
 

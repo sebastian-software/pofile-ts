@@ -368,7 +368,7 @@ function compileNode(
           return `{${node.value}}`
         }
         // Duration can be a DurationLike object or we format it manually
-        // Intl.DurationFormat is still a stage 3 proposal, so we provide a fallback
+        // DurationFormat (Baseline 2025) - runtime check for older environments
         if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
           const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
