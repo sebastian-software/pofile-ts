@@ -31,6 +31,32 @@ export const IcuNodeType = {
 
 export type IcuNodeType = (typeof IcuNodeType)[keyof typeof IcuNodeType]
 
+/** Reverse mapping from numeric type to name (for debugging) */
+const nodeTypeNames: Record<IcuNodeType, string> = {
+  [IcuNodeType.literal]: "literal",
+  [IcuNodeType.argument]: "argument",
+  [IcuNodeType.number]: "number",
+  [IcuNodeType.date]: "date",
+  [IcuNodeType.time]: "time",
+  [IcuNodeType.select]: "select",
+  [IcuNodeType.plural]: "plural",
+  [IcuNodeType.pound]: "pound",
+  [IcuNodeType.tag]: "tag"
+}
+
+/**
+ * Returns the string name for a node type.
+ * Useful for debugging since node types are numeric.
+ *
+ * @example
+ * getNodeTypeName(6)              // → "plural"
+ * getNodeTypeName(node.type)      // → "select"
+ * getNodeTypeName(IcuNodeType.tag) // → "tag"
+ */
+export function getNodeTypeName(type: IcuNodeType): string {
+  return nodeTypeNames[type] ?? "unknown"
+}
+
 /**
  * Source location in the message string.
  */

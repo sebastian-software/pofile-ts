@@ -99,10 +99,18 @@ function buildBaseHeaders(options: CreateHeadersOptions, now: string): Partial<H
 }
 
 /**
- * Generates a minimal Plural-Forms header from CLDR data.
- * Only includes nplurals - plural expression is a simple fallback.
+ * Generates a Plural-Forms header string for a locale.
+ *
+ * Uses CLDR data via Intl.PluralRules to determine nplurals.
+ * The plural expression is a simple fallback - for accurate runtime
+ * plural selection, use `getPluralFunction(locale)` instead.
+ *
+ * @example
+ * getPluralFormsHeader("de")  // → "nplurals=2; plural=(n != 1);"
+ * getPluralFormsHeader("pl")  // → "nplurals=4; plural=(n != 1);"
+ * getPluralFormsHeader("ar")  // → "nplurals=6; plural=(n != 1);"
  */
-function generatePluralFormsHeader(language: string): string {
+export function getPluralFormsHeader(language: string): string {
   const nplurals = getPluralCount(language)
   // Simple expression that works for 1-2 forms
   // For 3+ forms, tools should use their own CLDR data
@@ -131,7 +139,7 @@ export function createDefaultHeaders(options: CreateHeadersOptions = {}): Partia
   if (typeof options.pluralForms === "string") {
     headers["Plural-Forms"] = options.pluralForms
   } else if (options.pluralForms !== false && options.language) {
-    headers["Plural-Forms"] = generatePluralFormsHeader(options.language)
+    headers["Plural-Forms"] = getPluralFormsHeader(options.language)
   }
 
   // Apply custom headers (can override defaults)

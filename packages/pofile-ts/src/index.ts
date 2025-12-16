@@ -4,7 +4,7 @@ export { stringifyPo } from "./stringify"
 export { createItem, stringifyItem } from "./Item"
 
 // Header utilities
-export { createDefaultHeaders, formatPoDate } from "./headers"
+export { createDefaultHeaders, formatPoDate, getPluralFormsHeader } from "./headers"
 
 // Reference utilities
 export {
@@ -43,9 +43,11 @@ export {
   compareVariables,
   hasPlural,
   hasSelect,
+  hasSelectOrdinal,
   hasIcuSyntax,
   IcuNodeType,
   IcuErrorKind,
+  getNodeTypeName,
   // Conversion (Gettext ↔ ICU)
   gettextToIcu,
   isPluralItem,

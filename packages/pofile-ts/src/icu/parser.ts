@@ -181,14 +181,17 @@ export class IcuParser {
       this.error("Expected argument type", start)
     }
 
-    switch (argType) {
+    // ICU keywords are case-insensitive per spec
+    const argTypeLower = argType.toLowerCase()
+
+    switch (argTypeLower) {
       case "number":
       case "date":
       case "time":
-        return this.parseFormattedArg(argType, name, start)
+        return this.parseFormattedArg(argTypeLower, name, start)
       case "plural":
       case "selectordinal":
-        return this.parsePlural(argType, name, depth, start)
+        return this.parsePlural(argTypeLower, name, depth, start)
       case "select":
         return this.parseSelect(name, depth, start)
       default:

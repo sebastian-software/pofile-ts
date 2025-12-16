@@ -6,6 +6,7 @@ import {
   compareVariables,
   hasPlural,
   hasSelect,
+  hasSelectOrdinal,
   hasIcuSyntax
 } from "./utils"
 
@@ -240,6 +241,42 @@ describe("hasSelect", () => {
 
   it("detects select inside tags", () => {
     expect(hasSelect("<b>{g, select, a {A} other {O}}</b>")).toBe(true)
+  })
+})
+
+describe("hasSelectOrdinal", () => {
+  it("returns true for selectordinal messages", () => {
+    expect(hasSelectOrdinal("{n, selectordinal, one {#st} other {#th}}")).toBe(true)
+  })
+
+  it("returns true for camelCase selectOrdinal", () => {
+    expect(hasSelectOrdinal("{n, selectOrdinal, one {#st} other {#th}}")).toBe(true)
+  })
+
+  it("returns false for cardinal plural", () => {
+    expect(hasSelectOrdinal("{n, plural, one {#} other {#}}")).toBe(false)
+  })
+
+  it("returns false for select", () => {
+    expect(hasSelectOrdinal("{g, select, male {He} other {They}}")).toBe(false)
+  })
+
+  it("returns false for simple messages", () => {
+    expect(hasSelectOrdinal("Hello {name}")).toBe(false)
+  })
+
+  it("returns false for invalid ICU", () => {
+    expect(hasSelectOrdinal("{unclosed")).toBe(false)
+  })
+
+  it("detects nested selectordinal", () => {
+    expect(
+      hasSelectOrdinal("{g, select, male {{n, selectordinal, one {#st} other {#th}}} other {They}}")
+    ).toBe(true)
+  })
+
+  it("detects selectordinal inside tags", () => {
+    expect(hasSelectOrdinal("<b>{n, selectordinal, one {#st} other {#th}}</b>")).toBe(true)
   })
 })
 

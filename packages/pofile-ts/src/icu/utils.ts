@@ -129,7 +129,7 @@ export function compareVariables(source: string, translation: string): IcuVariab
 }
 
 /**
- * Check if a message contains ICU plural syntax.
+ * Check if a message contains ICU plural syntax (cardinal or ordinal).
  */
 export function hasPlural(message: string): boolean {
   const result = parseIcu(message, { requiresOtherClause: false })
@@ -137,6 +137,18 @@ export function hasPlural(message: string): boolean {
     return false
   }
   return containsNodeType(result.ast, IcuNodeType.plural)
+}
+
+/**
+ * Check if a message contains ICU selectordinal syntax.
+ * Note: selectordinal is internally stored as a plural node with pluralType: "ordinal".
+ */
+export function hasSelectOrdinal(message: string): boolean {
+  const result = parseIcu(message, { requiresOtherClause: false })
+  if (!result.success) {
+    return false
+  }
+  return containsOrdinalPlural(result.ast)
 }
 
 /**
@@ -282,6 +294,39 @@ function extractVariableInfoFromAst(nodes: IcuNode[]): IcuVariable[] {
 function containsNodeType(nodes: IcuNode[], type: IcuNodeType): boolean {
   function check(node: IcuNode): boolean {
     if (node.type === type) {
+      return true
+    }
+
+    switch (node.type) {
+      case IcuNodeType.plural:
+      case IcuNodeType.select:
+        for (const option of Object.values(node.options)) {
+          for (const child of option.value) {
+            if (check(child)) {
+              return true
+            }
+          }
+        }
+        break
+
+      case IcuNodeType.tag:
+        for (const child of node.children) {
+          if (check(child)) {
+            return true
+          }
+        }
+        break
+    }
+
+    return false
+  }
+
+  return nodes.some(check)
+}
+
+function containsOrdinalPlural(nodes: IcuNode[]): boolean {
+  function check(node: IcuNode): boolean {
+    if (node.type === IcuNodeType.plural && node.pluralType === "ordinal") {
       return true
     }
 

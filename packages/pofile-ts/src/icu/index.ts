@@ -34,6 +34,7 @@ export {
   compareVariables,
   hasPlural,
   hasSelect,
+  hasSelectOrdinal,
   hasIcuSyntax,
   type IcuVariable,
   type IcuValidationResult,
@@ -43,6 +44,7 @@ export {
 export {
   IcuNodeType,
   IcuErrorKind,
+  getNodeTypeName,
   type IcuNode,
   type IcuLiteralNode,
   type IcuArgumentNode,

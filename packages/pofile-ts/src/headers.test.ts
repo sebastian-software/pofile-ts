@@ -1,5 +1,33 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { createDefaultHeaders, formatPoDate } from "./headers"
+import { createDefaultHeaders, formatPoDate, getPluralFormsHeader } from "./headers"
+
+describe("getPluralFormsHeader", () => {
+  it("returns correct header for German (2 forms)", () => {
+    expect(getPluralFormsHeader("de")).toBe("nplurals=2; plural=(n != 1);")
+  })
+
+  it("returns correct header for Polish (4 forms)", () => {
+    expect(getPluralFormsHeader("pl")).toBe("nplurals=4; plural=(n != 1);")
+  })
+
+  it("returns correct header for Arabic (6 forms)", () => {
+    expect(getPluralFormsHeader("ar")).toBe("nplurals=6; plural=(n != 1);")
+  })
+
+  it("returns correct header for Chinese (1 form)", () => {
+    expect(getPluralFormsHeader("zh")).toBe("nplurals=1; plural=0;")
+  })
+
+  it("handles locale with region", () => {
+    // pt-BR has 3 plural forms according to CLDR
+    expect(getPluralFormsHeader("pt-BR")).toBe("nplurals=3; plural=(n != 1);")
+  })
+
+  it("handles underscore locale format", () => {
+    // Underscores are normalized to hyphens
+    expect(getPluralFormsHeader("pt_BR")).toBe("nplurals=3; plural=(n != 1);")
+  })
+})
 
 describe("formatPoDate", () => {
   it("formats date in PO format", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { parseIcu } from "./parser"
-import { IcuNodeType } from "./types"
+import { IcuNodeType, getNodeTypeName } from "./types"
 
 describe("parseIcu", () => {
   describe("literals", () => {
@@ -238,6 +238,25 @@ describe("parseIcu", () => {
         pluralType: "ordinal"
       })
     })
+
+    it("parses camelCase selectOrdinal (case-insensitive)", () => {
+      const result = parseIcu("{count, selectOrdinal, one {#st} other {#th}}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: IcuNodeType.plural,
+        value: "count",
+        pluralType: "ordinal"
+      })
+    })
+
+    it("parses SELECTORDINAL (all uppercase)", () => {
+      const result = parseIcu("{n, SELECTORDINAL, one {#st} other {#th}}")
+      expect(result.success).toBe(true)
+      expect(result.ast![0]).toMatchObject({
+        type: IcuNodeType.plural,
+        pluralType: "ordinal"
+      })
+    })
   })
 
   describe("select", () => {
@@ -443,5 +462,48 @@ describe("parseIcu", () => {
       expect(result.success).toBe(false)
       expect(result.errors[0]!.message).toContain("Invalid argument type")
     })
+  })
+})
+
+describe("getNodeTypeName", () => {
+  it("returns correct name for literal", () => {
+    expect(getNodeTypeName(IcuNodeType.literal)).toBe("literal")
+  })
+
+  it("returns correct name for argument", () => {
+    expect(getNodeTypeName(IcuNodeType.argument)).toBe("argument")
+  })
+
+  it("returns correct name for number", () => {
+    expect(getNodeTypeName(IcuNodeType.number)).toBe("number")
+  })
+
+  it("returns correct name for date", () => {
+    expect(getNodeTypeName(IcuNodeType.date)).toBe("date")
+  })
+
+  it("returns correct name for time", () => {
+    expect(getNodeTypeName(IcuNodeType.time)).toBe("time")
+  })
+
+  it("returns correct name for select", () => {
+    expect(getNodeTypeName(IcuNodeType.select)).toBe("select")
+  })
+
+  it("returns correct name for plural", () => {
+    expect(getNodeTypeName(IcuNodeType.plural)).toBe("plural")
+  })
+
+  it("returns correct name for pound", () => {
+    expect(getNodeTypeName(IcuNodeType.pound)).toBe("pound")
+  })
+
+  it("returns correct name for tag", () => {
+    expect(getNodeTypeName(IcuNodeType.tag)).toBe("tag")
+  })
+
+  it("works with numeric literals", () => {
+    expect(getNodeTypeName(6)).toBe("plural")
+    expect(getNodeTypeName(0)).toBe("literal")
   })
 })
