@@ -445,23 +445,10 @@ function buildGettextPluralSwitch(varName: string, compiledForms: string[]): str
  * Merges formatter sets from a result into the accumulated set.
  */
 function mergeFormatters(target: FormatterUsage, source: FormatterUsage): void {
-  for (const style of source.number) {
-    target.number.add(style)
-  }
-  for (const style of source.date) {
-    target.date.add(style)
-  }
-  for (const style of source.time) {
-    target.time.add(style)
-  }
-  for (const style of source.list) {
-    target.list.add(style)
-  }
-  for (const style of source.ago) {
-    target.ago.add(style)
-  }
-  for (const style of source.name) {
-    target.name.add(style)
+  for (const key of Object.keys(source) as (keyof FormatterUsage)[]) {
+    for (const style of source[key]) {
+      target[key].add(style)
+    }
   }
 }
 
