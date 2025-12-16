@@ -77,7 +77,7 @@ export default function Home() {
             <p className="max-w-xl text-sm text-fd-muted-foreground md:text-base">
               Modern i18n toolkit with ICU compiler, native CLDR plurals, and format conversion.
               <br className="hidden md:block" />
-              Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
+              Zero dependencies. TypeScript-first. Built for Node 20+, Bun, and modern browsers.
             </p>
           </div>
 

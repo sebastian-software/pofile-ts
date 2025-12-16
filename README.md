@@ -19,7 +19,7 @@
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen)](https://nodejs.org/)
 [![Bun](https://img.shields.io/badge/bun-compatible-f472b6)](https://bun.sh/)
 
-**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 4× faster runtime than Lingui/FormatJS, native CLDR plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+ and modern browsers.
+**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 4× faster runtime than Lingui/FormatJS, native CLDR plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+, Bun, and modern browsers.
 
 ## Why pofile-ts?
 
