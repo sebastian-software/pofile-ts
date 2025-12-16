@@ -68,7 +68,14 @@ export function parseHeaders(headerSection: string, po: PoFile): void {
 }
 
 /**
- * Merges multi-line header strings that don't end with \n.
+ * Merges continuation lines for multi-line header values.
+ *
+ * In PO files, header values can span multiple lines if they don't end with \n.
+ * This function joins them back together.
+ *
+ * @example
+ * Input:  ['"Content-Type: text/plain; "', '"charset=UTF-8\\n"']
+ * Output: ['"Content-Type: text/plain; charset=UTF-8\\n"']
  */
 function mergeMultilineHeaders(lines: string[]): string[] {
   const result: string[] = []
@@ -145,6 +152,11 @@ export function parseItems(lines: string[], po: PoFile, nplurals: string | undef
 
 /**
  * Parses a single line and updates parser state.
+ *
+ * Dispatches based on first character for O(1) line type detection:
+ * - '"': Continuation of previous multiline string
+ * - '#': Comment line (#, #:, #,, #.)
+ * - 'm': Keyword line (msgid, msgstr, msgctxt, msgid_plural)
  */
 function parseLine(
   line: string,
@@ -158,19 +170,16 @@ function parseLine(
 
   const firstChar = line[0]
 
-  // Continuation line (starts with quote)
   if (firstChar === '"') {
     appendMultilineValue(line, state)
     return
   }
 
-  // Comment line (starts with #)
   if (firstChar === "#") {
     parseCommentLine(line, state, po, nplurals)
     return
   }
 
-  // Keyword line (starts with m for msgid/msgstr/msgctxt)
   if (firstChar === "m") {
     parseKeywordLine(line, state, po, nplurals)
   }
@@ -208,8 +217,12 @@ function parseCommentLine(
 }
 
 /**
- * Parses keyword lines (msgid, msgstr, etc.)
- * Assumes line starts with 'm' (checked by caller).
+ * Parses keyword lines (msgid, msgstr, msgctxt, msgid_plural).
+ *
+ * Handles plural forms via bracket syntax: msgstr[0], msgstr[1], etc.
+ * The plural index is parsed inline for efficiency (avoiding regex).
+ *
+ * Note: msgid_plural checked before msgid (longer prefix match first).
  */
 function parseKeywordLine(
   line: string,
@@ -217,7 +230,6 @@ function parseKeywordLine(
   po: PoFile,
   nplurals: string | undefined
 ): void {
-  // Check msgid_plural before msgid (longer match first)
   if (line.startsWith("msgid_plural")) {
     state.item.msgid_plural = extractString(line)
     state.context = "msgid_plural"
@@ -228,7 +240,7 @@ function parseKeywordLine(
     state.context = "msgid"
     state.noCommentLineCount++
   } else if (line.startsWith("msgstr")) {
-    // Fast path: check for plural index only if bracket present
+    // Parse plural index from msgstr[N] - bracket at position 6
     if (line[6] === "[") {
       const closeBracket = line.indexOf("]", 7)
       state.plural = closeBracket > 7 ? parseInt(line.substring(7, closeBracket), 10) : 0
