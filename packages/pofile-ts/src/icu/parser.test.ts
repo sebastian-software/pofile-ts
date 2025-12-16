@@ -233,74 +233,74 @@ describe("parseIcu", () => {
     })
   })
 
-  describe("relativeTime format", () => {
-    it("parses relativeTime with unit", () => {
-      const result = parseIcu("{days, relativeTime, day}")
+  describe("ago format (relative time)", () => {
+    it("parses ago with unit", () => {
+      const result = parseIcu("{days, ago, day}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "relativeTime",
+        type: "ago",
         value: "days",
         style: "day"
       })
     })
 
-    it("parses relativeTime with unit and style", () => {
-      const result = parseIcu("{hours, relativeTime, hour short}")
+    it("parses ago with unit and style", () => {
+      const result = parseIcu("{hours, ago, hour short}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "relativeTime",
+        type: "ago",
         value: "hours",
         style: "hour short"
       })
     })
 
     it("handles case-insensitive keyword", () => {
-      const result = parseIcu("{n, RelativeTime, day}")
+      const result = parseIcu("{n, AGO, day}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "relativeTime",
+        type: "ago",
         value: "n",
         style: "day"
       })
     })
   })
 
-  describe("displayNames format", () => {
-    it("parses displayNames with language type", () => {
-      const result = parseIcu("{lang, displayNames, language}")
+  describe("name format (display names)", () => {
+    it("parses name with language type", () => {
+      const result = parseIcu("{lang, name, language}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "displayNames",
+        type: "name",
         value: "lang",
         style: "language"
       })
     })
 
-    it("parses displayNames with region type", () => {
-      const result = parseIcu("{country, displayNames, region}")
+    it("parses name with region type", () => {
+      const result = parseIcu("{country, name, region}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "displayNames",
+        type: "name",
         value: "country",
         style: "region"
       })
     })
 
-    it("parses displayNames with currency type", () => {
-      const result = parseIcu("{code, displayNames, currency}")
+    it("parses name with currency type", () => {
+      const result = parseIcu("{code, name, currency}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "displayNames",
+        type: "name",
         value: "code",
         style: "currency"
       })
     })
 
     it("handles case-insensitive keyword", () => {
-      const result = parseIcu("{code, DISPLAYNAMES, language}")
+      const result = parseIcu("{code, NAME, language}")
       expect(result.success).toBe(true)
       expect(result.ast![0]).toMatchObject({
-        type: "displayNames",
+        type: "name",
         value: "code",
         style: "language"
       })

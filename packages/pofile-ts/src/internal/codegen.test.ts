@@ -159,8 +159,8 @@ describe("codegen", () => {
       date: new Set<string>(),
       time: new Set<string>(),
       list: new Set<string>(),
-      relativeTime: new Set<string>(),
-      displayNames: new Set<string>()
+      ago: new Set<string>(),
+      name: new Set<string>()
     }
 
     it("returns null when no formatters used", () => {
@@ -208,16 +208,16 @@ describe("codegen", () => {
       expect(code).toContain('type: "disjunction"')
     })
 
-    it("generates relativeTime formatter", () => {
-      const used = { ...emptyFormatters, relativeTime: new Set<string>(["day_long"]) }
+    it("generates ago (relativeTime) formatter", () => {
+      const used = { ...emptyFormatters, ago: new Set<string>(["day_long"]) }
       const code = generateFormatterDeclarations("en", used)
       expect(code).toContain("_rtf_day_long")
       expect(code).toContain('new Intl.RelativeTimeFormat("en"')
       expect(code).toContain('style: "long"')
     })
 
-    it("generates displayNames formatter", () => {
-      const used = { ...emptyFormatters, displayNames: new Set<string>(["language"]) }
+    it("generates name (displayNames) formatter", () => {
+      const used = { ...emptyFormatters, name: new Set<string>(["language"]) }
       const code = generateFormatterDeclarations("en", used)
       expect(code).toContain("_dn_language")
       expect(code).toContain('new Intl.DisplayNames("en"')

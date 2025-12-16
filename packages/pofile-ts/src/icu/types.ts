@@ -13,8 +13,8 @@ export type IcuNodeType =
   | "time"
   | "list"
   | "duration"
-  | "relativeTime"
-  | "displayNames"
+  | "ago"
+  | "name"
   | "select"
   | "plural"
   | "pound"
@@ -131,36 +131,36 @@ export interface IcuDurationNode extends IcuNodeBase {
 }
 
 /**
- * Relative time format: {val, relativeTime, unit}
+ * Relative time format: {val, ago, unit}
  *
  * Formats relative time using Intl.RelativeTimeFormat.
  * Unit is required: second, minute, hour, day, week, month, quarter, year
  * Style can be appended after unit: day long, day short, day narrow
  *
  * @example
- * {days, relativeTime, day} → "in 3 days" or "3 days ago"
- * {hours, relativeTime, hour short} → "in 2 hr."
+ * {days, ago, day} → "in 3 days" or "3 days ago"
+ * {hours, ago, hour short} → "in 2 hr."
  */
-export interface IcuRelativeTimeNode extends IcuNodeBase {
-  type: "relativeTime"
+export interface IcuAgoNode extends IcuNodeBase {
+  type: "ago"
   value: string
   /** The time unit and optional style, e.g. "day", "hour short" */
   style: string | null
 }
 
 /**
- * Display names format: {code, displayNames, type}
+ * Display names format: {code, name, type}
  *
  * Formats codes to localized display names using Intl.DisplayNames.
  * Type is required: language, region, script, currency, calendar, dateTimeField
  *
  * @example
- * {lang, displayNames, language} → "English" (for "en")
- * {country, displayNames, region} → "Germany" (for "DE")
- * {cur, displayNames, currency} → "Euro" (for "EUR")
+ * {lang, name, language} → "English" (for "en")
+ * {country, name, region} → "Germany" (for "DE")
+ * {cur, name, currency} → "Euro" (for "EUR")
  */
-export interface IcuDisplayNamesNode extends IcuNodeBase {
-  type: "displayNames"
+export interface IcuNameNode extends IcuNodeBase {
+  type: "name"
   value: string
   /** The display names type, e.g. "language", "region", "currency" */
   style: string | null
@@ -224,8 +224,8 @@ export type IcuNode =
   | IcuTimeNode
   | IcuListNode
   | IcuDurationNode
-  | IcuRelativeTimeNode
-  | IcuDisplayNamesNode
+  | IcuAgoNode
+  | IcuNameNode
   | IcuSelectNode
   | IcuPluralNode
   | IcuPoundNode

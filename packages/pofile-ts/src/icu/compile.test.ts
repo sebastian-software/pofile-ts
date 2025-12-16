@@ -327,72 +327,72 @@ describe("compileIcu", () => {
     })
   })
 
-  describe("relativeTime formatting", () => {
+  describe("ago formatting (relative time)", () => {
     it("formats positive relative time", () => {
-      const fn = compileIcu("{days, relativeTime, day}", { locale: "en" })
+      const fn = compileIcu("{days, ago, day}", { locale: "en" })
       expect(fn({ days: 3 })).toBe("in 3 days")
     })
 
     it("formats negative relative time", () => {
-      const fn = compileIcu("{days, relativeTime, day}", { locale: "en" })
+      const fn = compileIcu("{days, ago, day}", { locale: "en" })
       expect(fn({ days: -2 })).toBe("2 days ago")
     })
 
     it("formats hour with short style", () => {
-      const fn = compileIcu("{hours, relativeTime, hour short}", { locale: "en" })
+      const fn = compileIcu("{hours, ago, hour short}", { locale: "en" })
       const result = fn({ hours: 1 })
       expect(result).toContain("1")
       expect(result).toMatch(/hr|hour/i)
     })
 
     it("formats with German locale", () => {
-      const fn = compileIcu("{days, relativeTime, day}", { locale: "de" })
+      const fn = compileIcu("{days, ago, day}", { locale: "de" })
       const result = fn({ days: -1 })
       expect(result).toContain("Tag")
     })
 
     it("shows placeholder for missing value", () => {
-      const fn = compileIcu("{n, relativeTime, day}", { locale: "en" })
+      const fn = compileIcu("{n, ago, day}", { locale: "en" })
       expect(fn({})).toBe("{n}")
     })
 
     it("converts non-number to string", () => {
-      const fn = compileIcu("{n, relativeTime, day}", { locale: "en" })
+      const fn = compileIcu("{n, ago, day}", { locale: "en" })
       expect(fn({ n: "text" })).toBe("text")
     })
   })
 
-  describe("displayNames formatting", () => {
+  describe("name formatting (display names)", () => {
     it("formats language code", () => {
-      const fn = compileIcu("{lang, displayNames, language}", { locale: "en" })
+      const fn = compileIcu("{lang, name, language}", { locale: "en" })
       expect(fn({ lang: "en" })).toBe("English")
       expect(fn({ lang: "de" })).toBe("German")
     })
 
     it("formats region code", () => {
-      const fn = compileIcu("{country, displayNames, region}", { locale: "en" })
+      const fn = compileIcu("{country, name, region}", { locale: "en" })
       expect(fn({ country: "US" })).toBe("United States")
       expect(fn({ country: "DE" })).toBe("Germany")
     })
 
     it("formats currency code", () => {
-      const fn = compileIcu("{code, displayNames, currency}", { locale: "en" })
+      const fn = compileIcu("{code, name, currency}", { locale: "en" })
       expect(fn({ code: "EUR" })).toBe("Euro")
       expect(fn({ code: "USD" })).toBe("US Dollar")
     })
 
     it("formats with German locale", () => {
-      const fn = compileIcu("{lang, displayNames, language}", { locale: "de" })
+      const fn = compileIcu("{lang, name, language}", { locale: "de" })
       expect(fn({ lang: "en" })).toBe("Englisch")
     })
 
     it("shows placeholder for missing value", () => {
-      const fn = compileIcu("{code, displayNames, language}", { locale: "en" })
+      const fn = compileIcu("{code, name, language}", { locale: "en" })
       expect(fn({})).toBe("{code}")
     })
 
     it("returns original value for unknown code", () => {
-      const fn = compileIcu("{code, displayNames, language}", { locale: "en" })
+      const fn = compileIcu("{code, name, language}", { locale: "en" })
       // Unknown codes may return undefined, which should fall back to the original value
       const result = fn({ code: "xyz" })
       expect(result).toBe("xyz")

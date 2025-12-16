@@ -77,8 +77,8 @@ interface FormatterCache {
   date: Map<string, Intl.DateTimeFormat>
   time: Map<string, Intl.DateTimeFormat>
   list: Map<string, Intl.ListFormat>
-  relativeTime: Map<string, Intl.RelativeTimeFormat>
-  displayNames: Map<string, Intl.DisplayNames>
+  ago: Map<string, Intl.RelativeTimeFormat>
+  name: Map<string, Intl.DisplayNames>
 }
 
 /**
@@ -90,8 +90,8 @@ function createFormatterCache(): FormatterCache {
     date: new Map(),
     time: new Map(),
     list: new Map(),
-    relativeTime: new Map(),
-    displayNames: new Map()
+    ago: new Map(),
+    name: new Map()
   }
 }
 
@@ -226,37 +226,37 @@ function parseRelativeTimeStyle(style: string | null): {
 }
 
 /**
- * Gets or creates a relative time formatter.
+ * Gets or creates a relative time formatter for {n, ago, unit}.
  */
-function getRelativeTimeFormatter(
+function getAgoFormatter(
   cache: FormatterCache,
   locale: string,
   style: string | null
 ): { formatter: Intl.RelativeTimeFormat; unit: Intl.RelativeTimeFormatUnit } {
   const { unit, formatStyle } = parseRelativeTimeStyle(style)
   const key = `${unit}:${formatStyle}`
-  let formatter = cache.relativeTime.get(key)
+  let formatter = cache.ago.get(key)
   if (!formatter) {
     formatter = new Intl.RelativeTimeFormat(locale, { style: formatStyle })
-    cache.relativeTime.set(key, formatter)
+    cache.ago.set(key, formatter)
   }
   return { formatter, unit }
 }
 
 /**
- * Gets or creates a display names formatter.
+ * Gets or creates a display names formatter for {code, name, type}.
  */
-function getDisplayNamesFormatter(
+function getNameFormatter(
   cache: FormatterCache,
   locale: string,
   style: string | null
 ): Intl.DisplayNames {
   const type = (style ?? "language") as Intl.DisplayNamesType
   const key = type
-  let formatter = cache.displayNames.get(key)
+  let formatter = cache.name.get(key)
   if (!formatter) {
     formatter = new Intl.DisplayNames(locale, { type })
-    cache.displayNames.set(key, formatter)
+    cache.name.set(key, formatter)
   }
   return formatter
 }
@@ -379,8 +379,8 @@ function compileNode(
       }
     }
 
-    case "relativeTime": {
-      const { formatter, unit } = getRelativeTimeFormatter(ctx.formatters, ctx.locale, node.style)
+    case "ago": {
+      const { formatter, unit } = getAgoFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
         if (typeof val === "number") {
@@ -393,8 +393,8 @@ function compileNode(
       }
     }
 
-    case "displayNames": {
-      const formatter = getDisplayNamesFormatter(ctx.formatters, ctx.locale, node.style)
+    case "name": {
+      const formatter = getNameFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
         if (typeof val === "string") {

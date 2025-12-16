@@ -17,8 +17,8 @@
  * Extended format types (pofile-ts extensions):
  * - List: {items, list}, {items, list, disjunction}
  * - Duration: {d, duration}, {d, duration, short}
- * - RelativeTime: {n, relativeTime, day}, {n, relativeTime, hour short}
- * - DisplayNames: {code, displayNames, language}, {code, displayNames, region}
+ * - Ago: {n, ago, day}, {n, ago, hour short}
+ * - Name: {code, name, language}, {code, name, region}
  *
  * Trade-offs for bundle size / complexity:
  * - Modern JS only (no IE11 polyfills)
@@ -37,8 +37,8 @@ import type {
   IcuTimeNode,
   IcuListNode,
   IcuDurationNode,
-  IcuRelativeTimeNode,
-  IcuDisplayNamesNode,
+  IcuAgoNode,
+  IcuNameNode,
   IcuSelectNode,
   IcuPluralNode,
   IcuTagNode,
@@ -199,8 +199,8 @@ export class IcuParser {
       case "time":
       case "list":
       case "duration":
-      case "relativetime":
-      case "displaynames":
+      case "ago":
+      case "name":
         return this.parseFormattedArg(argTypeLower, name, start)
       case "plural":
       case "selectordinal":
@@ -213,7 +213,7 @@ export class IcuParser {
   }
 
   private parseFormattedArg(
-    argType: "number" | "date" | "time" | "list" | "duration" | "relativetime" | "displaynames",
+    argType: "number" | "date" | "time" | "list" | "duration" | "ago" | "name",
     name: string,
     start: number
   ):
@@ -222,8 +222,8 @@ export class IcuParser {
     | IcuTimeNode
     | IcuListNode
     | IcuDurationNode
-    | IcuRelativeTimeNode
-    | IcuDisplayNamesNode {
+    | IcuAgoNode
+    | IcuNameNode {
     this.skipWhitespace()
     let style: string | null = null
 
@@ -238,22 +238,14 @@ export class IcuParser {
 
     this.expectChar("}", start)
 
-    // Normalize type names to match IcuNodeType
-    const nodeType =
-      argType === "relativetime"
-        ? "relativeTime"
-        : argType === "displaynames"
-          ? "displayNames"
-          : argType
-
-    return { type: nodeType, value: name, style } as
+    return { type: argType, value: name, style } as
       | IcuNumberNode
       | IcuDateNode
       | IcuTimeNode
       | IcuListNode
       | IcuDurationNode
-      | IcuRelativeTimeNode
-      | IcuDisplayNamesNode
+      | IcuAgoNode
+      | IcuNameNode
   }
 
   private parsePlural(

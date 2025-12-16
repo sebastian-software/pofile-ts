@@ -303,8 +303,8 @@ function processCatalogEntries(
     date: Set<string>
     time: Set<string>
     list: Set<string>
-    relativeTime: Set<string>
-    displayNames: Set<string>
+    ago: Set<string>
+    name: Set<string>
   }
   needsPluralFn: boolean
 } {
@@ -314,8 +314,8 @@ function processCatalogEntries(
     date: new Set<string>(),
     time: new Set<string>(),
     list: new Set<string>(),
-    relativeTime: new Set<string>(),
-    displayNames: new Set<string>()
+    ago: new Set<string>(),
+    name: new Set<string>()
   }
   let needsPluralFn = false
 
@@ -371,8 +371,8 @@ function generateGettextPluralCode(
     date: new Set<string>(),
     time: new Set<string>(),
     list: new Set<string>(),
-    relativeTime: new Set<string>(),
-    displayNames: new Set<string>()
+    ago: new Set<string>(),
+    name: new Set<string>()
   }
 
   // Extract the plural variable name from msgid or pluralSource
@@ -413,8 +413,8 @@ function compileGettextForms(
     date: Set<string>
     time: Set<string>
     list: Set<string>
-    relativeTime: Set<string>
-    displayNames: Set<string>
+    ago: Set<string>
+    name: Set<string>
   }
 ): string[] {
   const compiledForms: string[] = []
@@ -462,16 +462,16 @@ function mergeFormatters(
     date: Set<string>
     time: Set<string>
     list: Set<string>
-    relativeTime: Set<string>
-    displayNames: Set<string>
+    ago: Set<string>
+    name: Set<string>
   },
   source: {
     number: Set<string>
     date: Set<string>
     time: Set<string>
     list: Set<string>
-    relativeTime: Set<string>
-    displayNames: Set<string>
+    ago: Set<string>
+    name: Set<string>
   }
 ): void {
   for (const style of source.number) {
@@ -486,11 +486,11 @@ function mergeFormatters(
   for (const style of source.list) {
     target.list.add(style)
   }
-  for (const style of source.relativeTime) {
-    target.relativeTime.add(style)
+  for (const style of source.ago) {
+    target.ago.add(style)
   }
-  for (const style of source.displayNames) {
-    target.displayNames.add(style)
+  for (const style of source.name) {
+    target.name.add(style)
   }
 }
 
@@ -507,8 +507,8 @@ function generateMessageCodeFromString(
     date: new Set<string>(),
     time: new Set<string>(),
     list: new Set<string>(),
-    relativeTime: new Set<string>(),
-    displayNames: new Set<string>()
+    ago: new Set<string>(),
+    name: new Set<string>()
   }
 
   // Static string - no placeholders
@@ -566,8 +566,8 @@ interface BuildOutputOptions {
     date: Set<string>
     time: Set<string>
     list: Set<string>
-    relativeTime: Set<string>
-    displayNames: Set<string>
+    ago: Set<string>
+    name: Set<string>
   }
   needsPluralFn: boolean
   pluralCategories: readonly string[]
