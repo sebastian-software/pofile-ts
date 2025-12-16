@@ -124,15 +124,12 @@ function getDateTimeOptions(
 
 /**
  * Maps ICU number styles to Intl.NumberFormat options.
+ * Note: "currency" without skeleton is handled separately with runtime currency lookup.
  */
 function getNumberOptions(style: string | null): Intl.NumberFormatOptions {
   switch (style) {
     case "percent":
       return { style: "percent" }
-    case "currency":
-      // FIXME: Currency should be extracted from skeleton (::currency/EUR) or locale
-      // For now, defaults to USD as a fallback
-      return { style: "currency", currency: "USD" }
     case "integer":
       return { maximumFractionDigits: 0 }
     case null:
@@ -301,6 +298,28 @@ function compileNode(
       }
 
     case "number": {
+      // Special handling for "currency" style without skeleton:
+      // Read currency code from values.currency at runtime
+      if (node.style === "currency") {
+        const currencyCache = new Map<string, Intl.NumberFormat>()
+        return (values?: MessageValues) => {
+          const val = values?.[node.value]
+          if (typeof val !== "number") {
+            if (val == null) {
+              return `{${node.value}}`
+            }
+            return typeof val === "string" ? val : String(val as string | number | boolean)
+          }
+          const currency = typeof values?.currency === "string" ? values.currency : "USD"
+          let formatter = currencyCache.get(currency)
+          if (!formatter) {
+            formatter = new Intl.NumberFormat(ctx.locale, { style: "currency", currency })
+            currencyCache.set(currency, formatter)
+          }
+          return formatter.format(val)
+        }
+      }
+
       const formatter = getNumberFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]

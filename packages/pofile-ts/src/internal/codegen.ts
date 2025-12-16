@@ -187,13 +187,21 @@ function generateArgumentCode(varValue: string): string {
 
 /**
  * Generates code for {n, number, style}.
+ * Currency style without skeleton uses runtime lookup from values.currency.
  */
 function generateNumberCode(varValue: string, style: string | null, ctx: CodeGenContext): string {
+  const varName = safeVarName(varValue)
+  const fallback = JSON.stringify(`{${varValue}}`)
+
+  // Special handling for "currency" without skeleton - read from values.currency at runtime
+  if (style === "currency") {
+    ctx.formatters.number.add("_currency_dynamic")
+    return `(typeof v?.${varName} === "number" ? _nf_currency(v.currency ?? "USD").format(v.${varName}) : v?.${varName} ?? ${fallback})`
+  }
+
   const styleKey = style ?? ""
   ctx.formatters.number.add(styleKey)
   const formatterName = styleKey ? `_nf_${sanitizeStyle(styleKey)}` : "_nf"
-  const varName = safeVarName(varValue)
-  const fallback = JSON.stringify(`{${varValue}}`)
   return `(typeof v?.${varName} === "number" ? ${formatterName}.format(v.${varName}) : v?.${varName} ?? ${fallback})`
 }
 
@@ -501,14 +509,12 @@ export function extractPluralVariable(msgid: string, pluralSource?: string): str
 
 /**
  * Gets Intl.NumberFormat options for a style.
+ * Note: "currency" without skeleton is handled dynamically via _nf_currency().
  */
 export function getNumberOptionsForStyle(style: string): Intl.NumberFormatOptions {
   switch (style) {
     case "percent":
       return { style: "percent" }
-    case "currency":
-      // FIXME: Currency should be extracted from skeleton (::currency/EUR) or locale
-      return { style: "currency", currency: "USD" }
     default:
       return {}
   }
@@ -559,6 +565,14 @@ export function generateFormatterDeclarations(locale: string, used: FormatterUsa
   const decls: string[] = []
 
   for (const style of used.number) {
+    // Dynamic currency formatter with runtime cache
+    if (style === "_currency_dynamic") {
+      decls.push(`const _nf_currency_cache = new Map()`)
+      decls.push(
+        `const _nf_currency = (c) => { let f = _nf_currency_cache.get(c); if (!f) { f = new Intl.NumberFormat("${locale}", { style: "currency", currency: c }); _nf_currency_cache.set(c, f); } return f }`
+      )
+      continue
+    }
     const name = style ? `_nf_${sanitizeStyle(style)}` : "_nf"
     const opts = style ? `, ${JSON.stringify(getNumberOptionsForStyle(style))}` : ""
     decls.push(`const ${name} = new Intl.NumberFormat("${locale}"${opts})`)

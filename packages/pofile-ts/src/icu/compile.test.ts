@@ -169,6 +169,33 @@ describe("compileIcu", () => {
       // German uses . as thousands separator and , as decimal
       expect(fn({ n: 1234.5 })).toMatch(/1\.234,5/)
     })
+
+    it("formats currency with runtime currency code from values", () => {
+      const fn = compileIcu("{price, number, currency}", { locale: "en" })
+      const eurResult = fn({ price: 99.99, currency: "EUR" })
+      expect(eurResult).toContain("99.99")
+      expect(eurResult).toContain("€")
+
+      const usdResult = fn({ price: 99.99, currency: "USD" })
+      expect(usdResult).toContain("99.99")
+      expect(usdResult).toContain("$")
+    })
+
+    it("defaults to USD when currency not provided", () => {
+      const fn = compileIcu("{price, number, currency}", { locale: "en" })
+      const result = fn({ price: 99.99 })
+      expect(result).toContain("99.99")
+      expect(result).toContain("$")
+    })
+
+    it("caches currency formatters for reuse", () => {
+      const fn = compileIcu("{price, number, currency}", { locale: "en" })
+      // Multiple calls with same currency should use cache
+      const r1 = fn({ price: 10, currency: "EUR" })
+      const r2 = fn({ price: 20, currency: "EUR" })
+      expect(r1).toContain("€")
+      expect(r2).toContain("€")
+    })
   })
 
   describe("date formatting", () => {

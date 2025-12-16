@@ -122,11 +122,9 @@ describe("codegen", () => {
       expect(getNumberOptionsForStyle("percent")).toEqual({ style: "percent" })
     })
 
-    it("returns currency style options with USD default", () => {
-      expect(getNumberOptionsForStyle("currency")).toEqual({
-        style: "currency",
-        currency: "USD"
-      })
+    it("returns empty for currency (handled dynamically)", () => {
+      // Currency without skeleton is handled via _nf_currency() with runtime lookup
+      expect(getNumberOptionsForStyle("currency")).toEqual({})
     })
 
     it("returns empty object for unknown styles", () => {
