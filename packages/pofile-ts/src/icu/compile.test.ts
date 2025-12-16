@@ -507,4 +507,153 @@ describe("compileIcu", () => {
       expect(fn()).toBe("{unclosed")
     })
   })
+
+  describe("custom styles", () => {
+    describe("numberStyles", () => {
+      it("supports custom number style with unit", () => {
+        const fn = compileIcu("{size, number, bytes}", {
+          locale: "en",
+          numberStyles: {
+            bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" }
+          }
+        })
+        expect(fn({ size: 1024 })).toBe("1,024B")
+      })
+
+      it("supports custom number style with fractionDigits", () => {
+        const fn = compileIcu("{value, number, precise}", {
+          locale: "en",
+          numberStyles: {
+            precise: { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+          }
+        })
+        expect(fn({ value: 42 })).toBe("42.00")
+        expect(fn({ value: 3.1 })).toBe("3.10")
+      })
+
+      it("supports custom percent style", () => {
+        const fn = compileIcu("{ratio, number, percent2}", {
+          locale: "en",
+          numberStyles: {
+            percent2: { style: "percent", minimumFractionDigits: 2 }
+          }
+        })
+        expect(fn({ ratio: 0.1234 })).toBe("12.34%")
+      })
+
+      it("falls back to built-in styles when no custom match", () => {
+        const fn = compileIcu("{n, number, percent}", {
+          locale: "en",
+          numberStyles: { other: {} }
+        })
+        expect(fn({ n: 0.5 })).toBe("50%")
+      })
+    })
+
+    describe("dateStyles", () => {
+      it("supports custom date style with specific format", () => {
+        const fn = compileIcu("{d, date, monthYear}", {
+          locale: "en",
+          dateStyles: {
+            monthYear: { month: "long", year: "numeric" }
+          }
+        })
+        const date = new Date(2024, 11, 15) // Dec 15, 2024
+        expect(fn({ d: date })).toBe("December 2024")
+      })
+
+      it("supports custom date style with weekday", () => {
+        const fn = compileIcu("{d, date, weekday}", {
+          locale: "en",
+          dateStyles: {
+            weekday: { weekday: "long" }
+          }
+        })
+        const date = new Date(2024, 11, 15) // Sunday
+        expect(fn({ d: date })).toBe("Sunday")
+      })
+
+      it("falls back to built-in styles when no custom match", () => {
+        const fn = compileIcu("{d, date, short}", {
+          locale: "en",
+          dateStyles: {}
+        })
+        const date = new Date(2024, 11, 15)
+        const result = fn({ d: date })
+        expect(result).toContain("12")
+        expect(result).toContain("15")
+      })
+    })
+
+    describe("timeStyles", () => {
+      it("supports custom time style with seconds", () => {
+        const fn = compileIcu("{t, time, precise}", {
+          locale: "en",
+          timeStyles: {
+            precise: { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }
+          }
+        })
+        const date = new Date(2024, 11, 15, 14, 30, 45)
+        expect(fn({ t: date })).toBe("14:30:45")
+      })
+
+      it("supports custom time style with hour only", () => {
+        const fn = compileIcu("{t, time, hourOnly}", {
+          locale: "en",
+          timeStyles: {
+            hourOnly: { hour: "numeric", hour12: true }
+          }
+        })
+        const date = new Date(2024, 11, 15, 14, 30, 0)
+        expect(fn({ t: date })).toMatch(/2\s*PM/)
+      })
+    })
+
+    describe("listStyles", () => {
+      it("supports custom list style with narrow conjunction", () => {
+        const fn = compileIcu("{items, list, narrow}", {
+          locale: "en",
+          listStyles: {
+            narrow: { type: "conjunction", style: "narrow" }
+          }
+        })
+        expect(fn({ items: ["A", "B", "C"] })).toBe("A, B, C")
+      })
+
+      it("supports custom list style with disjunction", () => {
+        const fn = compileIcu("{items, list, or}", {
+          locale: "en",
+          listStyles: {
+            or: { type: "disjunction" }
+          }
+        })
+        expect(fn({ items: ["A", "B", "C"] })).toBe("A, B, or C")
+      })
+
+      it("falls back to built-in styles when no custom match", () => {
+        const fn = compileIcu("{items, list, unit}", {
+          locale: "en",
+          listStyles: {}
+        })
+        expect(fn({ items: ["A", "B"] })).toBe("A, B")
+      })
+    })
+
+    describe("combined custom styles", () => {
+      it("supports multiple custom style types together", () => {
+        const fn = compileIcu("Size: {size, number, kb}, Date: {d, date, iso}", {
+          locale: "en",
+          numberStyles: {
+            kb: { style: "unit", unit: "kilobyte", unitDisplay: "short" }
+          },
+          dateStyles: {
+            iso: { year: "numeric", month: "2-digit", day: "2-digit" }
+          }
+        })
+        const result = fn({ size: 512, d: new Date(2024, 11, 15) })
+        expect(result).toContain("512 kB")
+        expect(result).toContain("12/15/2024")
+      })
+    })
+  })
 })

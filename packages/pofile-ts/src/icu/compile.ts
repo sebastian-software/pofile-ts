@@ -33,6 +33,54 @@ export interface CompileIcuOptions {
    * @default true
    */
   strict?: boolean
+
+  /**
+   * Custom number format styles.
+   * Keys are style names used in messages, values are Intl.NumberFormat options.
+   * @example
+   * numberStyles: {
+   *   bytes: { style: "unit", unit: "byte", unitDisplay: "narrow" },
+   *   percent2: { style: "percent", minimumFractionDigits: 2 }
+   * }
+   * // Usage: {size, number, bytes}
+   */
+  numberStyles?: Record<string, Intl.NumberFormatOptions>
+
+  /**
+   * Custom date format styles.
+   * Keys are style names used in messages, values are Intl.DateTimeFormat options.
+   * @example
+   * dateStyles: {
+   *   monthYear: { month: "long", year: "numeric" },
+   *   iso: { year: "numeric", month: "2-digit", day: "2-digit" }
+   * }
+   * // Usage: {d, date, monthYear}
+   */
+  dateStyles?: Record<string, Intl.DateTimeFormatOptions>
+
+  /**
+   * Custom time format styles.
+   * Keys are style names used in messages, values are Intl.DateTimeFormat options.
+   * @example
+   * timeStyles: {
+   *   precise: { hour: "2-digit", minute: "2-digit", second: "2-digit" },
+   *   hourOnly: { hour: "numeric" }
+   * }
+   * // Usage: {t, time, precise}
+   */
+  timeStyles?: Record<string, Intl.DateTimeFormatOptions>
+
+  /**
+   * Custom list format styles.
+   * Keys are style names used in messages, values are Intl.ListFormat options.
+   * @example
+   * listStyles: {
+   *   narrow: { type: "conjunction", style: "narrow" },
+   *   or: { type: "disjunction" }
+   * }
+   * // Usage: {items, list, narrow}
+   */
+  listStyles?: Record<string, Intl.ListFormatOptions>
 }
 
 /**
@@ -67,6 +115,13 @@ interface CompileContext {
   formatters: FormatterCache
   /** Whether any tags were encountered */
   hasTags: boolean
+  /** Custom format styles */
+  customStyles: {
+    number: Record<string, Intl.NumberFormatOptions>
+    date: Record<string, Intl.DateTimeFormatOptions>
+    time: Record<string, Intl.DateTimeFormatOptions>
+    list: Record<string, Intl.ListFormatOptions>
+  }
 }
 
 /**
@@ -298,6 +353,22 @@ function compileNode(
       }
 
     case "number": {
+      // Check for custom style first
+      const customNumberStyle = node.style ? ctx.customStyles.number[node.style] : undefined
+      if (customNumberStyle) {
+        const formatter = new Intl.NumberFormat(ctx.locale, customNumberStyle)
+        return (values?: MessageValues) => {
+          const val = values?.[node.value]
+          if (typeof val === "number") {
+            return formatter.format(val)
+          }
+          if (val == null) {
+            return `{${node.value}}`
+          }
+          return typeof val === "string" ? val : String(val as string | number | boolean)
+        }
+      }
+
       // Special handling for "currency" style without skeleton:
       // Read currency code from values.currency at runtime
       if (node.style === "currency") {
@@ -334,7 +405,11 @@ function compileNode(
     }
 
     case "date": {
-      const formatter = getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "date")
+      // Check for custom style first
+      const customDateStyle = node.style ? ctx.customStyles.date[node.style] : undefined
+      const formatter = customDateStyle
+        ? new Intl.DateTimeFormat(ctx.locale, customDateStyle)
+        : getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "date")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
         if (val instanceof Date) {
@@ -351,7 +426,11 @@ function compileNode(
     }
 
     case "time": {
-      const formatter = getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "time")
+      // Check for custom style first
+      const customTimeStyle = node.style ? ctx.customStyles.time[node.style] : undefined
+      const formatter = customTimeStyle
+        ? new Intl.DateTimeFormat(ctx.locale, customTimeStyle)
+        : getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "time")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
         if (val instanceof Date) {
@@ -368,7 +447,11 @@ function compileNode(
     }
 
     case "list": {
-      const formatter = getListFormatter(ctx.formatters, ctx.locale, node.style)
+      // Check for custom style first
+      const customListStyle = node.style ? ctx.customStyles.list[node.style] : undefined
+      const formatter = customListStyle
+        ? new Intl.ListFormat(ctx.locale, customListStyle)
+        : getListFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
         if (Array.isArray(val)) {
@@ -613,7 +696,7 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
  * fn({ date: new Date() }) // → "Created on 15. Dez. 2024"
  */
 export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
-  const { locale, strict = true } = options
+  const { locale, strict = true, numberStyles, dateStyles, timeStyles, listStyles } = options
 
   // Parse the ICU message
   const result = parseIcu(message)
@@ -634,7 +717,13 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
     pluralValue: null,
     pluralOffset: 0,
     formatters: createFormatterCache(),
-    hasTags: false
+    hasTags: false,
+    customStyles: {
+      number: numberStyles ?? {},
+      date: dateStyles ?? {},
+      time: timeStyles ?? {},
+      list: listStyles ?? {}
+    }
   }
 
   // Compile the AST
