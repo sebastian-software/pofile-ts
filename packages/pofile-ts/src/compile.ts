@@ -16,6 +16,7 @@
  */
 
 import type { Catalog } from "./catalog"
+import type { FormatterUsage } from "./types"
 import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
 import { compileIcu } from "./icu/compile"
 import { parseIcu } from "./icu/parser"
@@ -298,14 +299,7 @@ function processCatalogEntries(
   useMessageId: boolean
 ): {
   entries: CompiledEntry[]
-  usedFormatters: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
+  usedFormatters: FormatterUsage
   needsPluralFn: boolean
 } {
   const entries: CompiledEntry[] = []
@@ -408,14 +402,7 @@ function compileGettextForms(
   translations: string[],
   locale: string,
   pluralCategories: readonly string[],
-  formatters: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
+  formatters: FormatterUsage
 ): string[] {
   const compiledForms: string[] = []
 
@@ -456,24 +443,7 @@ function buildGettextPluralSwitch(varName: string, compiledForms: string[]): str
 /**
  * Merges formatter sets from a result into the accumulated set.
  */
-function mergeFormatters(
-  target: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  },
-  source: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
-): void {
+function mergeFormatters(target: FormatterUsage, source: FormatterUsage): void {
   for (const style of source.number) {
     target.number.add(style)
   }
@@ -561,14 +531,7 @@ interface BuildOutputOptions {
   exportName: string
   includeSourceComments: boolean
   entries: CompiledEntry[]
-  usedFormatters: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
+  usedFormatters: FormatterUsage
   needsPluralFn: boolean
   pluralCategories: readonly string[]
 }

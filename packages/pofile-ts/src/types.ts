@@ -97,6 +97,19 @@ export interface ParserState {
 }
 
 /**
+ * Tracks which Intl formatters are used during compilation.
+ * Used for generating formatter declarations in static code output.
+ */
+export interface FormatterUsage {
+  number: Set<string>
+  date: Set<string>
+  time: Set<string>
+  list: Set<string>
+  ago: Set<string>
+  name: Set<string>
+}
+
+/**
  * Options for serializing PO files.
  *
  * These options control the output format when converting a PoFile object

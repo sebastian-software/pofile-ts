@@ -5,20 +5,14 @@
  */
 
 import type { IcuNode, IcuPluralNode, IcuSelectNode, IcuTagNode } from "../icu/types"
+import type { FormatterUsage } from "../types"
 
 /**
  * Context for code generation.
  */
 export interface CodeGenContext {
   locale: string
-  formatters: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
+  formatters: FormatterUsage
   pluralCategories: readonly string[]
   /** Current plural variable for # substitution */
   pluralVar: string | null
@@ -33,14 +27,7 @@ export interface CodeGenContext {
  */
 export interface MessageCodeResult {
   code: string
-  formatters: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
+  formatters: FormatterUsage
   needsPluralFn: boolean
   hasTags: boolean
 }
@@ -539,17 +526,7 @@ function getListTypeFromStyle(style: string): "conjunction" | "disjunction" | "u
  * Generates Intl formatter declarations.
  */
 // eslint-disable-next-line complexity
-export function generateFormatterDeclarations(
-  locale: string,
-  used: {
-    number: Set<string>
-    date: Set<string>
-    time: Set<string>
-    list: Set<string>
-    ago: Set<string>
-    name: Set<string>
-  }
-): string | null {
+export function generateFormatterDeclarations(locale: string, used: FormatterUsage): string | null {
   const decls: string[] = []
 
   for (const style of used.number) {
