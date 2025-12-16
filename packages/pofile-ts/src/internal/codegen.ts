@@ -341,8 +341,8 @@ export function generatePluralCode(node: IcuPluralNode, ctx: CodeGenContext): st
 
 /**
  * Builds the conditional expression for plural.
+ * Combines exact matches (=0, =1) with category matches (one, other).
  */
-// eslint-disable-next-line complexity
 function buildPluralCondition(
   varName: string,
   offset: number,
@@ -352,33 +352,58 @@ function buildPluralCondition(
 ): string {
   let code = ""
 
-  // Handle exact matches first
+  // Exact matches first (=0, =1, =2, etc.)
+  code += buildExactMatchCode(varName, exactMatches)
+
+  // Then category matches (zero, one, two, few, many, other)
+  code += buildCategoryMatchCode(varName, offset, categoryMatches, ctx)
+
+  return code
+}
+
+/** Builds ternary chain for exact value matches: v?.n === 0 ? ... : v?.n === 1 ? ... : */
+function buildExactMatchCode(
+  varName: string,
+  exactMatches: { value: number; code: string }[]
+): string {
+  let code = ""
   for (const { value, code: optionCode } of exactMatches) {
     code += `v?.${varName} === ${value} ? ${optionCode} : `
   }
+  return code
+}
 
-  // Then handle category matches
+/** Builds ternary chain for CLDR category matches using plural function */
+function buildCategoryMatchCode(
+  varName: string,
+  offset: number,
+  categoryMatches: Record<string, string>,
+  ctx: CodeGenContext
+): string {
   const categories = ctx.pluralCategories
 
-  if (Object.keys(categoryMatches).length > 0) {
-    const adjustedVar = offset > 0 ? `((v?.${varName} ?? 0) - ${offset})` : `(v?.${varName} ?? 0)`
+  if (Object.keys(categoryMatches).length === 0) {
+    return `"{${varName}}"`
+  }
 
-    for (let i = 0; i < categories.length; i++) {
-      const category = categories[i]
-      if (category && categoryMatches[category]) {
-        if (i === categories.length - 1 || category === "other") {
-          code += categoryMatches[category]
-        } else {
-          code += `_pf(${adjustedVar}) === ${i} ? ${categoryMatches[category]} : `
-        }
+  const adjustedVar = offset > 0 ? `((v?.${varName} ?? 0) - ${offset})` : `(v?.${varName} ?? 0)`
+  let code = ""
+
+  for (let i = 0; i < categories.length; i++) {
+    const category = categories[i]
+    if (category && categoryMatches[category]) {
+      // Last category or "other" is the fallback (no condition needed)
+      if (i === categories.length - 1 || category === "other") {
+        code += categoryMatches[category]
+      } else {
+        code += `_pf(${adjustedVar}) === ${i} ? ${categoryMatches[category]} : `
       }
     }
+  }
 
-    if (!code.endsWith(categoryMatches.other ?? '""')) {
-      code += categoryMatches.other ?? `"{${varName}}"`
-    }
-  } else {
-    code += `"{${varName}}"`
+  // Ensure we have a fallback
+  if (!code.endsWith(categoryMatches.other ?? '""')) {
+    code += categoryMatches.other ?? `"{${varName}}"`
   }
 
   return code
