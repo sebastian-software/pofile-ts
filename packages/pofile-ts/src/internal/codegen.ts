@@ -7,6 +7,9 @@
 import type { IcuNode, IcuPluralNode, IcuSelectNode, IcuTagNode } from "../icu/types"
 import type { FormatterUsage } from "../types"
 
+/** Default variable name for Gettext plurals when none can be extracted */
+export const DEFAULT_PLURAL_VAR = "count"
+
 /**
  * Context for code generation.
  */

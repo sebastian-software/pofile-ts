@@ -29,6 +29,7 @@ import {
   generateFormatterDeclarations,
   escapeComment,
   extractPluralVariable,
+  DEFAULT_PLURAL_VAR,
   type MessageCodeResult
 } from "./internal/codegen"
 
@@ -174,7 +175,7 @@ function compileGettextPluralRuntime(
   strict: boolean
 ): CompiledMessageFunction {
   // Extract variable name from msgid or pluralSource
-  const varName = extractPluralVariable(msgid, pluralSource) ?? "count"
+  const varName = extractPluralVariable(msgid, pluralSource) ?? DEFAULT_PLURAL_VAR
 
   // Compile each form
   const compiledForms = translations.map((form) => compileIcu(form, { locale, strict }))
@@ -370,7 +371,7 @@ function generateGettextPluralCode(
   }
 
   // Extract the plural variable name from msgid or pluralSource
-  const varName = extractPluralVariable(msgid, pluralSource) ?? "count"
+  const varName = extractPluralVariable(msgid, pluralSource) ?? DEFAULT_PLURAL_VAR
 
   // Compile each msgstr[] form
   const compiledForms = compileGettextForms(translations, locale, pluralCategories, formatters)

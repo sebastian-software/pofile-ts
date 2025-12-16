@@ -6,6 +6,7 @@
 
 import type { PoItem, PoFile } from "../types"
 import { getPluralCategories } from "../plurals"
+import { DEFAULT_PLURAL_VAR } from "../internal/codegen"
 
 /**
  * Options for Gettext to ICU conversion.
@@ -76,7 +77,7 @@ function getMsgstrToCategory(locale: string): string[] {
  * // → "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
  */
 export function gettextToIcu(item: PoItem, options: GettextToIcuOptions): string | null {
-  const { locale, pluralVariable = "count", expandOctothorpe = true } = options
+  const { locale, pluralVariable = DEFAULT_PLURAL_VAR, expandOctothorpe = true } = options
 
   // Not a plural item
   if (!item.msgid_plural || item.msgstr.length <= 1) {
