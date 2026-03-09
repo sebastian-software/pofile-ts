@@ -8,6 +8,7 @@
 
 pub mod catalog;
 pub mod headers;
+pub mod icu;
 pub mod message_id;
 pub mod plurals;
 pub mod po;
@@ -18,6 +19,12 @@ pub use catalog::{
     CatalogToItemsOptions, CatalogTranslation, ItemsToCatalogOptions,
 };
 pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
+pub use icu::{
+    compare_variables, extract_variable_info, extract_variables, has_icu_syntax, has_plural,
+    has_select, has_select_ordinal, parse_icu, validate_icu, IcuAgoStyle, IcuErrorKind, IcuNode,
+    IcuParseError, IcuParser, IcuParserOptions, IcuPluralOption, IcuPluralType, IcuSelectOption,
+    IcuValidationResult, IcuVariable, IcuVariableComparison,
+};
 pub use message_id::{generate_message_id, generate_message_ids, MessageIdInput};
 pub use plurals::{
     get_plural_categories, get_plural_count, get_plural_forms_header, get_plural_index,
