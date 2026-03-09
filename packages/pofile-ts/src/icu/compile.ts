@@ -907,6 +907,193 @@ function compileIcuJs(message: string, options: CompileIcuOptions): CompiledMess
   return createMessageFunction(parts, ctx)
 }
 
+type FormatterKind = "number" | "date" | "time" | "list" | "duration" | "ago" | "name"
+
+interface FormatterSpec {
+  kind: FormatterKind
+  style: string | null
+}
+
+function collectNativeFormatterSpecs(nodes: IcuNode[]): Map<string, FormatterSpec> | null {
+  const controlVars = new Set<string>()
+  const formatterVars = new Map<string, FormatterSpec>()
+
+  const visit = (node: IcuNode): boolean => {
+    switch (node.type) {
+      case "literal":
+      case "pound":
+        return true
+      case "argument":
+        return !formatterVars.has(node.value) && !controlVars.has(node.value)
+      case "tag":
+        if (formatterVars.has(node.value)) {
+          return false
+        }
+        return node.children.every(visit)
+      case "select":
+        if (formatterVars.has(node.value)) {
+          return false
+        }
+        controlVars.add(node.value)
+        return Object.values(node.options).every((option) => option.value.every(visit))
+      case "plural":
+        if (formatterVars.has(node.value)) {
+          return false
+        }
+        controlVars.add(node.value)
+        return Object.values(node.options).every((option) => option.value.every(visit))
+      case "number":
+      case "date":
+      case "time":
+      case "list":
+      case "duration":
+      case "ago":
+      case "name": {
+        if (controlVars.has(node.value)) {
+          return false
+        }
+        const spec: FormatterSpec = { kind: node.type, style: node.style }
+        const existing = formatterVars.get(node.value)
+        if (!existing) {
+          formatterVars.set(node.value, spec)
+          return true
+        }
+        return existing.kind === spec.kind && existing.style === spec.style
+      }
+      default:
+        return false
+    }
+  }
+
+  return nodes.every(visit) ? formatterVars : null
+}
+
+function formatFormatterValue(
+  spec: FormatterSpec,
+  rawValue: unknown,
+  allValues: MessageValues | undefined,
+  ctx: CompileContext
+): string | undefined {
+  if (rawValue == null) {
+    return undefined
+  }
+
+  switch (spec.kind) {
+    case "number": {
+      const customStyle = spec.style ? ctx.customStyles.number[spec.style] : undefined
+      if (customStyle) {
+        return typeof rawValue === "number"
+          ? new Intl.NumberFormat(ctx.locale, customStyle).format(rawValue)
+          : typeof rawValue === "string"
+            ? rawValue
+            : String(rawValue)
+      }
+
+      if (spec.style === "currency") {
+        if (typeof rawValue !== "number") {
+          return typeof rawValue === "string" ? rawValue : String(rawValue)
+        }
+        const currency = typeof allValues?.currency === "string" ? allValues.currency : "USD"
+        return new Intl.NumberFormat(ctx.locale, { style: "currency", currency }).format(rawValue)
+      }
+
+      return typeof rawValue === "number"
+        ? getNumberFormatter(ctx.formatters, ctx.locale, spec.style).format(rawValue)
+        : typeof rawValue === "string"
+          ? rawValue
+          : String(rawValue)
+    }
+    case "date":
+    case "time": {
+      const customStyle =
+        spec.kind === "date"
+          ? spec.style
+            ? ctx.customStyles.date[spec.style]
+            : undefined
+          : spec.style
+            ? ctx.customStyles.time[spec.style]
+            : undefined
+      const formatter = customStyle
+        ? new Intl.DateTimeFormat(ctx.locale, customStyle)
+        : getDateTimeFormatter(ctx.formatters, ctx.locale, spec.style, spec.kind)
+
+      if (rawValue instanceof Date) {
+        return formatter.format(rawValue)
+      }
+      if (typeof rawValue === "number") {
+        return formatter.format(new Date(rawValue))
+      }
+      return typeof rawValue === "string" ? rawValue : String(rawValue)
+    }
+    case "list": {
+      const customStyle = spec.style ? ctx.customStyles.list[spec.style] : undefined
+      const formatter = customStyle
+        ? new Intl.ListFormat(ctx.locale, customStyle)
+        : getListFormatter(ctx.formatters, ctx.locale, spec.style)
+
+      if (Array.isArray(rawValue)) {
+        return formatter.format(rawValue.map((value) => String(value)))
+      }
+      return typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue)
+    }
+    case "duration": {
+      if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
+        const style = (spec.style ?? "long") as "long" | "short" | "narrow" | "digital"
+        return new (
+          Intl as typeof Intl & {
+            DurationFormat: new (
+              locale: string,
+              options: { style: "long" | "short" | "narrow" | "digital" }
+            ) => { format(value: unknown): string }
+          }
+        ).DurationFormat(ctx.locale, { style }).format(rawValue)
+      }
+
+      return JSON.stringify(rawValue)
+    }
+    case "ago": {
+      if (typeof rawValue === "number") {
+        const { formatter, unit } = getAgoFormatter(ctx.formatters, ctx.locale, spec.style)
+        return formatter.format(rawValue, unit)
+      }
+      return typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue)
+    }
+    case "name": {
+      if (typeof rawValue === "string") {
+        return getNameFormatter(ctx.formatters, ctx.locale, spec.style).of(rawValue) ?? rawValue
+      }
+      return JSON.stringify(rawValue)
+    }
+  }
+}
+
+function prepareNativeValues(
+  values: MessageValues | undefined,
+  ctx: CompileContext,
+  formatterSpecs: Map<string, FormatterSpec>
+): MessageValues | undefined {
+  if (!values || formatterSpecs.size === 0) {
+    return values
+  }
+
+  const nativeValues: MessageValues = { ...values }
+  for (const [name, spec] of formatterSpecs) {
+    const rawValue = values[name]
+    const formatted = formatFormatterValue(spec, rawValue, values, ctx)
+    if (formatted === undefined) {
+      delete nativeValues[name]
+    } else {
+      nativeValues[name] = formatted
+    }
+  }
+
+  return nativeValues
+}
+
+function createNativeCompileContext(options: CompileIcuOptions): CompileContext {
+  return createCompileContext(options)
+}
+
 function supportsNativeNode(node: IcuNode): boolean {
   switch (node.type) {
     case "literal":
@@ -926,7 +1113,7 @@ function supportsNativeNode(node: IcuNode): boolean {
     case "duration":
     case "ago":
     case "name":
-      return false
+      return true
     default:
       return false
   }
@@ -939,11 +1126,14 @@ function supportsNativeAst(ast: IcuNode[]): boolean {
 function createNativeCompiledMessage(
   handle: number,
   message: string,
-  options: CompileIcuOptions
+  options: CompileIcuOptions,
+  formatterSpecs: Map<string, FormatterSpec>
 ): CompiledMessageFunction {
   let fallback: CompiledMessageFunction | undefined
+  const ctx = createNativeCompileContext(options)
   const compiled = (values?: MessageValues): MessageResult => {
-    if (!canSerializeNativeValues(values)) {
+    const nativeValues = prepareNativeValues(values, ctx, formatterSpecs)
+    if (!canSerializeNativeValues(nativeValues)) {
       fallback ??= compileIcuJs(message, options)
       return fallback(values)
     }
@@ -955,7 +1145,7 @@ function createNativeCompiledMessage(
     }
 
     try {
-      return binding.formatCompiledMessageJson(handle, stringifyNativeValues(values))
+      return binding.formatCompiledMessageJson(handle, stringifyNativeValues(nativeValues))
     } catch {
       fallback ??= compileIcuJs(message, options)
       return fallback(values)
@@ -977,6 +1167,11 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
     return compileIcuJs(message, options)
   }
 
+  const formatterSpecs = collectNativeFormatterSpecs(parsed.ast)
+  if (!formatterSpecs) {
+    return compileIcuJs(message, options)
+  }
+
   try {
     const handle = binding.compileIcuJson(
       message,
@@ -985,7 +1180,7 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
         strict: options.strict ?? true
       })
     )
-    return createNativeCompiledMessage(handle, message, options)
+    return createNativeCompiledMessage(handle, message, options, formatterSpecs)
   } catch {
     return compileIcuJs(message, options)
   }
