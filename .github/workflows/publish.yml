@@ -52,6 +52,7 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,10 +60,10 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Use Node.js 22
+      - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
@@ -85,6 +86,4 @@ jobs:
 
       - name: Publish package
         working-directory: packages/pofile-ts
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --tag "${{ steps.npm-tag.outputs.tag }}"
+        run: npm publish --provenance --access public --tag "${{ steps.npm-tag.outputs.tag }}"
