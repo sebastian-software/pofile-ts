@@ -9,6 +9,16 @@ const NATIVE_BINDING_PATH = fileURLToPath(new URL("../native/pofile-node.node", 
 interface NativeBinding {
   parsePoJson(input: string): string
   stringifyPoJson(input: string, optionsJson?: string | null): string
+  compileIcuJson(message: string, optionsJson: string): number
+  formatCompiledMessageJson(handle: number, valuesJson?: string | null): string
+  freeCompiledMessage(handle: number): void
+  compileCatalogJson(catalogJson: string, optionsJson: string): number
+  formatCompiledCatalogJson(handle: number, key: string, valuesJson?: string | null): string
+  compiledCatalogHas(handle: number, key: string): boolean
+  compiledCatalogKeysJson(handle: number): string
+  compiledCatalogSize(handle: number): number
+  compiledCatalogLocale(handle: number): string
+  freeCompiledCatalog(handle: number): void
   bindingVersion(): string
 }
 
@@ -67,4 +77,50 @@ export function stringifyPoWithNative(
   }
 
   return binding.stringifyPoJson(JSON.stringify(po), options ? JSON.stringify(options) : null)
+}
+
+type NativeValue = string | number | boolean | NativeValue[]
+
+export function canSerializeNativeValues(values: Record<string, unknown> | undefined): boolean {
+  if (!values) {
+    return true
+  }
+
+  return Object.values(values).every(isNativeValue)
+}
+
+export function stringifyNativeValues(values: Record<string, unknown> | undefined): string | null {
+  if (!values || Object.keys(values).length === 0) {
+    return null
+  }
+
+  const normalized = Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [key, normalizeNativeValue(value)])
+  )
+
+  return JSON.stringify(normalized)
+}
+
+function isNativeValue(value: unknown): value is NativeValue {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return true
+  }
+
+  if (Array.isArray(value)) {
+    return value.every(isNativeValue)
+  }
+
+  return false
+}
+
+function normalizeNativeValue(value: unknown): NativeValue {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeNativeValue)
+  }
+
+  throw new Error("Unsupported native message value")
 }

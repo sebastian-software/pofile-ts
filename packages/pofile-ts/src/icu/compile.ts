@@ -18,6 +18,7 @@
 
 import type { IcuNode, IcuPluralNode, IcuSelectNode, IcuTagNode } from "./types"
 import { parseIcu } from "./parser"
+import { canSerializeNativeValues, getNativeBinding, stringifyNativeValues } from "../native"
 import { getPluralFunction, getPluralCategories } from "../plurals"
 
 /**
@@ -99,6 +100,13 @@ export type MessageResult = string | readonly unknown[]
  * A compiled message function.
  */
 export type CompiledMessageFunction = (values?: MessageValues) => MessageResult
+
+const nativeCompiledMessageRegistry =
+  typeof FinalizationRegistry === "function"
+    ? new FinalizationRegistry<number>((handle) => {
+        getNativeBinding()?.freeCompiledMessage(handle)
+      })
+    : null
 
 /**
  * Context passed during AST traversal.
@@ -879,7 +887,7 @@ function createMessageFunction(parts: unknown[], ctx: CompileContext): CompiledM
   return createResolver(parts)
 }
 
-export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
+function compileIcuJs(message: string, options: CompileIcuOptions): CompiledMessageFunction {
   const { strict = true } = options
 
   // Parse the ICU message
@@ -897,6 +905,90 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
   const parts = compileNodes(result.ast, ctx)
 
   return createMessageFunction(parts, ctx)
+}
+
+function supportsNativeNode(node: IcuNode): boolean {
+  switch (node.type) {
+    case "literal":
+    case "argument":
+    case "pound":
+      return true
+    case "tag":
+      return node.children.every(supportsNativeNode)
+    case "select":
+      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
+    case "plural":
+      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
+    case "number":
+    case "date":
+    case "time":
+    case "list":
+    case "duration":
+    case "ago":
+    case "name":
+      return false
+    default:
+      return false
+  }
+}
+
+function supportsNativeAst(ast: IcuNode[]): boolean {
+  return ast.every(supportsNativeNode)
+}
+
+function createNativeCompiledMessage(
+  handle: number,
+  message: string,
+  options: CompileIcuOptions
+): CompiledMessageFunction {
+  let fallback: CompiledMessageFunction | undefined
+  const compiled = (values?: MessageValues): MessageResult => {
+    if (!canSerializeNativeValues(values)) {
+      fallback ??= compileIcuJs(message, options)
+      return fallback(values)
+    }
+
+    const binding = getNativeBinding()
+    if (!binding) {
+      fallback ??= compileIcuJs(message, options)
+      return fallback(values)
+    }
+
+    try {
+      return binding.formatCompiledMessageJson(handle, stringifyNativeValues(values))
+    } catch {
+      fallback ??= compileIcuJs(message, options)
+      return fallback(values)
+    }
+  }
+
+  nativeCompiledMessageRegistry?.register(compiled, handle, compiled)
+  return compiled
+}
+
+export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
+  const binding = getNativeBinding()
+  if (!binding) {
+    return compileIcuJs(message, options)
+  }
+
+  const parsed = parseIcu(message)
+  if (!parsed.success || !supportsNativeAst(parsed.ast)) {
+    return compileIcuJs(message, options)
+  }
+
+  try {
+    const handle = binding.compileIcuJson(
+      message,
+      JSON.stringify({
+        locale: options.locale,
+        strict: options.strict ?? true
+      })
+    )
+    return createNativeCompiledMessage(handle, message, options)
+  } catch {
+    return compileIcuJs(message, options)
+  }
 }
 
 /**

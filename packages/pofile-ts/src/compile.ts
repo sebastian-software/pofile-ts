@@ -17,10 +17,12 @@
 
 import type { Catalog } from "./catalog"
 import type { FormatterUsage } from "./types"
+import type { IcuNode } from "./icu/types"
 import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
 import { compileIcu } from "./icu/compile"
 import { parseIcu } from "./icu/parser"
 import { generateMessageIdSync } from "./messageId"
+import { canSerializeNativeValues, getNativeBinding, stringifyNativeValues } from "./native"
 import { getPluralCategories, getPluralFunction } from "./plurals"
 import {
   createCodeGenContext,
@@ -32,6 +34,13 @@ import {
   DEFAULT_PLURAL_VAR,
   type MessageCodeResult
 } from "./internal/codegen"
+
+const nativeCompiledCatalogRegistry =
+  typeof FinalizationRegistry === "function"
+    ? new FinalizationRegistry<number>((handle) => {
+        getNativeBinding()?.freeCompiledCatalog(handle)
+      })
+    : null
 
 // ============================================================================
 // Runtime Compilation (compileCatalog)
@@ -102,7 +111,7 @@ export interface CompiledCatalog {
  * const compiled = compileCatalog(catalog, { locale: "de" })
  * compiled.format("Xk9mLp", { name: "World" }) // → "Hallo World!"
  */
-export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
+function compileCatalogJs(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
   const { locale, useMessageId = true, strict = false } = options
 
   const messages = new Map<string, CompiledMessageFunction>()
@@ -160,6 +169,148 @@ export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions)
     },
 
     locale
+  }
+}
+
+function supportsNativeNode(node: IcuNode): boolean {
+  switch (node.type) {
+    case "literal":
+    case "argument":
+    case "pound":
+      return true
+    case "tag":
+      return node.children.every(supportsNativeNode)
+    case "select":
+      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
+    case "plural":
+      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
+    case "number":
+    case "date":
+    case "time":
+    case "list":
+    case "duration":
+    case "ago":
+    case "name":
+      return false
+    default:
+      return false
+  }
+}
+
+function supportsNativeMessage(message: string): boolean {
+  const parsed = parseIcu(message)
+  return !parsed.success || parsed.ast.every(supportsNativeNode)
+}
+
+function supportsNativeCatalog(catalog: Catalog): boolean {
+  return Object.values(catalog).every((entry) => {
+    if (entry.translation === undefined) {
+      return true
+    }
+
+    if (Array.isArray(entry.translation)) {
+      return entry.translation.every(supportsNativeMessage)
+    }
+
+    return supportsNativeMessage(entry.translation)
+  })
+}
+
+function createNativeCatalog(
+  catalog: Catalog,
+  options: CompileCatalogOptions,
+  handle: number
+): CompiledCatalog {
+  let fallback: CompiledCatalog | undefined
+  const getFallback = (): CompiledCatalog => {
+    fallback ??= compileCatalogJs(catalog, options)
+    return fallback
+  }
+
+  const formatNative = (key: string, values?: MessageValues): MessageResult => {
+    if (!canSerializeNativeValues(values)) {
+      return getFallback().format(key, values)
+    }
+
+    const binding = getNativeBinding()
+    if (!binding) {
+      return getFallback().format(key, values)
+    }
+
+    try {
+      return binding.formatCompiledCatalogJson(handle, key, stringifyNativeValues(values))
+    } catch {
+      return getFallback().format(key, values)
+    }
+  }
+
+  const getNative = (key: string): CompiledMessageFunction | undefined => {
+    const binding = getNativeBinding()
+    if (!binding || !binding.compiledCatalogHas(handle, key)) {
+      return undefined
+    }
+
+    return (values?: MessageValues) => formatNative(key, values)
+  }
+
+  const compiled: CompiledCatalog = {
+    get(key: string) {
+      return getNative(key)
+    },
+
+    format(key: string, values?: MessageValues) {
+      const message = getNative(key)
+      if (!message) {
+        return key
+      }
+      return message(values)
+    },
+
+    has(key: string) {
+      const binding = getNativeBinding()
+      return binding ? binding.compiledCatalogHas(handle, key) : getFallback().has(key)
+    },
+
+    keys() {
+      const binding = getNativeBinding()
+      return binding
+        ? (JSON.parse(binding.compiledCatalogKeysJson(handle)) as string[])
+        : getFallback().keys()
+    },
+
+    get size() {
+      const binding = getNativeBinding()
+      return binding ? binding.compiledCatalogSize(handle) : getFallback().size
+    },
+
+    get locale() {
+      const binding = getNativeBinding()
+      return binding ? binding.compiledCatalogLocale(handle) : getFallback().locale
+    }
+  }
+
+  nativeCompiledCatalogRegistry?.register(compiled, handle, compiled)
+  return compiled
+}
+
+export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
+  const binding = getNativeBinding()
+  if (!binding || !supportsNativeCatalog(catalog)) {
+    return compileCatalogJs(catalog, options)
+  }
+
+  try {
+    const handle = binding.compileCatalogJson(
+      JSON.stringify(catalog),
+      JSON.stringify({
+        locale: options.locale,
+        useMessageId: options.useMessageId ?? true,
+        strict: options.strict ?? false
+      })
+    )
+    return createNativeCatalog(catalog, options, handle)
+  } catch {
+    return compileCatalogJs(catalog, options)
   }
 }
 
