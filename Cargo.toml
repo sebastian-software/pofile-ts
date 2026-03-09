@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/pofile", "crates/pofile-node"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/sebastian-software/pofile-ts"
+rust-version = "1.80"
+

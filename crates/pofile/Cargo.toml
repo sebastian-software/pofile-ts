@@ -1,0 +1,12 @@
+[package]
+name = "pofile"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Rust core for parsing and serializing GNU gettext PO files."
+
+[lib]
+path = "src/lib.rs"
+

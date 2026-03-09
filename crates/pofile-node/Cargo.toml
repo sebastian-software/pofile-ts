@@ -1,0 +1,16 @@
+[package]
+name = "pofile-node"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Internal Node.js bindings for the pofile Rust core."
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+pofile = { path = "../pofile" }
+
