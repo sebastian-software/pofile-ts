@@ -47,6 +47,7 @@ import type {
   IcuParserOptions,
   IcuParseResult
 } from "./types"
+import { parseIcuWithNative } from "../native"
 
 // Character classification helpers (clearer than inline regex)
 // Accept undefined for safe indexed access (returns false for undefined)
@@ -601,6 +602,11 @@ export class IcuParser {
  * const result = parseIcu("{count, plural, one {# item} other {# items}}")
  */
 export function parseIcu(message: string, options?: IcuParserOptions): IcuParseResult {
+  const nativeResult = parseIcuWithNative(message, options)
+  if (nativeResult) {
+    return nativeResult
+  }
+
   try {
     const ast = new IcuParser(message, options).parse()
     return { success: true, ast, errors: [] }

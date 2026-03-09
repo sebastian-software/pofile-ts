@@ -6,8 +6,9 @@ use napi::bindgen_prelude::Result;
 use napi::Error;
 use napi_derive::napi;
 use pofile::{
-    compile_catalog, compile_icu, parse_po, stringify_po, Catalog, CatalogEntry,
+    compile_catalog, compile_icu, parse_icu, parse_po, stringify_po, Catalog, CatalogEntry,
     CatalogTranslation, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog, CompiledMessage,
+    IcuNode, IcuParseError, IcuParserOptions, IcuPluralOption, IcuPluralType, IcuSelectOption,
     MessageValue, MessageValues, PoFile, PoItem, SerializeOptions,
 };
 use serde::{Deserialize, Serialize};
@@ -92,6 +93,14 @@ struct InputCompileCatalogOptions {
 }
 
 #[derive(Debug, Default, Deserialize)]
+struct InputIcuParserOptions {
+    #[serde(rename = "ignoreTag")]
+    ignore_tag: Option<bool>,
+    #[serde(rename = "requiresOtherClause")]
+    requires_other_clause: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
 struct InputCatalogEntry {
     translation: Option<InputCatalogTranslation>,
     #[serde(rename = "pluralSource")]
@@ -107,6 +116,106 @@ enum InputCatalogTranslation {
 }
 
 type InputCatalog = BTreeMap<String, InputCatalogEntry>;
+
+#[derive(Debug, Serialize, Clone)]
+struct JsIcuPosition {
+    offset: usize,
+    line: usize,
+    column: usize,
+}
+
+#[derive(Debug, Serialize)]
+struct JsIcuLocation {
+    start: JsIcuPosition,
+    end: JsIcuPosition,
+}
+
+#[derive(Debug, Serialize)]
+struct JsIcuParseError {
+    kind: &'static str,
+    message: String,
+    location: JsIcuLocation,
+}
+
+#[derive(Debug, Serialize)]
+struct JsIcuPluralOption {
+    value: Vec<JsIcuNode>,
+}
+
+#[derive(Debug, Serialize)]
+struct JsIcuSelectOption {
+    value: Vec<JsIcuNode>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+enum JsIcuNode {
+    Literal {
+        value: String,
+    },
+    Argument {
+        value: String,
+    },
+    Number {
+        value: String,
+        style: Option<String>,
+    },
+    Date {
+        value: String,
+        style: Option<String>,
+    },
+    Time {
+        value: String,
+        style: Option<String>,
+    },
+    List {
+        value: String,
+        style: Option<String>,
+    },
+    Duration {
+        value: String,
+        style: Option<String>,
+    },
+    Ago {
+        value: String,
+        style: Option<String>,
+    },
+    Name {
+        value: String,
+        style: Option<String>,
+    },
+    Select {
+        value: String,
+        options: BTreeMap<String, JsIcuSelectOption>,
+    },
+    Plural {
+        value: String,
+        options: BTreeMap<String, JsIcuPluralOption>,
+        offset: i32,
+        #[serde(rename = "pluralType")]
+        plural_type: &'static str,
+    },
+    Pound,
+    Tag {
+        value: String,
+        children: Vec<JsIcuNode>,
+    },
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+enum JsIcuParseResult {
+    Success {
+        success: bool,
+        ast: Vec<JsIcuNode>,
+        errors: Vec<JsIcuParseError>,
+    },
+    Failure {
+        success: bool,
+        ast: Option<Vec<JsIcuNode>>,
+        errors: Vec<JsIcuParseError>,
+    },
+}
 
 struct Registry<T> {
     next_id: AtomicU32,
@@ -222,10 +331,101 @@ impl From<InputCatalogTranslation> for CatalogTranslation {
     }
 }
 
+impl From<IcuPluralOption> for JsIcuPluralOption {
+    fn from(value: IcuPluralOption) -> Self {
+        Self {
+            value: value.value.into_iter().map(JsIcuNode::from).collect(),
+        }
+    }
+}
+
+impl From<IcuSelectOption> for JsIcuSelectOption {
+    fn from(value: IcuSelectOption) -> Self {
+        Self {
+            value: value.value.into_iter().map(JsIcuNode::from).collect(),
+        }
+    }
+}
+
+impl From<IcuNode> for JsIcuNode {
+    fn from(value: IcuNode) -> Self {
+        match value {
+            IcuNode::Literal { value } => Self::Literal { value },
+            IcuNode::Argument { value } => Self::Argument { value },
+            IcuNode::Number { value, style } => Self::Number { value, style },
+            IcuNode::Date { value, style } => Self::Date { value, style },
+            IcuNode::Time { value, style } => Self::Time { value, style },
+            IcuNode::List { value, style } => Self::List { value, style },
+            IcuNode::Duration { value, style } => Self::Duration { value, style },
+            IcuNode::Ago { value, style } => Self::Ago { value, style },
+            IcuNode::Name { value, style } => Self::Name { value, style },
+            IcuNode::Select { value, options } => Self::Select {
+                value,
+                options: options
+                    .into_iter()
+                    .map(|(key, option)| (key, JsIcuSelectOption::from(option)))
+                    .collect(),
+            },
+            IcuNode::Plural {
+                value,
+                options,
+                offset,
+                plural_type,
+            } => Self::Plural {
+                value,
+                options: options
+                    .into_iter()
+                    .map(|(key, option)| (key, JsIcuPluralOption::from(option)))
+                    .collect(),
+                offset,
+                plural_type: match plural_type {
+                    IcuPluralType::Cardinal => "cardinal",
+                    IcuPluralType::Ordinal => "ordinal",
+                },
+            },
+            IcuNode::Pound => Self::Pound,
+            IcuNode::Tag { value, children } => Self::Tag {
+                value,
+                children: children.into_iter().map(JsIcuNode::from).collect(),
+            },
+        }
+    }
+}
+
 #[napi]
 pub fn parse_po_json(input: String) -> Result<String> {
     let po = parse_po(&input);
     serde_json::to_string(&JsPoFile::from(po)).map_err(to_napi_error)
+}
+
+#[napi]
+pub fn parse_icu_json(message: String, options_json: Option<String>) -> Result<String> {
+    let options = options_json
+        .as_deref()
+        .map(serde_json::from_str::<InputIcuParserOptions>)
+        .transpose()
+        .map_err(to_napi_error)?
+        .unwrap_or_default();
+
+    let parser_options = IcuParserOptions {
+        ignore_tag: options.ignore_tag.unwrap_or(false),
+        requires_other_clause: options.requires_other_clause.unwrap_or(true),
+    };
+
+    let result = match parse_icu(&message, parser_options) {
+        Ok(ast) => JsIcuParseResult::Success {
+            success: true,
+            ast: ast.into_iter().map(JsIcuNode::from).collect(),
+            errors: Vec::new(),
+        },
+        Err(error) => JsIcuParseResult::Failure {
+            success: false,
+            ast: None,
+            errors: vec![js_icu_parse_error(&message, error)],
+        },
+    };
+
+    serde_json::to_string(&result).map_err(to_napi_error)
 }
 
 #[napi]
@@ -413,4 +613,36 @@ fn json_to_message_value(value: Value) -> Option<MessageValue> {
 
 fn to_napi_error(error: impl std::fmt::Display) -> Error {
     Error::from_reason(error.to_string())
+}
+
+fn js_icu_parse_error(message: &str, error: IcuParseError) -> JsIcuParseError {
+    let position = offset_to_position(message, error.offset);
+    JsIcuParseError {
+        kind: "SYNTAX_ERROR",
+        message: error.message,
+        location: JsIcuLocation {
+            start: position.clone(),
+            end: position,
+        },
+    }
+}
+
+fn offset_to_position(message: &str, offset: usize) -> JsIcuPosition {
+    let mut line = 1usize;
+    let mut column = 1usize;
+
+    for ch in message.chars().take(offset) {
+        if ch == '\n' {
+            line += 1;
+            column = 1;
+        } else {
+            column += 1;
+        }
+    }
+
+    JsIcuPosition {
+        offset,
+        line,
+        column,
+    }
 }

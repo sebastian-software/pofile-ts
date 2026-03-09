@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { IcuParser, parseIcu } from "./parser"
+import { __setNativeBindingCacheForTesting, getNativeBinding } from "../native"
 
 function expectSyntaxError(message: string) {
   const result = parseIcu(message)
@@ -201,14 +202,17 @@ describe("parseIcu (edge cases)", () => {
 
   describe("parseIcu error passthrough", () => {
     it("rethrows non-syntax errors", () => {
+      const nativeBinding = getNativeBinding()
       // eslint-disable-next-line @typescript-eslint/unbound-method -- safe: we reassign and restore the same method
       const original = IcuParser.prototype.parse
       try {
+        __setNativeBindingCacheForTesting(null)
         IcuParser.prototype.parse = () => {
           throw new Error("boom")
         }
         expect(() => parseIcu("Hello {name}")).toThrow("boom")
       } finally {
+        __setNativeBindingCacheForTesting(nativeBinding ?? undefined)
         IcuParser.prototype.parse = original
       }
     })

@@ -2,12 +2,14 @@ import { existsSync } from "node:fs"
 import { createRequire } from "node:module"
 import { fileURLToPath } from "node:url"
 import type { PoFile, SerializeOptions } from "./types"
+import type { IcuParseResult, IcuParserOptions } from "./icu/types"
 
 const require = createRequire(import.meta.url)
 const NATIVE_BINDING_PATH = fileURLToPath(new URL("../native/pofile-node.node", import.meta.url))
 
 interface NativeBinding {
   parsePoJson(input: string): string
+  parseIcuJson(message: string, optionsJson?: string | null): string
   stringifyPoJson(input: string, optionsJson?: string | null): string
   compileIcuJson(message: string, optionsJson: string): number
   formatCompiledMessageJson(handle: number, valuesJson?: string | null): string
@@ -59,12 +61,30 @@ export function getNativeBinding(): NativeBinding | null {
   return loadBinding()
 }
 
+export function __setNativeBindingCacheForTesting(binding: NativeBinding | null | undefined): void {
+  bindingCache = binding
+}
+
 export function parsePoWithNative(input: string): PoFile | null {
   const binding = loadBinding()
   if (!binding) {
     return null
   }
   return JSON.parse(binding.parsePoJson(input)) as PoFile
+}
+
+export function parseIcuWithNative(
+  message: string,
+  options?: IcuParserOptions
+): IcuParseResult | null {
+  const binding = loadBinding()
+  if (!binding) {
+    return null
+  }
+
+  return JSON.parse(
+    binding.parseIcuJson(message, options ? JSON.stringify(options) : null)
+  ) as IcuParseResult
 }
 
 export function stringifyPoWithNative(
