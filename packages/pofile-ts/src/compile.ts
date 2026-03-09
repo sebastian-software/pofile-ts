@@ -182,6 +182,13 @@ function compileCatalogJs(catalog: Catalog, options: CompileCatalogOptions): Com
   }
 }
 
+function everyOptionValueSupports(
+  options: Record<string, { value: IcuNode[] }>,
+  predicate: (node: IcuNode) => boolean
+): boolean {
+  return Object.values(options).every((option) => option.value.every(predicate))
+}
+
 function supportsNativeNode(node: IcuNode): boolean {
   switch (node.type) {
     case "literal":
@@ -191,17 +198,9 @@ function supportsNativeNode(node: IcuNode): boolean {
     case "tag":
       return node.children.every(supportsNativeNode)
     case "select":
-      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
+      return everyOptionValueSupports(node.options, supportsNativeNode)
     case "plural":
-      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
-    case "number":
-    case "date":
-    case "time":
-    case "list":
-    case "duration":
-    case "ago":
-    case "name":
-      return false
+      return everyOptionValueSupports(node.options, supportsNativeNode)
     default:
       return false
   }
@@ -213,7 +212,7 @@ function supportsNativeMessage(message: string): boolean {
 }
 
 function isNativeCatalogEntry(entry: Catalog[string] | undefined): boolean {
-  if (!entry || entry.translation === undefined) {
+  if (entry?.translation === undefined) {
     return false
   }
 
@@ -302,7 +301,7 @@ function createNativeCatalog(
     }
 
     const binding = getNativeBinding()
-    if (!binding || !binding.compiledCatalogHas(handle, key)) {
+    if (!binding?.compiledCatalogHas(handle, key)) {
       return undefined
     }
 

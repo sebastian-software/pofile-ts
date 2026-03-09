@@ -194,14 +194,12 @@ export function createIntlMessageHost(options: CompileIcuOptions): IcuMessageHos
       if (customNumberStyle) {
         return typeof value === "number"
           ? new Intl.NumberFormat(locale, customNumberStyle).format(value)
-          : typeof value === "string"
-            ? value
-            : String(value as string | number | boolean)
+          : formatHostFallbackValue(value)
       }
 
       if (style === "currency") {
         if (typeof value !== "number") {
-          return typeof value === "string" ? value : String(value as string | number | boolean)
+          return formatHostFallbackValue(value)
         }
         const currency = typeof values?.currency === "string" ? values.currency : "USD"
         return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value)
@@ -209,9 +207,7 @@ export function createIntlMessageHost(options: CompileIcuOptions): IcuMessageHos
 
       return typeof value === "number"
         ? getNumberFormatter(formatters, locale, style).format(value)
-        : typeof value === "string"
-          ? value
-          : String(value as string | number | boolean)
+        : formatHostFallbackValue(value)
     },
 
     formatDate(value: unknown, style: string | null): string | undefined {
@@ -226,7 +222,7 @@ export function createIntlMessageHost(options: CompileIcuOptions): IcuMessageHos
       if (typeof value === "number") {
         return formatter.format(new Date(value))
       }
-      return typeof value === "string" ? value : String(value as string | number | boolean)
+      return formatHostFallbackValue(value)
     },
 
     formatTime(value: unknown, style: string | null): string | undefined {
@@ -241,7 +237,7 @@ export function createIntlMessageHost(options: CompileIcuOptions): IcuMessageHos
       if (typeof value === "number") {
         return formatter.format(new Date(value))
       }
-      return typeof value === "string" ? value : String(value as string | number | boolean)
+      return formatHostFallbackValue(value)
     },
 
     formatList(value: unknown, style: string | null): string | undefined {
@@ -321,6 +317,14 @@ function createFormatterCache(): FormatterCache {
     ago: new Map(),
     name: new Map()
   }
+}
+
+function formatHostFallbackValue(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value)
+  }
+
+  return JSON.stringify(value)
 }
 
 /**
@@ -1014,13 +1018,29 @@ interface NativeCompilationPlan {
   formatterBindings: NativeFormatterBinding[]
 }
 
+function everyOptionValueSupports(
+  options: Record<string, { value: IcuNode[] }>,
+  predicate: (node: IcuNode) => boolean
+): boolean {
+  return Object.values(options).every((option) => option.value.every(predicate))
+}
+
+function mapRewrittenOptionValues(
+  options: Record<string, { value: IcuNode[] }>,
+  rewriteNode: (node: IcuNode) => IcuNode
+): Record<string, { value: IcuNode[] }> {
+  return Object.fromEntries(
+    Object.entries(options).map(([key, option]) => [key, { value: option.value.map(rewriteNode) }])
+  )
+}
+
 function buildNativeCompilationPlan(nodes: IcuNode[]): NativeCompilationPlan {
   const usedNames = collectVariableNames(nodes)
   const formatterBindings: NativeFormatterBinding[] = []
   let counter = 0
 
   const createSyntheticName = (): string => {
-    while (true) {
+    for (;;) {
       const candidate = `__pofile_fmt_${counter}`
       counter += 1
       if (!usedNames.has(candidate)) {
@@ -1030,6 +1050,8 @@ function buildNativeCompilationPlan(nodes: IcuNode[]): NativeCompilationPlan {
     }
   }
 
+  // Rewriting formatter nodes touches most ICU node variants by design.
+  // eslint-disable-next-line complexity
   const rewriteNode = (node: IcuNode): IcuNode => {
     switch (node.type) {
       case "number":
@@ -1061,22 +1083,12 @@ function buildNativeCompilationPlan(nodes: IcuNode[]): NativeCompilationPlan {
       case "select":
         return {
           ...node,
-          options: Object.fromEntries(
-            Object.entries(node.options).map(([key, option]) => [
-              key,
-              { value: option.value.map(rewriteNode) }
-            ])
-          )
+          options: mapRewrittenOptionValues(node.options, rewriteNode)
         }
       case "plural":
         return {
           ...node,
-          options: Object.fromEntries(
-            Object.entries(node.options).map(([key, option]) => [
-              key,
-              { value: option.value.map(rewriteNode) }
-            ])
-          )
+          options: mapRewrittenOptionValues(node.options, rewriteNode)
         }
       default:
         return node
@@ -1093,29 +1105,25 @@ function buildNativeCompilationPlan(nodes: IcuNode[]): NativeCompilationPlan {
 function collectVariableNames(nodes: IcuNode[]): Set<string> {
   const names = new Set<string>()
 
-  const visit = (node: IcuNode): void => {
-    switch (node.type) {
-      case "argument":
-      case "number":
-      case "date":
-      case "time":
-      case "list":
-      case "duration":
-      case "ago":
-      case "name":
-      case "select":
-      case "plural":
-      case "tag":
-        names.add(node.value)
-        break
-      default:
-        break
+  const addNodeValueName = (node: IcuNode): void => {
+    if ("value" in node && typeof node.value === "string") {
+      names.add(node.value)
     }
+  }
+
+  const visit = (node: IcuNode): void => {
+    addNodeValueName(node)
 
     if (node.type === "tag") {
-      node.children.forEach(visit)
+      node.children.forEach((child) => {
+        visit(child)
+      })
     } else if (node.type === "select" || node.type === "plural") {
-      Object.values(node.options).forEach((option) => option.value.forEach(visit))
+      Object.values(node.options).forEach((option) => {
+        option.value.forEach((child) => {
+          visit(child)
+        })
+      })
     }
   }
 
@@ -1127,6 +1135,17 @@ function serializeIcuNodes(nodes: IcuNode[], inPlural = false): string {
   return nodes.map((node) => serializeIcuNode(node, inPlural)).join("")
 }
 
+function serializeOptions(
+  options: Record<string, { value: IcuNode[] }>,
+  inPlural: boolean
+): string {
+  return Object.entries(options)
+    .map(([key, option]) => `${key} {${serializeIcuNodes(option.value, inPlural)}}`)
+    .join(" ")
+}
+
+// ICU serialization mirrors the AST surface and is intentionally branchy.
+// eslint-disable-next-line complexity
 function serializeIcuNode(node: IcuNode, inPlural: boolean): string {
   switch (node.type) {
     case "literal":
@@ -1147,19 +1166,12 @@ function serializeIcuNode(node: IcuNode, inPlural: boolean): string {
       return "#"
     case "tag":
       return `<${node.value}>${serializeIcuNodes(node.children, inPlural)}</${node.value}>`
-    case "select": {
-      const options = Object.entries(node.options)
-        .map(([key, option]) => `${key} {${serializeIcuNodes(option.value, inPlural)}}`)
-        .join(" ")
-      return `{${node.value}, select, ${options}}`
-    }
+    case "select":
+      return `{${node.value}, select, ${serializeOptions(node.options, inPlural)}}`
     case "plural": {
       const type = node.pluralType === "ordinal" ? "selectordinal" : "plural"
       const offset = node.offset > 0 ? ` offset:${node.offset}` : ""
-      const options = Object.entries(node.options)
-        .map(([key, option]) => `${key} {${serializeIcuNodes(option.value, true)}}`)
-        .join(" ")
-      return `{${node.value}, ${type},${offset} ${options}}`
+      return `{${node.value}, ${type},${offset} ${serializeOptions(node.options, true)}}`
     }
     default:
       return ""
@@ -1184,6 +1196,8 @@ function escapeIcuLiteral(value: string, inPlural: boolean): string {
   return output
 }
 
+// Formatter dispatch mirrors the host interface and ICU formatter variants.
+// eslint-disable-next-line complexity
 function formatFormatterValue(
   spec: FormatterSpec,
   rawValue: unknown,
@@ -1196,11 +1210,17 @@ function formatFormatterValue(
 
   switch (spec.kind) {
     case "number":
-      return ctx.host.formatNumber(rawValue, spec.style, allValues) ?? String(rawValue)
+      return (
+        ctx.host.formatNumber(rawValue, spec.style, allValues) ?? formatHostFallbackValue(rawValue)
+      )
     case "date":
-      return ctx.host.formatDate(rawValue, spec.style, allValues) ?? String(rawValue)
+      return (
+        ctx.host.formatDate(rawValue, spec.style, allValues) ?? formatHostFallbackValue(rawValue)
+      )
     case "time":
-      return ctx.host.formatTime(rawValue, spec.style, allValues) ?? String(rawValue)
+      return (
+        ctx.host.formatTime(rawValue, spec.style, allValues) ?? formatHostFallbackValue(rawValue)
+      )
     case "list":
       return ctx.host.formatList(rawValue, spec.style, allValues) ?? JSON.stringify(rawValue)
     case "duration":
@@ -1239,29 +1259,33 @@ function createNativeCompileContext(options: CompileIcuOptions): CompileContext 
   return createCompileContext(options)
 }
 
+const ALWAYS_NATIVE_NODE_TYPES = new Set<IcuNode["type"]>([
+  "literal",
+  "argument",
+  "pound",
+  "number",
+  "date",
+  "time",
+  "list",
+  "duration",
+  "ago",
+  "name"
+])
+
 function supportsNativeNode(node: IcuNode): boolean {
-  switch (node.type) {
-    case "literal":
-    case "argument":
-    case "pound":
-      return true
-    case "tag":
-      return node.children.every(supportsNativeNode)
-    case "select":
-      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
-    case "plural":
-      return Object.values(node.options).every((option) => option.value.every(supportsNativeNode))
-    case "number":
-    case "date":
-    case "time":
-    case "list":
-    case "duration":
-    case "ago":
-    case "name":
-      return true
-    default:
-      return false
+  if (ALWAYS_NATIVE_NODE_TYPES.has(node.type)) {
+    return true
   }
+
+  if (node.type === "tag") {
+    return node.children.every(supportsNativeNode)
+  }
+
+  if (node.type === "select" || node.type === "plural") {
+    return everyOptionValueSupports(node.options, supportsNativeNode)
+  }
+
+  return false
 }
 
 function supportsNativeAst(ast: IcuNode[]): boolean {
