@@ -7,6 +7,7 @@
 #![deny(missing_docs)]
 
 pub mod catalog;
+pub mod compile;
 pub mod headers;
 pub mod icu;
 pub mod message_id;
@@ -17,6 +18,10 @@ pub mod references;
 pub use catalog::{
     catalog_to_items, items_to_catalog, merge_catalogs, Catalog, CatalogEntry,
     CatalogToItemsOptions, CatalogTranslation, ItemsToCatalogOptions,
+};
+pub use compile::{
+    compile_catalog, compile_icu, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog,
+    CompiledMessage, MessageValue, MessageValues, TagHandler,
 };
 pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
 pub use icu::{
