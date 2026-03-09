@@ -4,6 +4,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+use crate::plurals::get_plural_categories;
+use crate::po::{PoFile, PoItem};
+
 /// Relative-time style string.
 pub type IcuAgoStyle = String;
 
@@ -198,6 +201,29 @@ pub struct IcuVariableComparison {
     pub extra: Vec<String>,
     /// Whether both sides match exactly.
     pub is_match: bool,
+}
+
+/// Options for Gettext-to-ICU conversion.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GettextToIcuOptions {
+    /// Target locale used to map plural indices to categories.
+    pub locale: String,
+    /// Variable name used for the resulting ICU plural expression.
+    pub plural_variable: String,
+    /// Replace `#` with `{plural_variable}`.
+    pub expand_octothorpe: bool,
+}
+
+impl GettextToIcuOptions {
+    /// Create conversion options for a locale.
+    #[must_use]
+    pub fn new(locale: impl Into<String>) -> Self {
+        Self {
+            locale: locale.into(),
+            plural_variable: String::from("count"),
+            expand_octothorpe: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -869,6 +895,112 @@ pub fn has_icu_syntax(message: &str) -> bool {
     })
 }
 
+/// Check whether a PO item uses gettext plural forms.
+#[must_use]
+pub fn is_plural_item(item: &PoItem) -> bool {
+    item.msgid_plural.is_some() && item.msgstr.len() > 1
+}
+
+/// Convert a gettext plural item to ICU MessageFormat.
+#[must_use]
+pub fn gettext_to_icu(item: &PoItem, options: &GettextToIcuOptions) -> Option<String> {
+    if !is_plural_item(item) {
+        return None;
+    }
+
+    let categories = get_plural_categories(&options.locale);
+    let clauses = item
+        .msgstr
+        .iter()
+        .enumerate()
+        .map(|(index, translation)| {
+            let category = categories.get(index).copied().unwrap_or("other");
+            let text = if options.expand_octothorpe {
+                translation.replace('#', &format!("{{{}}}", options.plural_variable))
+            } else {
+                translation.clone()
+            };
+            format!("{category} {{{text}}}")
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    Some(format!(
+        "{{{}, plural, {clauses}}}",
+        options.plural_variable
+    ))
+}
+
+/// Normalize a plural item to ICU format in place.
+pub fn normalize_item_to_icu(item: &mut PoItem, options: &GettextToIcuOptions) -> bool {
+    match gettext_to_icu(item, options) {
+        Some(icu) => {
+            item.msgstr = vec![icu];
+            item.msgid_plural = Some(String::new());
+            true
+        }
+        None => false,
+    }
+}
+
+/// Normalize all plural items in a PO file in place.
+pub fn normalize_to_icu_in_place(po: &mut PoFile, options: &GettextToIcuOptions) {
+    for item in &mut po.items {
+        let _ = normalize_item_to_icu(item, options);
+    }
+}
+
+/// Normalize all plural items in a PO file and return a cloned result.
+#[must_use]
+pub fn normalize_to_icu(po: &PoFile, options: &GettextToIcuOptions) -> PoFile {
+    let mut cloned = po.clone();
+    normalize_to_icu_in_place(&mut cloned, options);
+    cloned
+}
+
+/// Convert an ICU plural expression back to gettext-style source strings.
+#[must_use]
+pub fn icu_to_gettext_source(
+    icu: &str,
+    expand_octothorpe: bool,
+) -> Option<(String, String, String)> {
+    let ast = parse_icu(
+        icu,
+        IcuParserOptions {
+            requires_other_clause: false,
+            ..IcuParserOptions::default()
+        },
+    )
+    .ok()?;
+
+    let IcuNode::Plural { value, options, .. } = ast.first()? else {
+        return None;
+    };
+
+    if options.len() < 2 {
+        return None;
+    }
+
+    let singular = options
+        .get("one")
+        .or_else(|| options.values().next())
+        .map(flatten_option_text)?;
+    let plural = options
+        .get("other")
+        .or_else(|| options.values().last())
+        .map(flatten_option_text)?;
+
+    let expand = |text: String| {
+        if expand_octothorpe {
+            text.replace('#', &format!("{{{value}}}"))
+        } else {
+            text
+        }
+    };
+
+    Some((expand(singular), expand(plural), value.clone()))
+}
+
 fn extract_variables_from_ast(nodes: &[IcuNode]) -> Vec<String> {
     let mut variables = BTreeSet::new();
     for_each_node(nodes, &mut |node| {
@@ -892,6 +1024,18 @@ fn extract_variable_info_from_ast(nodes: &[IcuNode]) -> Vec<IcuVariable> {
     });
 
     variables
+}
+
+fn flatten_option_text<T>(option: &T) -> String
+where
+    T: OptionNodes,
+{
+    option
+        .nodes()
+        .iter()
+        .map(flatten_node_text)
+        .collect::<Vec<_>>()
+        .join("")
 }
 
 fn contains_node_type(nodes: &[IcuNode], predicate: impl Fn(&IcuNode) -> bool + Copy) -> bool {
@@ -1056,13 +1200,48 @@ fn is_tag_char(ch: char) -> bool {
     ch.is_ascii_alphanumeric() || matches!(ch, '-' | '.' | ':' | '_')
 }
 
+fn flatten_node_text(node: &IcuNode) -> String {
+    match node {
+        IcuNode::Literal { value }
+        | IcuNode::Argument { value }
+        | IcuNode::Number { value, .. }
+        | IcuNode::Date { value, .. }
+        | IcuNode::Time { value, .. }
+        | IcuNode::List { value, .. }
+        | IcuNode::Duration { value, .. }
+        | IcuNode::Ago { value, .. }
+        | IcuNode::Name { value, .. } => value.clone(),
+        IcuNode::Pound => String::from("#"),
+        IcuNode::Tag { children, .. } => children.iter().map(flatten_node_text).collect(),
+        IcuNode::Plural { .. } | IcuNode::Select { .. } => String::new(),
+    }
+}
+
+trait OptionNodes {
+    fn nodes(&self) -> &[IcuNode];
+}
+
+impl OptionNodes for IcuPluralOption {
+    fn nodes(&self) -> &[IcuNode] {
+        &self.value
+    }
+}
+
+impl OptionNodes for IcuSelectOption {
+    fn nodes(&self) -> &[IcuNode] {
+        &self.value
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        compare_variables, extract_variable_info, extract_variables, has_icu_syntax, has_plural,
-        has_select, has_select_ordinal, parse_icu, validate_icu, IcuNode, IcuParserOptions,
-        IcuPluralType,
+        compare_variables, extract_variable_info, extract_variables, gettext_to_icu,
+        has_icu_syntax, has_plural, has_select, has_select_ordinal, icu_to_gettext_source,
+        is_plural_item, normalize_item_to_icu, normalize_to_icu, normalize_to_icu_in_place,
+        parse_icu, validate_icu, GettextToIcuOptions, IcuNode, IcuParserOptions, IcuPluralType,
     };
+    use crate::po::{PoFile, PoItem};
 
     #[test]
     fn parse_icu_parses_literals_and_arguments() {
@@ -1197,5 +1376,70 @@ mod tests {
             IcuNode::Plural { plural_type, .. } => assert_eq!(*plural_type, IcuPluralType::Ordinal),
             other => panic!("expected plural node, got {other:?}"),
         }
+    }
+
+    fn plural_item(msgstr: &[&str]) -> PoItem {
+        let mut item = PoItem::new(2);
+        item.msgid = String::from("One item");
+        item.msgid_plural = Some(String::from("{count} items"));
+        item.msgstr = msgstr.iter().map(|value| (*value).to_owned()).collect();
+        item
+    }
+
+    #[test]
+    fn gettext_to_icu_converts_plural_forms() {
+        let item = plural_item(&["Ein Artikel", "{count} Artikel"]);
+        let result = gettext_to_icu(&item, &GettextToIcuOptions::new("de"));
+        assert_eq!(
+            result,
+            Some(String::from(
+                "{count, plural, one {Ein Artikel} other {{count} Artikel}}"
+            ))
+        );
+    }
+
+    #[test]
+    fn gettext_to_icu_handles_multi_form_locales() {
+        let item = plural_item(&["plik", "pliki", "plików", "pliki"]);
+        let result = gettext_to_icu(&item, &GettextToIcuOptions::new("pl"));
+        assert_eq!(
+            result,
+            Some(String::from(
+                "{count, plural, one {plik} few {pliki} many {plików} other {pliki}}"
+            ))
+        );
+    }
+
+    #[test]
+    fn normalize_helpers_convert_plural_items() {
+        let mut item = plural_item(&["Ein Artikel", "{count} Artikel"]);
+        assert!(is_plural_item(&item));
+        assert!(normalize_item_to_icu(
+            &mut item,
+            &GettextToIcuOptions::new("de")
+        ));
+        assert_eq!(item.msgstr.len(), 1);
+
+        let mut po = PoFile::new();
+        po.items
+            .push(plural_item(&["Ein Artikel", "{count} Artikel"]));
+        let cloned = normalize_to_icu(&po, &GettextToIcuOptions::new("de"));
+        assert_ne!(po.items[0].msgstr, cloned.items[0].msgstr);
+
+        normalize_to_icu_in_place(&mut po, &GettextToIcuOptions::new("de"));
+        assert_eq!(po.items[0].msgstr, cloned.items[0].msgstr);
+    }
+
+    #[test]
+    fn icu_to_gettext_source_extracts_singular_and_plural() {
+        let source = icu_to_gettext_source("{count, plural, one {# item} other {# items}}", true);
+        assert_eq!(
+            source,
+            Some((
+                String::from("{count} item"),
+                String::from("{count} items"),
+                String::from("count")
+            ))
+        );
     }
 }

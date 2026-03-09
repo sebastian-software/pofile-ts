@@ -20,10 +20,12 @@ pub use catalog::{
 };
 pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
 pub use icu::{
-    compare_variables, extract_variable_info, extract_variables, has_icu_syntax, has_plural,
-    has_select, has_select_ordinal, parse_icu, validate_icu, IcuAgoStyle, IcuErrorKind, IcuNode,
-    IcuParseError, IcuParser, IcuParserOptions, IcuPluralOption, IcuPluralType, IcuSelectOption,
-    IcuValidationResult, IcuVariable, IcuVariableComparison,
+    compare_variables, extract_variable_info, extract_variables, gettext_to_icu, has_icu_syntax,
+    has_plural, has_select, has_select_ordinal, icu_to_gettext_source, is_plural_item,
+    normalize_item_to_icu, normalize_to_icu, normalize_to_icu_in_place, parse_icu, validate_icu,
+    GettextToIcuOptions, IcuAgoStyle, IcuErrorKind, IcuNode, IcuParseError, IcuParser,
+    IcuParserOptions, IcuPluralOption, IcuPluralType, IcuSelectOption, IcuValidationResult,
+    IcuVariable, IcuVariableComparison,
 };
 pub use message_id::{generate_message_id, generate_message_ids, MessageIdInput};
 pub use plurals::{
