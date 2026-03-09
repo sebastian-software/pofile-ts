@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1-pre.0](https://github.com/sebastian-software/pofile-ts/compare/v5.0.0-pre.0...v5.0.1-pre.0) (2026-03-09)
+
+
+### Bug Fixes
+
+* **pofile-ts:** trigger next prerelease cut ([3b7e58d](https://github.com/sebastian-software/pofile-ts/commit/3b7e58db25f091e1ef65e542072cd9dbd148c08a))
+
 ## [5.0.0-pre.0](https://github.com/sebastian-software/pofile-ts/compare/v4.0.1...v5.0.0-pre.0) (2026-03-09)
 
 
