@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.0.0-pre.0](https://github.com/sebastian-software/pofile-ts/compare/v4.0.1...v5.0.0-pre.0) (2026-03-09)
+
+
+### Features
+
+* **core:** add explicit formatting hosts ([5a736be](https://github.com/sebastian-software/pofile-ts/commit/5a736be24d55ebdb18367a4f08ccfe4bc42dece1))
+* **node:** add hybrid native catalog compilation ([d76c94e](https://github.com/sebastian-software/pofile-ts/commit/d76c94e9694ef24d2edb532430a49c0d7e8cf1cd))
+* **node:** add native compile bindings ([a61bb7d](https://github.com/sebastian-software/pofile-ts/commit/a61bb7d5667452636d5323a3ab02b1de1cb4eaf1))
+* **node:** add native icu parser binding ([8fdbcda](https://github.com/sebastian-software/pofile-ts/commit/8fdbcda811845977c4d7b956fb59856e3decf779))
+* **node:** add native po bindings prototype ([2390591](https://github.com/sebastian-software/pofile-ts/commit/23905915175fb188bdaf15a7f2bfa40519ec6465))
+* **node:** preprocess formatter values for native icu ([667a9a3](https://github.com/sebastian-software/pofile-ts/commit/667a9a3057c4935fc0f0345637f0b6ba96faafc7))
+* **node:** rewrite formatter nodes for native icu ([6fd3e8b](https://github.com/sebastian-software/pofile-ts/commit/6fd3e8b72d0104a89cd8982602596e2b21eeb96c))
+
+
+### Bug Fixes
+
+* **ci:** resolve eslint regressions in native compile paths ([61ab314](https://github.com/sebastian-software/pofile-ts/commit/61ab31494e46b937f99b0578d21fe7b32f9ad91f))
+
+
+### Miscellaneous Chores
+
+* start pofile-ts 5.0 prerelease ([30fce38](https://github.com/sebastian-software/pofile-ts/commit/30fce38406db3ed0521e97181b9b2ecd990116b9))
+
 ## [4.0.1](https://github.com/sebastian-software/pofile-ts/compare/v4.0.0...v4.0.1) (2026-03-09)
 
 
