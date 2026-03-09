@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "packages/pofile-ts": {
+      "release-type": "node",
+      "package-name": "pofile-ts",
+      "component": "pofile-ts",
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "changelog-path": "packages/pofile-ts/CHANGELOG.md"
+    }
+  }
+}

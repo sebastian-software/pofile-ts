@@ -119,9 +119,6 @@ importers:
       "@eslint/js":
         specifier: ^9.39.1
         version: 9.39.1
-      "@release-it/conventional-changelog":
-        specifier: ^10.0.2
-        version: 10.0.3(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.2.1)(release-it@19.1.0(@types/node@22.19.2))
       "@types/node":
         specifier: ^22.19.1
         version: 22.19.2
@@ -2218,15 +2215,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  "@release-it/conventional-changelog@10.0.3":
-    resolution:
-      {
-        integrity: sha512-/aMwawGmepjPSFtbbIZNdjzkcbAegU+cR3eGgYSYBSHRhmIsxOtz187BreqMZDsYB7P05BCty8vqG381DV7bMA==
-      }
-    engines: { node: ^20.12.0 || >=22.0.0 }
-    peerDependencies:
-      release-it: ^18.0.0 || ^19.0.0
 
   "@remix-run/node-fetch-server@0.9.0":
     resolution:
@@ -6594,14 +6582,6 @@ packages:
         integrity: sha512-lqA4rGUf1JmacCNWWZx0Wv1dHqMwxzsDWYMTowuplHF3xH0N/MmrZ/G3BDZnzAkRmxDadujCjaKM2hqYdCBOGw==
       }
 
-  release-it@19.1.0:
-    resolution:
-      {
-        integrity: sha512-XgAIZVKgHgOBUUoLFrUfXHG4cUDiXPWFW0AHIAgk17Tk9JbIjz9YyAU8MyQer7dWkfG5IpNU9QH8tViQZGfhaw==
-      }
-    engines: { node: ^20.12.0 || >=22.0.0 }
-    hasBin: true
-
   remark-gfm@4.0.1:
     resolution:
       {
@@ -9021,20 +9001,6 @@ snapshots:
       react-router: 7.10.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     optionalDependencies:
       typescript: 5.9.3
-
-  "@release-it/conventional-changelog@10.0.3(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.2.1)(release-it@19.1.0(@types/node@22.19.2))":
-    dependencies:
-      "@conventional-changelog/git-client": 2.5.1(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.2.1)
-      concat-stream: 2.0.0
-      conventional-changelog: 7.1.1(conventional-commits-filter@5.0.0)
-      conventional-changelog-angular: 8.1.0
-      conventional-changelog-conventionalcommits: 9.1.0
-      conventional-recommended-bump: 11.2.0
-      release-it: 19.1.0(@types/node@22.19.2)
-      semver: 7.7.3
-    transitivePeerDependencies:
-      - conventional-commits-filter
-      - conventional-commits-parser
 
   "@remix-run/node-fetch-server@0.9.0": {}
 
@@ -11937,36 +11903,6 @@ snapshots:
       "@types/hast": 3.0.4
       hast-util-to-estree: 3.1.3
     transitivePeerDependencies:
-      - supports-color
-
-  release-it@19.1.0(@types/node@22.19.2):
-    dependencies:
-      "@nodeutils/defaults-deep": 1.1.0
-      "@octokit/rest": 22.0.0
-      "@phun-ky/typeof": 2.0.3
-      async-retry: 1.3.3
-      c12: 3.3.1
-      ci-info: 4.3.1
-      eta: 4.0.1
-      git-url-parse: 16.1.0
-      inquirer: 12.9.6(@types/node@22.19.2)
-      issue-parser: 7.0.1
-      lodash.merge: 4.6.2
-      mime-types: 3.0.1
-      new-github-release-url: 2.0.0
-      open: 10.2.0
-      ora: 9.0.0
-      os-name: 6.1.0
-      proxy-agent: 6.5.0
-      semver: 7.7.2
-      tinyglobby: 0.2.15
-      undici: 6.21.3
-      url-join: 5.0.0
-      wildcard-match: 5.1.4
-      yargs-parser: 21.1.1
-    transitivePeerDependencies:
-      - "@types/node"
-      - magicast
       - supports-color
 
   remark-gfm@4.0.1:
