@@ -18,7 +18,12 @@
 import type { Catalog } from "./catalog"
 import type { FormatterUsage } from "./types"
 import type { IcuNode } from "./icu/types"
-import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
+import type {
+  CompiledMessageFunction,
+  IcuMessageHost,
+  MessageValues,
+  MessageResult
+} from "./icu/compile"
 import { compileIcu } from "./icu/compile"
 import { parseIcu } from "./icu/parser"
 import { generateMessageIdSync } from "./messageId"
@@ -52,6 +57,9 @@ const nativeCompiledCatalogRegistry =
 export interface CompileCatalogOptions {
   /** Locale for plural rules and Intl formatting */
   locale: string
+
+  /** Optional host implementation for formatting and tag rendering. */
+  host?: IcuMessageHost
 
   /**
    * Whether to use messageId (hash) as key.
@@ -112,10 +120,11 @@ export interface CompiledCatalog {
  * compiled.format("Xk9mLp", { name: "World" }) // → "Hallo World!"
  */
 function compileCatalogJs(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
-  const { locale, useMessageId = true, strict = false } = options
+  const { locale, host, useMessageId = true, strict = false } = options
+  const effectiveLocale = host?.locale ?? locale
 
   const messages = new Map<string, CompiledMessageFunction>()
-  const pluralFn = getPluralFunction(locale)
+  const pluralFn = getPluralFunction(effectiveLocale)
 
   for (const [msgid, entry] of Object.entries(catalog)) {
     const translation = entry.translation
@@ -132,13 +141,14 @@ function compileCatalogJs(catalog: Catalog, options: CompileCatalogOptions): Com
         msgid,
         entry.pluralSource,
         translation,
-        locale,
+        effectiveLocale,
         pluralFn,
-        strict
+        strict,
+        host
       )
       messages.set(key, compiled)
     } else {
-      const compiled = compileIcu(translation, { locale, strict })
+      const compiled = compileIcu(translation, { locale, strict, host })
       messages.set(key, compiled)
     }
   }
@@ -339,6 +349,10 @@ function createNativeCatalog(
 }
 
 export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
+  if (options.host) {
+    return compileCatalogJs(catalog, options)
+  }
+
   const binding = getNativeBinding()
   if (!binding) {
     return compileCatalogJs(catalog, options)
@@ -382,13 +396,14 @@ function compileGettextPluralRuntime(
   translations: string[],
   locale: string,
   pluralFn: (n: number) => number,
-  strict: boolean
+  strict: boolean,
+  host: IcuMessageHost | undefined
 ): CompiledMessageFunction {
   // Extract variable name from msgid or pluralSource
   const varName = extractPluralVariable(msgid, pluralSource) ?? DEFAULT_PLURAL_VAR
 
   // Compile each form
-  const compiledForms = translations.map((form) => compileIcu(form, { locale, strict }))
+  const compiledForms = translations.map((form) => compileIcu(form, { locale, strict, host }))
 
   // Return a function that selects the right form at runtime
   return (values?: MessageValues): MessageResult => {

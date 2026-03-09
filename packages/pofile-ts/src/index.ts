@@ -53,6 +53,7 @@ export {
   icuToGettextSource,
   // Compilation
   compileIcu,
+  createIntlMessageHost,
   createIcuCompiler
 } from "./icu/index"
 
@@ -135,6 +136,7 @@ export type {
   // Compile types
   CompileIcuOptions,
   CompiledMessageFunction,
+  IcuMessageHost,
   MessageValues,
   MessageResult
 } from "./icu/index"

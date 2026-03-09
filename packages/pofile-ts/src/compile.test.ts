@@ -174,6 +174,33 @@ describe("compileCatalog", () => {
     })
   })
 
+  describe("custom hosts", () => {
+    it("passes a custom host through compileCatalog", () => {
+      const catalog: Catalog = {
+        "Value: {n, number}": { translation: "Wert: {n, number}" }
+      }
+
+      const compiled = compileCatalog(catalog, {
+        locale: "de",
+        host: {
+          locale: "en",
+          formatNumber(value) {
+            return `n=${String(value)}`
+          },
+          formatDate: () => undefined,
+          formatTime: () => undefined,
+          formatList: () => undefined,
+          formatDuration: () => undefined,
+          formatAgo: () => undefined,
+          formatName: () => undefined
+        }
+      })
+      const key = compiled.keys()[0]!
+
+      expect(compiled.format(key, { n: 7 })).toBe("Wert: n=7")
+    })
+  })
+
   describe("gettext plurals (msgstr[] array)", () => {
     it("compiles gettext plural forms", () => {
       const catalog: Catalog = {

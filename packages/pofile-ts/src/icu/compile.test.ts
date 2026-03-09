@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest"
-import { compileIcu, createIcuCompiler } from "./compile"
+import {
+  compileIcu,
+  createIcuCompiler,
+  createIntlMessageHost,
+  type IcuMessageHost
+} from "./compile"
 
 describe("compileIcu", () => {
   describe("literals", () => {
@@ -297,6 +302,40 @@ describe("compileIcu", () => {
         const hourFn = compileIcu("{n, number, hour}", { locale: "en" })
         expect(hourFn({ n: 2 })).toMatch(/2\s*hr/)
       })
+    })
+  })
+
+  describe("custom hosts", () => {
+    it("uses a custom host for formatter nodes", () => {
+      const host: IcuMessageHost = {
+        locale: "en",
+        formatNumber(value) {
+          return `n=${String(value)}`
+        },
+        formatDate: () => undefined,
+        formatTime: () => undefined,
+        formatList: () => undefined,
+        formatDuration: () => undefined,
+        formatAgo: () => undefined,
+        formatName: () => undefined
+      }
+
+      const fn = compileIcu("{price} / {price, number}", { locale: "de", host })
+
+      expect(fn({ price: 12.5 })).toBe("12.5 / n=12.5")
+    })
+
+    it("lets a custom host override tag rendering", () => {
+      const host: IcuMessageHost = {
+        ...createIntlMessageHost({ locale: "en" }),
+        renderTag(name, children) {
+          return `<${name}:${children}>`
+        }
+      }
+
+      const fn = compileIcu("Click <link>here</link>", { locale: "en", host })
+
+      expect(fn()).toBe("Click <link:here>")
     })
   })
 

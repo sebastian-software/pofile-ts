@@ -21,7 +21,7 @@ pub use catalog::{
 };
 pub use compile::{
     compile_catalog, compile_icu, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog,
-    CompiledMessage, MessageValue, MessageValues, TagHandler,
+    CompiledMessage, DefaultFormatHost, FormatHost, MessageValue, MessageValues, TagHandler,
 };
 pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
 pub use icu::{

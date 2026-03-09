@@ -82,6 +82,14 @@ export interface CompileIcuOptions {
    * // Usage: {items, list, narrow}
    */
   listStyles?: Record<string, Intl.ListFormatOptions>
+
+  /**
+   * Optional host implementation for formatting and tag rendering.
+   *
+   * When omitted, pofile-ts uses its built-in `Intl`-based host.
+   * Passing a custom host currently forces the JavaScript runtime path.
+   */
+  host?: IcuMessageHost
 }
 
 /**
@@ -101,6 +109,38 @@ export type MessageResult = string | readonly unknown[]
  */
 export type CompiledMessageFunction = (values?: MessageValues) => MessageResult
 
+/**
+ * Host interface for locale-aware formatting and tag rendering.
+ */
+export interface IcuMessageHost {
+  /** Locale used by the host. */
+  readonly locale: string
+
+  /** Format a number-like value. */
+  formatNumber(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a date-like value. */
+  formatDate(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a time-like value. */
+  formatTime(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a list-like value. */
+  formatList(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a duration-like value. */
+  formatDuration(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a relative-time value. */
+  formatAgo(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Format a display-name value. */
+  formatName(value: unknown, style: string | null, values?: MessageValues): string | undefined
+
+  /** Render a tag, if the host wants to intercept it. */
+  renderTag?(name: string, children: string, values?: MessageValues): unknown
+}
+
 const nativeCompiledMessageRegistry =
   typeof FinalizationRegistry === "function"
     ? new FinalizationRegistry<number>((handle) => {
@@ -112,6 +152,7 @@ const nativeCompiledMessageRegistry =
  * Context passed during AST traversal.
  */
 interface CompileContext {
+  host: IcuMessageHost
   locale: string
   pluralFn: (n: number) => number
   pluralCategories: readonly string[]
@@ -129,6 +170,130 @@ interface CompileContext {
     date: Record<string, Intl.DateTimeFormatOptions>
     time: Record<string, Intl.DateTimeFormatOptions>
     list: Record<string, Intl.ListFormatOptions>
+  }
+}
+
+/**
+ * Creates the default `Intl`-based host implementation used by pofile-ts.
+ */
+export function createIntlMessageHost(options: CompileIcuOptions): IcuMessageHost {
+  const { locale, numberStyles, dateStyles, timeStyles, listStyles } = options
+  const formatters = createFormatterCache()
+  const customStyles = {
+    number: numberStyles ?? {},
+    date: dateStyles ?? {},
+    time: timeStyles ?? {},
+    list: listStyles ?? {}
+  }
+
+  return {
+    locale,
+
+    formatNumber(value: unknown, style: string | null, values?: MessageValues): string | undefined {
+      const customNumberStyle = style ? customStyles.number[style] : undefined
+      if (customNumberStyle) {
+        return typeof value === "number"
+          ? new Intl.NumberFormat(locale, customNumberStyle).format(value)
+          : typeof value === "string"
+            ? value
+            : String(value as string | number | boolean)
+      }
+
+      if (style === "currency") {
+        if (typeof value !== "number") {
+          return typeof value === "string" ? value : String(value as string | number | boolean)
+        }
+        const currency = typeof values?.currency === "string" ? values.currency : "USD"
+        return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value)
+      }
+
+      return typeof value === "number"
+        ? getNumberFormatter(formatters, locale, style).format(value)
+        : typeof value === "string"
+          ? value
+          : String(value as string | number | boolean)
+    },
+
+    formatDate(value: unknown, style: string | null): string | undefined {
+      const customDateStyle = style ? customStyles.date[style] : undefined
+      const formatter = customDateStyle
+        ? new Intl.DateTimeFormat(locale, customDateStyle)
+        : getDateTimeFormatter(formatters, locale, style, "date")
+
+      if (value instanceof Date) {
+        return formatter.format(value)
+      }
+      if (typeof value === "number") {
+        return formatter.format(new Date(value))
+      }
+      return typeof value === "string" ? value : String(value as string | number | boolean)
+    },
+
+    formatTime(value: unknown, style: string | null): string | undefined {
+      const customTimeStyle = style ? customStyles.time[style] : undefined
+      const formatter = customTimeStyle
+        ? new Intl.DateTimeFormat(locale, customTimeStyle)
+        : getDateTimeFormatter(formatters, locale, style, "time")
+
+      if (value instanceof Date) {
+        return formatter.format(value)
+      }
+      if (typeof value === "number") {
+        return formatter.format(new Date(value))
+      }
+      return typeof value === "string" ? value : String(value as string | number | boolean)
+    },
+
+    formatList(value: unknown, style: string | null): string | undefined {
+      const customListStyle = style ? customStyles.list[style] : undefined
+      const formatter = customListStyle
+        ? new Intl.ListFormat(locale, customListStyle)
+        : getListFormatter(formatters, locale, style)
+
+      if (Array.isArray(value)) {
+        return formatter.format(value.map((entry) => String(entry)))
+      }
+      return typeof value === "string" ? value : JSON.stringify(value)
+    },
+
+    formatDuration(value: unknown, style: string | null): string | undefined {
+      if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
+        const durationStyle = (style ?? "long") as "long" | "short" | "narrow" | "digital"
+        return new (
+          Intl as typeof Intl & {
+            DurationFormat: new (
+              locale: string,
+              options: { style: "long" | "short" | "narrow" | "digital" }
+            ) => { format(value: unknown): string }
+          }
+        ).DurationFormat(locale, { style: durationStyle }).format(value)
+      }
+
+      return JSON.stringify(value)
+    },
+
+    formatAgo(value: unknown, style: string | null): string | undefined {
+      if (typeof value === "number") {
+        const { formatter, unit } = getAgoFormatter(formatters, locale, style)
+        return formatter.format(value, unit)
+      }
+      return typeof value === "string" ? value : JSON.stringify(value)
+    },
+
+    formatName(value: unknown, style: string | null): string | undefined {
+      if (typeof value === "string") {
+        return getNameFormatter(formatters, locale, style).of(value) ?? value
+      }
+      return JSON.stringify(value)
+    },
+
+    renderTag(name: string, children: string, values?: MessageValues): unknown {
+      const tagFn = values?.[name]
+      if (typeof tagFn === "function") {
+        return (tagFn as (children: string) => unknown)(children)
+      }
+      return children
+    }
   }
 }
 
@@ -499,114 +664,51 @@ function compileNode(
       }
 
     case "number": {
-      // Check for custom style first
-      const customNumberStyle = node.style ? ctx.customStyles.number[node.style] : undefined
-      if (customNumberStyle) {
-        const formatter = new Intl.NumberFormat(ctx.locale, customNumberStyle)
-        return (values?: MessageValues) => {
-          const val = values?.[node.value]
-          if (typeof val === "number") {
-            return formatter.format(val)
-          }
-          if (val == null) {
-            return `{${node.value}}`
-          }
-          return typeof val === "string" ? val : String(val as string | number | boolean)
-        }
-      }
-
-      // Special handling for "currency" style without skeleton:
-      // Read currency code from values.currency at runtime
-      if (node.style === "currency") {
-        const currencyCache = new Map<string, Intl.NumberFormat>()
-        return (values?: MessageValues) => {
-          const val = values?.[node.value]
-          if (typeof val !== "number") {
-            if (val == null) {
-              return `{${node.value}}`
-            }
-            return typeof val === "string" ? val : String(val as string | number | boolean)
-          }
-          const currency = typeof values?.currency === "string" ? values.currency : "USD"
-          let formatter = currencyCache.get(currency)
-          if (!formatter) {
-            formatter = new Intl.NumberFormat(ctx.locale, { style: "currency", currency })
-            currencyCache.set(currency, formatter)
-          }
-          return formatter.format(val)
-        }
-      }
-
-      const formatter = getNumberFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (typeof val === "number") {
-          return formatter.format(val)
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return (
+          ctx.host.formatNumber(val, node.style, values) ??
+          (typeof val === "string" ? val : String(val as string | number | boolean))
+        )
       }
     }
 
     case "date": {
-      // Check for custom style first
-      const customDateStyle = node.style ? ctx.customStyles.date[node.style] : undefined
-      const formatter = customDateStyle
-        ? new Intl.DateTimeFormat(ctx.locale, customDateStyle)
-        : getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "date")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (val instanceof Date) {
-          return formatter.format(val)
-        }
-        if (typeof val === "number") {
-          return formatter.format(new Date(val))
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return (
+          ctx.host.formatDate(val, node.style, values) ??
+          (typeof val === "string" ? val : String(val as string | number | boolean))
+        )
       }
     }
 
     case "time": {
-      // Check for custom style first
-      const customTimeStyle = node.style ? ctx.customStyles.time[node.style] : undefined
-      const formatter = customTimeStyle
-        ? new Intl.DateTimeFormat(ctx.locale, customTimeStyle)
-        : getDateTimeFormatter(ctx.formatters, ctx.locale, node.style, "time")
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (val instanceof Date) {
-          return formatter.format(val)
-        }
-        if (typeof val === "number") {
-          return formatter.format(new Date(val))
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return (
+          ctx.host.formatTime(val, node.style, values) ??
+          (typeof val === "string" ? val : String(val as string | number | boolean))
+        )
       }
     }
 
     case "list": {
-      // Check for custom style first
-      const customListStyle = node.style ? ctx.customStyles.list[node.style] : undefined
-      const formatter = customListStyle
-        ? new Intl.ListFormat(ctx.locale, customListStyle)
-        : getListFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (Array.isArray(val)) {
-          return formatter.format(val.map((v) => String(v)))
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : JSON.stringify(val)
+        return ctx.host.formatList(val, node.style, values) ?? JSON.stringify(val)
       }
     }
 
@@ -616,45 +718,27 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        // Duration can be a DurationLike object or we format it manually
-        // DurationFormat (Baseline 2025) - runtime check for older environments
-        if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
-          const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          const formatter = new (Intl as any).DurationFormat(ctx.locale, { style })
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-          return formatter.format(val)
-        }
-        // Fallback: just stringify the object
-        return JSON.stringify(val)
+        return ctx.host.formatDuration(val, node.style, values) ?? JSON.stringify(val)
       }
     }
 
     case "ago": {
-      const { formatter, unit } = getAgoFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (typeof val === "number") {
-          return formatter.format(val, unit)
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : JSON.stringify(val)
+        return ctx.host.formatAgo(val, node.style, values) ?? JSON.stringify(val)
       }
     }
 
     case "name": {
-      const formatter = getNameFormatter(ctx.formatters, ctx.locale, node.style)
       return (values?: MessageValues) => {
         const val = values?.[node.value]
-        if (typeof val === "string") {
-          return formatter.of(val) ?? val
-        }
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : JSON.stringify(val)
+        return ctx.host.formatName(val, node.style, values) ?? JSON.stringify(val)
       }
     }
 
@@ -672,8 +756,10 @@ function compileNode(
         }
         const val = values?.[ctx.pluralValue]
         if (typeof val === "number") {
-          const formatter = getNumberFormatter(ctx.formatters, ctx.locale, null)
-          return formatter.format(val - ctx.pluralOffset)
+          return (
+            ctx.host.formatNumber(val - ctx.pluralOffset, null, values) ??
+            String(val - ctx.pluralOffset)
+          )
         }
         if (val == null) {
           return "#"
@@ -782,17 +868,18 @@ function compileTag(node: IcuTagNode, ctx: CompileContext): (values?: MessageVal
   const childResolver = createResolver(compiledChildren)
 
   return (values?: MessageValues) => {
-    const tagFn = values?.[tagName]
-
     // Resolve children first
     const resolvedChildren = childResolver(values)
+    const childText =
+      typeof resolvedChildren === "string" ? resolvedChildren : String(resolvedChildren)
 
-    // If tag value is a function, call it with children
-    if (typeof tagFn === "function") {
-      return (tagFn as (children: string) => unknown)(resolvedChildren)
+    if (ctx.host.renderTag) {
+      const rendered = ctx.host.renderTag(tagName, childText, values)
+      if (rendered !== undefined) {
+        return rendered
+      }
     }
 
-    // If no function provided, return children as-is
     return resolvedChildren
   }
 }
@@ -845,11 +932,13 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
  * Creates the compilation context from options.
  */
 function createCompileContext(options: CompileIcuOptions): CompileContext {
-  const { locale, numberStyles, dateStyles, timeStyles, listStyles } = options
+  const host = options.host ?? createIntlMessageHost(options)
+  const { numberStyles, dateStyles, timeStyles, listStyles } = options
   return {
-    locale,
-    pluralFn: getPluralFunction(locale),
-    pluralCategories: getPluralCategories(locale),
+    host,
+    locale: host.locale,
+    pluralFn: getPluralFunction(host.locale),
+    pluralCategories: getPluralCategories(host.locale),
     pluralValue: null,
     pluralOffset: 0,
     formatters: createFormatterCache(),
@@ -1106,91 +1195,20 @@ function formatFormatterValue(
   }
 
   switch (spec.kind) {
-    case "number": {
-      const customStyle = spec.style ? ctx.customStyles.number[spec.style] : undefined
-      if (customStyle) {
-        return typeof rawValue === "number"
-          ? new Intl.NumberFormat(ctx.locale, customStyle).format(rawValue)
-          : typeof rawValue === "string"
-            ? rawValue
-            : String(rawValue)
-      }
-
-      if (spec.style === "currency") {
-        if (typeof rawValue !== "number") {
-          return typeof rawValue === "string" ? rawValue : String(rawValue)
-        }
-        const currency = typeof allValues?.currency === "string" ? allValues.currency : "USD"
-        return new Intl.NumberFormat(ctx.locale, { style: "currency", currency }).format(rawValue)
-      }
-
-      return typeof rawValue === "number"
-        ? getNumberFormatter(ctx.formatters, ctx.locale, spec.style).format(rawValue)
-        : typeof rawValue === "string"
-          ? rawValue
-          : String(rawValue)
-    }
+    case "number":
+      return ctx.host.formatNumber(rawValue, spec.style, allValues) ?? String(rawValue)
     case "date":
-    case "time": {
-      const customStyle =
-        spec.kind === "date"
-          ? spec.style
-            ? ctx.customStyles.date[spec.style]
-            : undefined
-          : spec.style
-            ? ctx.customStyles.time[spec.style]
-            : undefined
-      const formatter = customStyle
-        ? new Intl.DateTimeFormat(ctx.locale, customStyle)
-        : getDateTimeFormatter(ctx.formatters, ctx.locale, spec.style, spec.kind)
-
-      if (rawValue instanceof Date) {
-        return formatter.format(rawValue)
-      }
-      if (typeof rawValue === "number") {
-        return formatter.format(new Date(rawValue))
-      }
-      return typeof rawValue === "string" ? rawValue : String(rawValue)
-    }
-    case "list": {
-      const customStyle = spec.style ? ctx.customStyles.list[spec.style] : undefined
-      const formatter = customStyle
-        ? new Intl.ListFormat(ctx.locale, customStyle)
-        : getListFormatter(ctx.formatters, ctx.locale, spec.style)
-
-      if (Array.isArray(rawValue)) {
-        return formatter.format(rawValue.map((value) => String(value)))
-      }
-      return typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue)
-    }
-    case "duration": {
-      if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
-        const style = (spec.style ?? "long") as "long" | "short" | "narrow" | "digital"
-        return new (
-          Intl as typeof Intl & {
-            DurationFormat: new (
-              locale: string,
-              options: { style: "long" | "short" | "narrow" | "digital" }
-            ) => { format(value: unknown): string }
-          }
-        ).DurationFormat(ctx.locale, { style }).format(rawValue)
-      }
-
-      return JSON.stringify(rawValue)
-    }
-    case "ago": {
-      if (typeof rawValue === "number") {
-        const { formatter, unit } = getAgoFormatter(ctx.formatters, ctx.locale, spec.style)
-        return formatter.format(rawValue, unit)
-      }
-      return typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue)
-    }
-    case "name": {
-      if (typeof rawValue === "string") {
-        return getNameFormatter(ctx.formatters, ctx.locale, spec.style).of(rawValue) ?? rawValue
-      }
-      return JSON.stringify(rawValue)
-    }
+      return ctx.host.formatDate(rawValue, spec.style, allValues) ?? String(rawValue)
+    case "time":
+      return ctx.host.formatTime(rawValue, spec.style, allValues) ?? String(rawValue)
+    case "list":
+      return ctx.host.formatList(rawValue, spec.style, allValues) ?? JSON.stringify(rawValue)
+    case "duration":
+      return ctx.host.formatDuration(rawValue, spec.style, allValues) ?? JSON.stringify(rawValue)
+    case "ago":
+      return ctx.host.formatAgo(rawValue, spec.style, allValues) ?? JSON.stringify(rawValue)
+    case "name":
+      return ctx.host.formatName(rawValue, spec.style, allValues) ?? JSON.stringify(rawValue)
   }
 }
 
@@ -1284,6 +1302,10 @@ function createNativeCompiledMessage(
 }
 
 export function compileIcu(message: string, options: CompileIcuOptions): CompiledMessageFunction {
+  if (options.host) {
+    return compileIcuJs(message, options)
+  }
+
   const binding = getNativeBinding()
   if (!binding) {
     return compileIcuJs(message, options)

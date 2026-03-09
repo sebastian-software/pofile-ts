@@ -9,6 +9,119 @@ use crate::generate_message_id;
 use crate::icu::{parse_icu, IcuNode, IcuParseError, IcuParserOptions};
 use crate::plurals::{get_plural_categories, get_plural_index};
 
+/// Host interface used for locale-aware formatting and tag rendering.
+pub trait FormatHost {
+    /// Locale used by plural selection and host-provided formatters.
+    fn locale(&self) -> &str;
+
+    /// Format a number node value.
+    fn format_number(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a date node value.
+    fn format_date(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a time node value.
+    fn format_time(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a list node value.
+    fn format_list(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a duration node value.
+    fn format_duration(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a relative-time node value.
+    fn format_ago(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Format a display-name node value.
+    fn format_name(
+        &self,
+        _name: &str,
+        value: &MessageValue,
+        _style: Option<&str>,
+        _values: &MessageValues,
+    ) -> Option<String> {
+        Some(display_value(value))
+    }
+
+    /// Render a tag node.
+    fn render_tag(&self, name: &str, children: &str, values: &MessageValues) -> Option<String> {
+        match values.get(name) {
+            Some(MessageValue::Tag(handler)) => Some(handler.render(children)),
+            _ => None,
+        }
+    }
+}
+
+/// Default host used by [`CompiledMessage::format`] and [`CompiledCatalog::format`].
+#[derive(Debug, Clone)]
+pub struct DefaultFormatHost {
+    locale: String,
+}
+
+impl DefaultFormatHost {
+    /// Create a default host for a locale.
+    #[must_use]
+    pub fn new(locale: impl Into<String>) -> Self {
+        Self {
+            locale: locale.into(),
+        }
+    }
+}
+
+impl FormatHost for DefaultFormatHost {
+    fn locale(&self) -> &str {
+        &self.locale
+    }
+}
+
 /// Trait implemented by tag handlers used during message rendering.
 pub trait TagHandler: Send + Sync {
     /// Render child text for a tag.
@@ -142,10 +255,17 @@ impl CompiledMessage {
     /// Format the compiled message with the given values.
     #[must_use]
     pub fn format(&self, values: &MessageValues) -> String {
+        let host = DefaultFormatHost::new(self.locale.clone());
+        self.format_with_host(values, &host)
+    }
+
+    /// Format the compiled message with a caller-provided host.
+    #[must_use]
+    pub fn format_with_host<H: FormatHost>(&self, values: &MessageValues, host: &H) -> String {
         match &self.kind {
-            CompiledMessageKind::Parsed(ast) => render_nodes(ast, values, &self.locale, None),
+            CompiledMessageKind::Parsed(ast) => render_nodes(ast, values, host, None),
             CompiledMessageKind::GettextPlural { variable, forms } => {
-                render_gettext_plural(forms, variable, values, &self.locale)
+                render_gettext_plural(forms, variable, values, host)
             }
             CompiledMessageKind::Fallback(message) => message.clone(),
         }
@@ -211,9 +331,22 @@ impl CompiledCatalog {
     /// Format a message by key, returning the key itself if missing.
     #[must_use]
     pub fn format(&self, key: &str, values: &MessageValues) -> String {
-        self.messages
-            .get(key)
-            .map_or_else(|| key.to_owned(), |message| message.format(values))
+        let host = DefaultFormatHost::new(self.locale.clone());
+        self.format_with_host(key, values, &host)
+    }
+
+    /// Format a message with a caller-provided host, returning the key itself if missing.
+    #[must_use]
+    pub fn format_with_host<H: FormatHost>(
+        &self,
+        key: &str,
+        values: &MessageValues,
+        host: &H,
+    ) -> String {
+        self.messages.get(key).map_or_else(
+            || key.to_owned(),
+            |message| message.format_with_host(values, host),
+        )
     }
 
     /// Check whether a message exists.
@@ -313,14 +446,14 @@ fn render_gettext_plural(
     forms: &[CompiledMessage],
     variable: &str,
     values: &MessageValues,
-    locale: &str,
+    host: &impl FormatHost,
 ) -> String {
     let count = values.get(variable).and_then(as_number).unwrap_or(0.0);
-    let index = get_plural_index(locale, count);
+    let index = get_plural_index(host.locale(), count);
     let message = forms
         .get(index)
         .or_else(|| forms.last())
-        .map_or_else(String::new, |form| form.format(values));
+        .map_or_else(String::new, |form| form.format_with_host(values, host));
 
     if message.is_empty() && forms.is_empty() {
         format_number(count)
@@ -332,12 +465,12 @@ fn render_gettext_plural(
 fn render_nodes(
     nodes: &[IcuNode],
     values: &MessageValues,
-    locale: &str,
+    host: &impl FormatHost,
     plural: Option<PluralRuntime<'_>>,
 ) -> String {
     let mut output = String::new();
     for node in nodes {
-        output.push_str(&render_node(node, values, locale, plural));
+        output.push_str(&render_node(node, values, host, plural));
     }
     output
 }
@@ -351,7 +484,7 @@ struct PluralRuntime<'a> {
 fn render_node(
     node: &IcuNode,
     values: &MessageValues,
-    locale: &str,
+    host: &impl FormatHost,
     plural: Option<PluralRuntime<'_>>,
 ) -> String {
     match node {
@@ -359,15 +492,55 @@ fn render_node(
         IcuNode::Argument { value } => values
             .get(value)
             .map_or_else(|| format!("{{{value}}}"), display_value),
-        IcuNode::Number { value, .. }
-        | IcuNode::Date { value, .. }
-        | IcuNode::Time { value, .. }
-        | IcuNode::List { value, .. }
-        | IcuNode::Duration { value, .. }
-        | IcuNode::Ago { value, .. }
-        | IcuNode::Name { value, .. } => values
-            .get(value)
-            .map_or_else(|| format!("{{{value}}}"), display_value),
+        IcuNode::Number { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_number(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::Date { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_date(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::Time { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_time(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::List { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_list(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::Duration { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_duration(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::Ago { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_ago(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
+        IcuNode::Name { value, style } => values.get(value).map_or_else(
+            || format!("{{{value}}}"),
+            |message_value| {
+                host.format_name(value, message_value, style.as_deref(), values)
+                    .unwrap_or_else(|| display_value(message_value))
+            },
+        ),
         IcuNode::Pound => plural
             .and_then(|context| {
                 values
@@ -386,7 +559,7 @@ fn render_node(
                 .or_else(|| options.get("other"))
                 .map_or_else(
                     || format!("{{{value}}}"),
-                    |option| render_nodes(&option.value, values, locale, plural),
+                    |option| render_nodes(&option.value, values, host, plural),
                 )
         }
         IcuNode::Plural {
@@ -403,7 +576,7 @@ fn render_node(
                     return render_nodes(
                         &option.value,
                         values,
-                        locale,
+                        host,
                         Some(PluralRuntime {
                             variable: value,
                             offset: *offset,
@@ -413,8 +586,8 @@ fn render_node(
             }
 
             let adjusted = count - f64::from(*offset);
-            let category_index = get_plural_index(locale, adjusted);
-            let category = get_plural_categories(locale)
+            let category_index = get_plural_index(host.locale(), adjusted);
+            let category = get_plural_categories(host.locale())
                 .get(category_index)
                 .copied()
                 .unwrap_or("other");
@@ -427,7 +600,7 @@ fn render_node(
                         render_nodes(
                             &option.value,
                             values,
-                            locale,
+                            host,
                             Some(PluralRuntime {
                                 variable: value,
                                 offset: *offset,
@@ -437,11 +610,9 @@ fn render_node(
                 )
         }
         IcuNode::Tag { value, children } => {
-            let child_text = render_nodes(children, values, locale, plural);
-            match values.get(value) {
-                Some(MessageValue::Tag(handler)) => handler.render(&child_text),
-                _ => child_text,
-            }
+            let child_text = render_nodes(children, values, host, plural);
+            host.render_tag(value, &child_text, values)
+                .unwrap_or(child_text)
         }
     }
 }
@@ -507,7 +678,7 @@ mod tests {
 
     use super::{
         compile_catalog, compile_icu, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog,
-        MessageValue, MessageValues,
+        FormatHost, MessageValue, MessageValues,
     };
     use crate::catalog::{Catalog, CatalogEntry, CatalogTranslation};
 
@@ -549,6 +720,50 @@ mod tests {
             ),
         ]));
         assert_eq!(rendered, "[They]");
+    }
+
+    #[test]
+    fn compile_icu_supports_custom_host_formatters_and_locale() {
+        struct TestHost;
+
+        impl FormatHost for TestHost {
+            fn locale(&self) -> &str {
+                "pl"
+            }
+
+            fn format_number(
+                &self,
+                _name: &str,
+                value: &MessageValue,
+                _style: Option<&str>,
+                _values: &MessageValues,
+            ) -> Option<String> {
+                match value {
+                    MessageValue::Number(number) => Some(format!("n={number:.1}")),
+                    _ => None,
+                }
+            }
+
+            fn render_tag(
+                &self,
+                _name: &str,
+                children: &str,
+                _values: &MessageValues,
+            ) -> Option<String> {
+                Some(format!("<{children}>"))
+            }
+        }
+
+        let compiled = compile_icu(
+            "{count, plural, one {<b>{count, number}</b> file} few {<b>{count, number}</b> files} other {<b>{count, number}</b> files}}",
+            &CompileIcuOptions::new("en"),
+        )
+        .expect("should compile");
+
+        let rendered =
+            compiled.format_with_host(&values(&[("count", MessageValue::from(2usize))]), &TestHost);
+
+        assert_eq!(rendered, "<n=2.0> files");
     }
 
     #[test]
