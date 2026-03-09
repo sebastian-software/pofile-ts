@@ -16,6 +16,7 @@
       "include-component-in-tag": false,
       "include-v-in-tag": true,
       "prerelease": true,
+      "prerelease-type": "beta",
       "changelog-path": "CHANGELOG.md"
     }
   }
