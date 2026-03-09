@@ -914,34 +914,35 @@ interface FormatterSpec {
   style: string | null
 }
 
-function collectNativeFormatterSpecs(nodes: IcuNode[]): Map<string, FormatterSpec> | null {
-  const controlVars = new Set<string>()
-  const formatterVars = new Map<string, FormatterSpec>()
+interface NativeFormatterBinding {
+  argName: string
+  sourceName: string
+  spec: FormatterSpec
+}
 
-  const visit = (node: IcuNode): boolean => {
+interface NativeCompilationPlan {
+  rewrittenMessage: string
+  formatterBindings: NativeFormatterBinding[]
+}
+
+function buildNativeCompilationPlan(nodes: IcuNode[]): NativeCompilationPlan {
+  const usedNames = collectVariableNames(nodes)
+  const formatterBindings: NativeFormatterBinding[] = []
+  let counter = 0
+
+  const createSyntheticName = (): string => {
+    while (true) {
+      const candidate = `__pofile_fmt_${counter}`
+      counter += 1
+      if (!usedNames.has(candidate)) {
+        usedNames.add(candidate)
+        return candidate
+      }
+    }
+  }
+
+  const rewriteNode = (node: IcuNode): IcuNode => {
     switch (node.type) {
-      case "literal":
-      case "pound":
-        return true
-      case "argument":
-        return !formatterVars.has(node.value) && !controlVars.has(node.value)
-      case "tag":
-        if (formatterVars.has(node.value)) {
-          return false
-        }
-        return node.children.every(visit)
-      case "select":
-        if (formatterVars.has(node.value)) {
-          return false
-        }
-        controlVars.add(node.value)
-        return Object.values(node.options).every((option) => option.value.every(visit))
-      case "plural":
-        if (formatterVars.has(node.value)) {
-          return false
-        }
-        controlVars.add(node.value)
-        return Object.values(node.options).every((option) => option.value.every(visit))
       case "number":
       case "date":
       case "time":
@@ -949,23 +950,149 @@ function collectNativeFormatterSpecs(nodes: IcuNode[]): Map<string, FormatterSpe
       case "duration":
       case "ago":
       case "name": {
-        if (controlVars.has(node.value)) {
-          return false
+        const argName = createSyntheticName()
+        formatterBindings.push({
+          argName,
+          sourceName: node.value,
+          spec: {
+            kind: node.type,
+            style: node.style
+          }
+        })
+        return {
+          type: "argument",
+          value: argName
         }
-        const spec: FormatterSpec = { kind: node.type, style: node.style }
-        const existing = formatterVars.get(node.value)
-        if (!existing) {
-          formatterVars.set(node.value, spec)
-          return true
-        }
-        return existing.kind === spec.kind && existing.style === spec.style
       }
+      case "tag":
+        return {
+          ...node,
+          children: node.children.map(rewriteNode)
+        }
+      case "select":
+        return {
+          ...node,
+          options: Object.fromEntries(
+            Object.entries(node.options).map(([key, option]) => [
+              key,
+              { value: option.value.map(rewriteNode) }
+            ])
+          )
+        }
+      case "plural":
+        return {
+          ...node,
+          options: Object.fromEntries(
+            Object.entries(node.options).map(([key, option]) => [
+              key,
+              { value: option.value.map(rewriteNode) }
+            ])
+          )
+        }
       default:
-        return false
+        return node
     }
   }
 
-  return nodes.every(visit) ? formatterVars : null
+  const rewrittenNodes = nodes.map(rewriteNode)
+  return {
+    rewrittenMessage: serializeIcuNodes(rewrittenNodes),
+    formatterBindings
+  }
+}
+
+function collectVariableNames(nodes: IcuNode[]): Set<string> {
+  const names = new Set<string>()
+
+  const visit = (node: IcuNode): void => {
+    switch (node.type) {
+      case "argument":
+      case "number":
+      case "date":
+      case "time":
+      case "list":
+      case "duration":
+      case "ago":
+      case "name":
+      case "select":
+      case "plural":
+      case "tag":
+        names.add(node.value)
+        break
+      default:
+        break
+    }
+
+    if (node.type === "tag") {
+      node.children.forEach(visit)
+    } else if (node.type === "select" || node.type === "plural") {
+      Object.values(node.options).forEach((option) => option.value.forEach(visit))
+    }
+  }
+
+  nodes.forEach(visit)
+  return names
+}
+
+function serializeIcuNodes(nodes: IcuNode[], inPlural = false): string {
+  return nodes.map((node) => serializeIcuNode(node, inPlural)).join("")
+}
+
+function serializeIcuNode(node: IcuNode, inPlural: boolean): string {
+  switch (node.type) {
+    case "literal":
+      return escapeIcuLiteral(node.value, inPlural)
+    case "argument":
+      return `{${node.value}}`
+    case "number":
+    case "date":
+    case "time":
+    case "list":
+    case "duration":
+    case "ago":
+    case "name":
+      return node.style === null
+        ? `{${node.value}, ${node.type}}`
+        : `{${node.value}, ${node.type}, ${node.style}}`
+    case "pound":
+      return "#"
+    case "tag":
+      return `<${node.value}>${serializeIcuNodes(node.children, inPlural)}</${node.value}>`
+    case "select": {
+      const options = Object.entries(node.options)
+        .map(([key, option]) => `${key} {${serializeIcuNodes(option.value, inPlural)}}`)
+        .join(" ")
+      return `{${node.value}, select, ${options}}`
+    }
+    case "plural": {
+      const type = node.pluralType === "ordinal" ? "selectordinal" : "plural"
+      const offset = node.offset > 0 ? ` offset:${node.offset}` : ""
+      const options = Object.entries(node.options)
+        .map(([key, option]) => `${key} {${serializeIcuNodes(option.value, true)}}`)
+        .join(" ")
+      return `{${node.value}, ${type},${offset} ${options}}`
+    }
+    default:
+      return ""
+  }
+}
+
+function escapeIcuLiteral(value: string, inPlural: boolean): string {
+  let output = ""
+
+  for (const char of value) {
+    if (char === "'") {
+      output += "''"
+    } else if (char === "{" || char === "}") {
+      output += `'${char}'`
+    } else if (inPlural && char === "#") {
+      output += "'#'"
+    } else {
+      output += char
+    }
+  }
+
+  return output
 }
 
 function formatFormatterValue(
@@ -1070,20 +1197,20 @@ function formatFormatterValue(
 function prepareNativeValues(
   values: MessageValues | undefined,
   ctx: CompileContext,
-  formatterSpecs: Map<string, FormatterSpec>
+  formatterBindings: NativeFormatterBinding[]
 ): MessageValues | undefined {
-  if (!values || formatterSpecs.size === 0) {
+  if (!values || formatterBindings.length === 0) {
     return values
   }
 
   const nativeValues: MessageValues = { ...values }
-  for (const [name, spec] of formatterSpecs) {
-    const rawValue = values[name]
-    const formatted = formatFormatterValue(spec, rawValue, values, ctx)
+  for (const binding of formatterBindings) {
+    const rawValue = values[binding.sourceName]
+    const formatted = formatFormatterValue(binding.spec, rawValue, values, ctx)
     if (formatted === undefined) {
-      delete nativeValues[name]
+      nativeValues[binding.argName] = `{${binding.sourceName}}`
     } else {
-      nativeValues[name] = formatted
+      nativeValues[binding.argName] = formatted
     }
   }
 
@@ -1127,12 +1254,12 @@ function createNativeCompiledMessage(
   handle: number,
   message: string,
   options: CompileIcuOptions,
-  formatterSpecs: Map<string, FormatterSpec>
+  formatterBindings: NativeFormatterBinding[]
 ): CompiledMessageFunction {
   let fallback: CompiledMessageFunction | undefined
   const ctx = createNativeCompileContext(options)
   const compiled = (values?: MessageValues): MessageResult => {
-    const nativeValues = prepareNativeValues(values, ctx, formatterSpecs)
+    const nativeValues = prepareNativeValues(values, ctx, formatterBindings)
     if (!canSerializeNativeValues(nativeValues)) {
       fallback ??= compileIcuJs(message, options)
       return fallback(values)
@@ -1167,20 +1294,17 @@ export function compileIcu(message: string, options: CompileIcuOptions): Compile
     return compileIcuJs(message, options)
   }
 
-  const formatterSpecs = collectNativeFormatterSpecs(parsed.ast)
-  if (!formatterSpecs) {
-    return compileIcuJs(message, options)
-  }
+  const nativePlan = buildNativeCompilationPlan(parsed.ast)
 
   try {
     const handle = binding.compileIcuJson(
-      message,
+      nativePlan.rewrittenMessage,
       JSON.stringify({
         locale: options.locale,
         strict: options.strict ?? true
       })
     )
-    return createNativeCompiledMessage(handle, message, options, formatterSpecs)
+    return createNativeCompiledMessage(handle, message, options, nativePlan.formatterBindings)
   } catch {
     return compileIcuJs(message, options)
   }

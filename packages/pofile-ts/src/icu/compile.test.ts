@@ -63,6 +63,16 @@ describe("compileIcu", () => {
       expect(fn({ count: 5 })).toBe("you and 4 others")
     })
 
+    it("supports formatted output for the plural control variable", () => {
+      const fn = compileIcu(
+        "{count, plural, one {{count, number} item} other {{count, number} items}}",
+        { locale: "en" }
+      )
+
+      expect(fn({ count: 1 })).toBe("1 item")
+      expect(fn({ count: 1234.5 })).toBe("1,234.5 items")
+    })
+
     it("works with German plural rules", () => {
       const fn = compileIcu("{count, plural, one {# Artikel} other {# Artikel}}", { locale: "de" })
       expect(fn({ count: 1 })).toBe("1 Artikel")
@@ -195,6 +205,21 @@ describe("compileIcu", () => {
       const r2 = fn({ price: 20, currency: "EUR" })
       expect(r1).toContain("€")
       expect(r2).toContain("€")
+    })
+
+    it("keeps raw and formatted access to the same variable", () => {
+      const fn = compileIcu("{price} ({price, number, currency})", { locale: "en" })
+      const result = fn({ price: 99.99, currency: "EUR" })
+
+      expect(result).toContain("99.99")
+      expect(result).toContain("€")
+      expect(result).toContain("(")
+    })
+
+    it("supports multiple formatter styles for the same variable", () => {
+      const fn = compileIcu("{n, number, integer} / {n, number, percent}", { locale: "en" })
+
+      expect(fn({ n: 0.42 })).toBe("0 / 42%")
     })
 
     describe("built-in number styles", () => {
