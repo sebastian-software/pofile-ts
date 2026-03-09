@@ -1,3 +1,4 @@
 {
+  "crates/pofile": "0.1.0",
   "packages/pofile-ts": "4.0.1"
 }

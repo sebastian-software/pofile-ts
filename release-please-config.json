@@ -1,6 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
+    "crates/pofile": {
+      "release-type": "rust",
+      "package-name": "pofile",
+      "component": "pofile",
+      "include-component-in-tag": true,
+      "include-v-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
     "packages/pofile-ts": {
       "release-type": "node",
       "package-name": "pofile-ts",
