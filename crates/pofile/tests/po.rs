@@ -51,7 +51,7 @@ fn parse_po_reads_headers_and_comments_from_fixture() {
         Some("1.0")
     );
     assert_eq!(po.comments.len(), 3);
-  assert_eq!(po.items.len(), 70);
+    assert_eq!(po.items.len(), 70);
 }
 
 #[test]
