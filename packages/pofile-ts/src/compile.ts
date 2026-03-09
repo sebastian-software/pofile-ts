@@ -202,49 +202,95 @@ function supportsNativeMessage(message: string): boolean {
   return !parsed.success || parsed.ast.every(supportsNativeNode)
 }
 
-function supportsNativeCatalog(catalog: Catalog): boolean {
-  return Object.values(catalog).every((entry) => {
+function isNativeCatalogEntry(entry: Catalog[string] | undefined): boolean {
+  if (!entry || entry.translation === undefined) {
+    return false
+  }
+
+  if (Array.isArray(entry.translation)) {
+    return entry.translation.every(supportsNativeMessage)
+  }
+
+  return supportsNativeMessage(entry.translation)
+}
+
+function getCatalogKey(
+  msgid: string,
+  entry: Catalog[string] | undefined,
+  useMessageId: boolean
+): string {
+  return useMessageId ? generateMessageIdSync(msgid, entry?.context) : msgid
+}
+
+function splitCatalogByNativeSupport(
+  catalog: Catalog,
+  useMessageId: boolean
+): {
+  nativeCatalog: Catalog
+  jsCatalog: Catalog
+  orderedKeys: string[]
+  nativeKeys: Set<string>
+} {
+  const nativeCatalog: Catalog = {}
+  const jsCatalog: Catalog = {}
+  const orderedKeys: string[] = []
+  const nativeKeys = new Set<string>()
+
+  for (const [msgid, entry] of Object.entries(catalog)) {
     if (entry.translation === undefined) {
-      return true
+      continue
     }
 
-    if (Array.isArray(entry.translation)) {
-      return entry.translation.every(supportsNativeMessage)
-    }
+    const key = getCatalogKey(msgid, entry, useMessageId)
+    orderedKeys.push(key)
 
-    return supportsNativeMessage(entry.translation)
-  })
+    if (isNativeCatalogEntry(entry)) {
+      nativeCatalog[msgid] = entry
+      nativeKeys.add(key)
+    } else {
+      jsCatalog[msgid] = entry
+    }
+  }
+
+  return { nativeCatalog, jsCatalog, orderedKeys, nativeKeys }
 }
 
 function createNativeCatalog(
   catalog: Catalog,
   options: CompileCatalogOptions,
-  handle: number
+  handle: number,
+  nativeKeys: Set<string>,
+  orderedKeys: string[],
+  jsCatalogFallback?: CompiledCatalog
 ): CompiledCatalog {
-  let fallback: CompiledCatalog | undefined
-  const getFallback = (): CompiledCatalog => {
-    fallback ??= compileCatalogJs(catalog, options)
-    return fallback
+  let fullFallback: CompiledCatalog | undefined
+  const getFullFallback = (): CompiledCatalog => {
+    fullFallback ??= compileCatalogJs(catalog, options)
+    return fullFallback
   }
 
   const formatNative = (key: string, values?: MessageValues): MessageResult => {
     if (!canSerializeNativeValues(values)) {
-      return getFallback().format(key, values)
+      return getFullFallback().format(key, values)
     }
 
     const binding = getNativeBinding()
     if (!binding) {
-      return getFallback().format(key, values)
+      return getFullFallback().format(key, values)
     }
 
     try {
       return binding.formatCompiledCatalogJson(handle, key, stringifyNativeValues(values))
     } catch {
-      return getFallback().format(key, values)
+      return getFullFallback().format(key, values)
     }
   }
 
   const getNative = (key: string): CompiledMessageFunction | undefined => {
+    if (!nativeKeys.has(key)) {
+      return undefined
+    }
+
     const binding = getNativeBinding()
     if (!binding || !binding.compiledCatalogHas(handle, key)) {
       return undefined
@@ -255,37 +301,36 @@ function createNativeCatalog(
 
   const compiled: CompiledCatalog = {
     get(key: string) {
-      return getNative(key)
+      return getNative(key) ?? jsCatalogFallback?.get(key) ?? getFullFallback().get(key)
     },
 
     format(key: string, values?: MessageValues) {
       const message = getNative(key)
-      if (!message) {
-        return key
+      if (message) {
+        return message(values)
       }
-      return message(values)
+      return jsCatalogFallback?.format(key, values) ?? getFullFallback().format(key, values)
     },
 
     has(key: string) {
-      const binding = getNativeBinding()
-      return binding ? binding.compiledCatalogHas(handle, key) : getFallback().has(key)
+      return (
+        getNative(key) !== undefined ||
+        jsCatalogFallback?.has(key) === true ||
+        (nativeKeys.has(key) && getFullFallback().has(key))
+      )
     },
 
     keys() {
-      const binding = getNativeBinding()
-      return binding
-        ? (JSON.parse(binding.compiledCatalogKeysJson(handle)) as string[])
-        : getFallback().keys()
+      return orderedKeys
     },
 
     get size() {
-      const binding = getNativeBinding()
-      return binding ? binding.compiledCatalogSize(handle) : getFallback().size
+      return orderedKeys.length
     },
 
     get locale() {
       const binding = getNativeBinding()
-      return binding ? binding.compiledCatalogLocale(handle) : getFallback().locale
+      return binding ? binding.compiledCatalogLocale(handle) : getFullFallback().locale
     }
   }
 
@@ -295,20 +340,34 @@ function createNativeCatalog(
 
 export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions): CompiledCatalog {
   const binding = getNativeBinding()
-  if (!binding || !supportsNativeCatalog(catalog)) {
+  if (!binding) {
     return compileCatalogJs(catalog, options)
   }
 
+  const useMessageId = options.useMessageId ?? true
+  const { nativeCatalog, jsCatalog, orderedKeys, nativeKeys } = splitCatalogByNativeSupport(
+    catalog,
+    useMessageId
+  )
+  if (Object.keys(nativeCatalog).length === 0) {
+    return compileCatalogJs(catalog, options)
+  }
+
+  const jsFallback =
+    Object.keys(jsCatalog).length > 0
+      ? compileCatalogJs(jsCatalog, options)
+      : compileCatalogJs({}, options)
+
   try {
     const handle = binding.compileCatalogJson(
-      JSON.stringify(catalog),
+      JSON.stringify(nativeCatalog),
       JSON.stringify({
         locale: options.locale,
-        useMessageId: options.useMessageId ?? true,
+        useMessageId,
         strict: options.strict ?? false
       })
     )
-    return createNativeCatalog(catalog, options, handle)
+    return createNativeCatalog(catalog, options, handle, nativeKeys, orderedKeys, jsFallback)
   } catch {
     return compileCatalogJs(catalog, options)
   }

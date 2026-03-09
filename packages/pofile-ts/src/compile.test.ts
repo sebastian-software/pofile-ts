@@ -143,6 +143,19 @@ describe("compileCatalog", () => {
       // German uses comma as decimal separator
       expect(result).toMatch(/1\.234,5/)
     })
+
+    it("handles mixed native and formatter-backed entries in one catalog", () => {
+      const catalog: Catalog = {
+        Hello: { translation: "Hallo" },
+        "Value: {n, number}": { translation: "Wert: {n, number}" }
+      }
+
+      const compiled = compileCatalog(catalog, { locale: "de", useMessageId: false })
+
+      expect(compiled.size).toBe(2)
+      expect(compiled.format("Hello")).toBe("Hallo")
+      expect(compiled.format("Value: {n, number}", { n: 1234.5 })).toMatch(/1\.234,5/)
+    })
   })
 
   describe("tags", () => {
