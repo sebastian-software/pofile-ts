@@ -239,7 +239,10 @@ fn split_header_and_body(input: &str) -> (String, Vec<String>) {
 
 fn contains_non_header_msgid(section: &str) -> bool {
     section.lines().any(|line| {
-        let trimmed = line.trim();
+        let trimmed = line
+            .trim()
+            .strip_prefix("#~")
+            .map_or(line.trim(), str::trim);
         trimmed.starts_with("msgid ") && trimmed != r#"msgid """#
     })
 }

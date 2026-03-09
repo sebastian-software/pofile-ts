@@ -1,5 +1,6 @@
 import type { Headers, PoFile, SerializeOptions } from "./types"
 import { stringifyItem } from "./Item"
+import { stringifyPoWithNative } from "./native"
 
 /** Appends file-level comments to lines array */
 function appendFileComments(lines: string[], po: Partial<PoFile>): void {
@@ -52,6 +53,11 @@ function appendHeaders(lines: string[], po: Partial<PoFile>): void {
  * const output = stringifyPo(po, { foldLength: 0 })
  */
 export function stringifyPo(po: Partial<PoFile>, options?: SerializeOptions): string {
+  const native = stringifyPoWithNative(po, options)
+  if (native !== null) {
+    return native
+  }
+
   const lines: string[] = []
 
   appendFileComments(lines, po)

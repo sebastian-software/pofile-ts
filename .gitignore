@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 target/
+packages/pofile-ts/native/
 
 # IDE
 .idea/

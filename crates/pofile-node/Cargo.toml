@@ -10,7 +10,14 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
+crate-type = ["cdylib"]
 
 [dependencies]
+napi = { version = "3.4.0", default-features = false, features = ["napi9"] }
+napi-derive = "3.3.0"
 pofile = { path = "../pofile" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 
+[build-dependencies]
+napi-build = "2.3.0"

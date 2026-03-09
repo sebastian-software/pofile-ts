@@ -1,6 +1,7 @@
 import type { PoFile } from "./types"
 import { DEFAULT_HEADERS } from "./internal/constants"
 import { splitHeaderAndBody, parseHeaders, parseItems } from "./internal/parser"
+import { parsePoWithNative } from "./native"
 import { parsePluralForms } from "./plurals"
 
 /**
@@ -20,6 +21,11 @@ export function createPoFile(): PoFile {
  * Parses a PO file string into a PoFile structure.
  */
 export function parsePo(data: string): PoFile {
+  const native = parsePoWithNative(data)
+  if (native) {
+    return native
+  }
+
   // Normalize line endings (Windows CRLF to Unix LF)
   if (data.includes("\r\n")) {
     data = data.replaceAll("\r\n", "\n")

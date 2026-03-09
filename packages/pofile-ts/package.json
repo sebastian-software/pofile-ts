@@ -59,8 +59,11 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:native": "node ./scripts/build-native.mjs",
+    "build:native:release": "node ./scripts/build-native.mjs --release",
     "dev": "tsup --watch",
     "test": "vitest run",
+    "test:native": "pnpm run build:native && POFILE_USE_NATIVE=1 vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint src",
