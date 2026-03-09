@@ -15,6 +15,7 @@
       "component": "pofile-ts",
       "include-component-in-tag": false,
       "include-v-in-tag": true,
+      "prerelease": true,
       "changelog-path": "CHANGELOG.md"
     }
   }

@@ -71,8 +71,19 @@ jobs:
       - name: Build package
         run: pnpm --filter pofile-ts build
 
+      - name: Determine npm dist-tag
+        id: npm-tag
+        working-directory: packages/pofile-ts
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "tag=beta" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish package
         working-directory: packages/pofile-ts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: npm publish --access public --tag "${{ steps.npm-tag.outputs.tag }}"
