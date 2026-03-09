@@ -1,3 +1,5 @@
+// Public surface for the JavaScript package. Keep exports grouped by feature so
+// release-only housekeeping changes can stay no-op at runtime.
 // Core API
 export { parsePo, createPoFile } from "./parse"
 export { stringifyPo } from "./stringify"
