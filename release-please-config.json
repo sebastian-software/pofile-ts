@@ -7,7 +7,7 @@
       "component": "pofile-ts",
       "include-component-in-tag": false,
       "include-v-in-tag": true,
-      "changelog-path": "packages/pofile-ts/CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }
