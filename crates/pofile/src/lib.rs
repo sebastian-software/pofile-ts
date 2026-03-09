@@ -7,6 +7,7 @@
 #![deny(missing_docs)]
 
 pub mod catalog;
+pub mod headers;
 pub mod message_id;
 pub mod plurals;
 pub mod po;
@@ -16,6 +17,7 @@ pub use catalog::{
     catalog_to_items, items_to_catalog, merge_catalogs, Catalog, CatalogEntry,
     CatalogToItemsOptions, CatalogTranslation, ItemsToCatalogOptions,
 };
+pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
 pub use message_id::{generate_message_id, generate_message_ids, MessageIdInput};
 pub use plurals::{
     get_plural_categories, get_plural_count, get_plural_forms_header, get_plural_index,
