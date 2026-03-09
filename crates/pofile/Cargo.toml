@@ -6,7 +6,14 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "Rust core for parsing and serializing GNU gettext PO files."
+homepage = "https://github.com/sebastian-software/pofile-ts"
+documentation = "https://docs.rs/pofile"
+readme = "README.md"
+keywords = ["gettext", "po", "icu", "i18n", "lingui"]
+categories = ["internationalization", "localization", "parser-implementations"]
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--generate-link-to-definition"]
 
 [lib]
 path = "src/lib.rs"
-
