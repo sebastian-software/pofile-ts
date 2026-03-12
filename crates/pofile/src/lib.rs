@@ -20,8 +20,10 @@ pub use catalog::{
     CatalogToItemsOptions, CatalogTranslation, ItemsToCatalogOptions,
 };
 pub use compile::{
-    compile_catalog, compile_icu, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog,
-    CompiledMessage, DefaultFormatHost, FormatHost, MessageValue, MessageValues, TagHandler,
+    compile_catalog, compile_icu, serialize_compiled_catalog, CompileCatalogOptions,
+    CompileIcuOptions, CompiledCatalog, CompiledMessage, DefaultFormatHost, FormatHost,
+    MessageValue, MessageValues, SerializedCompiledCatalog, SerializedCompiledEntry,
+    SerializedCompiledMessage, SerializedCompiledMessageKind, TagHandler,
 };
 pub use headers::{create_default_headers, format_po_date, CreateHeadersOptions, PoDateTime};
 pub use icu::{

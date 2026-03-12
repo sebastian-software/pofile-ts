@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { compileCatalog, generateCompiledCode } from "./compile"
+import { compileCatalog, generateCompiledCode, serializeCompiledCatalog } from "./compile"
 import type { Catalog } from "./catalog"
+import { __setNativeBindingCacheForTesting, getNativeBinding } from "./native"
 
 describe("compileCatalog", () => {
   it("compiles simple messages", () => {
@@ -428,5 +429,101 @@ describe("generateCompiledCode", () => {
     expect(code).toContain("v?.count")
     // Should have plural index selection
     expect(code).toContain("_pf(_n)")
+  })
+})
+
+describe("serializeCompiledCatalog", () => {
+  it("serializes ICU entries as AST payloads", () => {
+    const catalog: Catalog = {
+      "Hello {name}!": { translation: "Hallo {name}!" }
+    }
+
+    const serialized = serializeCompiledCatalog(catalog, { locale: "de", useMessageId: false })
+
+    expect(serialized).toEqual({
+      locale: "de",
+      entries: [
+        {
+          key: "Hello {name}!",
+          message: {
+            kind: "icu",
+            ast: [
+              { type: "literal", value: "Hallo " },
+              { type: "argument", value: "name" },
+              { type: "literal", value: "!" }
+            ]
+          }
+        }
+      ]
+    })
+  })
+
+  it("serializes gettext plurals with resolved variable name", () => {
+    const catalog: Catalog = {
+      "One file": {
+        translation: ["Eine Datei", "{n} Dateien"],
+        pluralSource: "{n} files"
+      }
+    }
+
+    const serialized = serializeCompiledCatalog(catalog, { locale: "de", useMessageId: false })
+
+    expect(serialized.entries[0]).toEqual({
+      key: "One file",
+      message: {
+        kind: "gettextPlural",
+        variable: "n",
+        forms: [
+          {
+            kind: "icu",
+            ast: [{ type: "literal", value: "Eine Datei" }]
+          },
+          {
+            kind: "icu",
+            ast: [
+              { type: "argument", value: "n" },
+              { type: "literal", value: " Dateien" }
+            ]
+          }
+        ]
+      }
+    })
+  })
+
+  it("uses fallback payloads for invalid messages when not strict", () => {
+    const catalog: Catalog = {
+      broken: { translation: "{broken" }
+    }
+
+    const serialized = serializeCompiledCatalog(catalog, { locale: "en", useMessageId: false })
+
+    expect(serialized.entries[0]).toEqual({
+      key: "broken",
+      message: {
+        kind: "fallback",
+        text: "{broken"
+      }
+    })
+  })
+
+  it("matches the JS fallback shape when native bindings are available", () => {
+    const catalog: Catalog = {
+      "Hello {name}!": { translation: "Hallo {name}!" },
+      "{count} item": {
+        translation: ["{count} Artikel", "{count} Artikel"],
+        pluralSource: "{count} items"
+      }
+    }
+
+    const originalBinding = getNativeBinding()
+
+    try {
+      const actual = serializeCompiledCatalog(catalog, { locale: "de", useMessageId: false })
+      __setNativeBindingCacheForTesting(null)
+      const fallback = serializeCompiledCatalog(catalog, { locale: "de", useMessageId: false })
+      expect(actual).toEqual(fallback)
+    } finally {
+      __setNativeBindingCacheForTesting(originalBinding)
+    }
   })
 })

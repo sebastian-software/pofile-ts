@@ -15,6 +15,7 @@ interface NativeBinding {
   formatCompiledMessageJson(handle: number, valuesJson?: string | null): string
   freeCompiledMessage(handle: number): void
   compileCatalogJson(catalogJson: string, optionsJson: string): number
+  serializeCompiledCatalogJson(catalogJson: string, optionsJson: string): string
   formatCompiledCatalogJson(handle: number, key: string, valuesJson?: string | null): string
   compiledCatalogHas(handle: number, key: string): boolean
   compiledCatalogKeysJson(handle: number): string

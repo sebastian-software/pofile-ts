@@ -113,6 +113,53 @@ export interface CompiledCatalog {
 }
 
 /**
+ * Options for producing a serialization-friendly compiled catalog payload.
+ */
+export interface SerializeCompiledCatalogOptions {
+  /** Locale for plural rules and ICU parsing */
+  locale: string
+
+  /**
+   * Whether to use messageId (hash) as key.
+   * If false, uses msgid as key.
+   * @default true
+   */
+  useMessageId?: boolean
+
+  /**
+   * Whether to throw on parse errors.
+   * If false, invalid messages are emitted as fallback payloads.
+   * @default false
+   */
+  strict?: boolean
+}
+
+export interface SerializedCompiledCatalog {
+  locale: string
+  entries: SerializedCompiledEntry[]
+}
+
+export interface SerializedCompiledEntry {
+  key: string
+  message: SerializedCompiledMessage
+}
+
+export type SerializedCompiledMessage =
+  | {
+      kind: "icu"
+      ast: IcuNode[]
+    }
+  | {
+      kind: "gettextPlural"
+      variable: string
+      forms: SerializedCompiledMessage[]
+    }
+  | {
+      kind: "fallback"
+      text: string
+    }
+
+/**
  * Compiles a catalog into optimized message functions.
  *
  * @example
@@ -179,6 +226,67 @@ function compileCatalogJs(catalog: Catalog, options: CompileCatalogOptions): Com
     },
 
     locale
+  }
+}
+
+function serializeCompiledMessageJs(
+  message: string,
+  options: SerializeCompiledCatalogOptions
+): SerializedCompiledMessage {
+  const result = parseIcu(message)
+  if (!result.success) {
+    if (options.strict) {
+      throw new Error(`Failed to parse ICU message: ${result.errors[0]?.message}`)
+    }
+    return {
+      kind: "fallback",
+      text: message
+    }
+  }
+
+  return {
+    kind: "icu",
+    ast: result.ast
+  }
+}
+
+function serializeGettextPluralMessageJs(
+  msgid: string,
+  pluralSource: string | undefined,
+  translations: string[],
+  options: SerializeCompiledCatalogOptions
+): SerializedCompiledMessage {
+  return {
+    kind: "gettextPlural",
+    variable: extractPluralVariable(msgid, pluralSource) ?? DEFAULT_PLURAL_VAR,
+    forms: translations.map((translation) => serializeCompiledMessageJs(translation, options))
+  }
+}
+
+function serializeCompiledCatalogJs(
+  catalog: Catalog,
+  options: SerializeCompiledCatalogOptions
+): SerializedCompiledCatalog {
+  const useMessageId = options.useMessageId ?? true
+  const entries: SerializedCompiledEntry[] = []
+
+  for (const [msgid, entry] of Object.entries(catalog)) {
+    const translation = entry.translation
+    if (translation === undefined) {
+      continue
+    }
+
+    entries.push({
+      key: useMessageId ? generateMessageIdSync(msgid, entry.context) : msgid,
+      message: Array.isArray(translation)
+        ? serializeGettextPluralMessageJs(msgid, entry.pluralSource, translation, options)
+        : serializeCompiledMessageJs(translation, options)
+    })
+  }
+
+  return {
+    locale: options.locale,
+    entries
   }
 }
 
@@ -383,6 +491,31 @@ export function compileCatalog(catalog: Catalog, options: CompileCatalogOptions)
     return createNativeCatalog(catalog, options, handle, nativeKeys, orderedKeys, jsFallback)
   } catch {
     return compileCatalogJs(catalog, options)
+  }
+}
+
+export function serializeCompiledCatalog(
+  catalog: Catalog,
+  options: SerializeCompiledCatalogOptions
+): SerializedCompiledCatalog {
+  const binding = getNativeBinding()
+  if (!binding) {
+    return serializeCompiledCatalogJs(catalog, options)
+  }
+
+  try {
+    return JSON.parse(
+      binding.serializeCompiledCatalogJson(
+        JSON.stringify(catalog),
+        JSON.stringify({
+          locale: options.locale,
+          useMessageId: options.useMessageId ?? true,
+          strict: options.strict ?? false
+        })
+      )
+    ) as SerializedCompiledCatalog
+  } catch {
+    return serializeCompiledCatalogJs(catalog, options)
   }
 }
 

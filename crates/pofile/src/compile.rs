@@ -277,17 +277,10 @@ pub fn compile_icu(
     message: &str,
     options: &CompileIcuOptions,
 ) -> Result<CompiledMessage, IcuParseError> {
-    match parse_icu(message, IcuParserOptions::default()) {
-        Ok(ast) => Ok(CompiledMessage {
-            kind: CompiledMessageKind::Parsed(ast),
-            locale: options.locale.clone(),
-        }),
-        Err(error) if options.strict => Err(error),
-        Err(_) => Ok(CompiledMessage {
-            kind: CompiledMessageKind::Fallback(message.to_owned()),
-            locale: options.locale.clone(),
-        }),
-    }
+    Ok(CompiledMessage {
+        kind: compile_icu_kind(message, options)?,
+        locale: options.locale.clone(),
+    })
 }
 
 /// Options for catalog compilation.
@@ -311,6 +304,53 @@ impl CompileCatalogOptions {
             strict: false,
         }
     }
+}
+
+/// A serialization-friendly compiled catalog.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerializedCompiledCatalog {
+    /// Locale associated with the compiled catalog.
+    pub locale: String,
+    /// Compiled catalog entries in deterministic iteration order.
+    pub entries: Vec<SerializedCompiledEntry>,
+}
+
+/// A single serialization-friendly compiled catalog entry.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerializedCompiledEntry {
+    /// Lookup key, optionally derived from the message ID hash.
+    pub key: String,
+    /// Serialized compiled message payload.
+    pub message: SerializedCompiledMessage,
+}
+
+/// A serialization-friendly compiled message wrapper.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerializedCompiledMessage {
+    /// The concrete serialized message representation.
+    pub kind: SerializedCompiledMessageKind,
+}
+
+/// The concrete shape of a serialization-friendly compiled message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SerializedCompiledMessageKind {
+    /// Parsed ICU AST.
+    Icu {
+        /// The parsed ICU AST nodes.
+        ast: Vec<IcuNode>,
+    },
+    /// Gettext plural runtime with resolved variable and nested forms.
+    GettextPlural {
+        /// The plural variable to read at runtime.
+        variable: String,
+        /// Compiled forms in source order.
+        forms: Vec<SerializedCompiledMessage>,
+    },
+    /// Original text kept as a fallback when strict parsing is disabled.
+    Fallback {
+        /// The original unparsed message text.
+        text: String,
+    },
 }
 
 /// A compiled catalog with lookup and formatting.
@@ -387,20 +427,26 @@ pub fn compile_catalog(
         };
 
         let compiled = match translation {
-            CatalogTranslation::Singular(text) => compile_icu(
-                text,
-                &CompileIcuOptions {
-                    locale: options.locale.clone(),
-                    strict: options.strict,
-                },
-            )?,
-            CatalogTranslation::Plural(translations) => compile_gettext_plural_runtime(
-                msgid,
-                entry.plural_source.as_deref(),
-                translations,
-                &options.locale,
-                options.strict,
-            )?,
+            CatalogTranslation::Singular(text) => CompiledMessage {
+                kind: compile_icu_kind(
+                    text,
+                    &CompileIcuOptions {
+                        locale: options.locale.clone(),
+                        strict: options.strict,
+                    },
+                )?,
+                locale: options.locale.clone(),
+            },
+            CatalogTranslation::Plural(translations) => CompiledMessage {
+                kind: compile_gettext_plural_kind(
+                    msgid,
+                    entry.plural_source.as_deref(),
+                    translations,
+                    &options.locale,
+                    options.strict,
+                )?,
+                locale: options.locale.clone(),
+            },
         };
 
         messages.insert(key, compiled);
@@ -412,17 +458,75 @@ pub fn compile_catalog(
     })
 }
 
-fn compile_gettext_plural_runtime(
+/// Compile a catalog to a serialization-friendly representation.
+pub fn serialize_compiled_catalog(
+    catalog: &Catalog,
+    options: &CompileCatalogOptions,
+) -> Result<SerializedCompiledCatalog, IcuParseError> {
+    let mut entries = Vec::new();
+
+    for (msgid, entry) in catalog {
+        let Some(translation) = &entry.translation else {
+            continue;
+        };
+
+        let key = if options.use_message_id {
+            generate_message_id(msgid, entry.context.as_deref())
+        } else {
+            msgid.clone()
+        };
+
+        let kind = match translation {
+            CatalogTranslation::Singular(text) => compile_icu_kind(
+                text,
+                &CompileIcuOptions {
+                    locale: options.locale.clone(),
+                    strict: options.strict,
+                },
+            )?,
+            CatalogTranslation::Plural(translations) => compile_gettext_plural_kind(
+                msgid,
+                entry.plural_source.as_deref(),
+                translations,
+                &options.locale,
+                options.strict,
+            )?,
+        };
+
+        entries.push(SerializedCompiledEntry {
+            key,
+            message: serialize_compiled_message_kind(kind),
+        });
+    }
+
+    Ok(SerializedCompiledCatalog {
+        locale: options.locale.clone(),
+        entries,
+    })
+}
+
+fn compile_icu_kind(
+    message: &str,
+    options: &CompileIcuOptions,
+) -> Result<CompiledMessageKind, IcuParseError> {
+    match parse_icu(message, IcuParserOptions::default()) {
+        Ok(ast) => Ok(CompiledMessageKind::Parsed(ast)),
+        Err(error) if options.strict => Err(error),
+        Err(_) => Ok(CompiledMessageKind::Fallback(message.to_owned())),
+    }
+}
+
+fn compile_gettext_plural_kind(
     msgid: &str,
     plural_source: Option<&str>,
     translations: &[String],
     locale: &str,
     strict: bool,
-) -> Result<CompiledMessage, IcuParseError> {
+) -> Result<CompiledMessageKind, IcuParseError> {
     let forms = translations
         .iter()
         .map(|translation| {
-            compile_icu(
+            compile_icu_kind(
                 translation,
                 &CompileIcuOptions {
                     locale: locale.to_owned(),
@@ -432,14 +536,35 @@ fn compile_gettext_plural_runtime(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    Ok(CompiledMessage {
-        kind: CompiledMessageKind::GettextPlural {
-            variable: extract_plural_variable(msgid, plural_source)
-                .unwrap_or_else(|| String::from("count")),
-            forms,
-        },
-        locale: locale.to_owned(),
+    Ok(CompiledMessageKind::GettextPlural {
+        variable: extract_plural_variable(msgid, plural_source)
+            .unwrap_or_else(|| String::from("count")),
+        forms: forms
+            .into_iter()
+            .map(|kind| CompiledMessage {
+                kind,
+                locale: locale.to_owned(),
+            })
+            .collect(),
     })
+}
+
+fn serialize_compiled_message_kind(kind: CompiledMessageKind) -> SerializedCompiledMessage {
+    let kind = match kind {
+        CompiledMessageKind::Parsed(ast) => SerializedCompiledMessageKind::Icu { ast },
+        CompiledMessageKind::GettextPlural { variable, forms } => {
+            SerializedCompiledMessageKind::GettextPlural {
+                variable,
+                forms: forms
+                    .into_iter()
+                    .map(|form| serialize_compiled_message_kind(form.kind))
+                    .collect(),
+            }
+        }
+        CompiledMessageKind::Fallback(text) => SerializedCompiledMessageKind::Fallback { text },
+    };
+
+    SerializedCompiledMessage { kind }
 }
 
 fn render_gettext_plural(
@@ -677,8 +802,9 @@ mod tests {
     use std::sync::Arc;
 
     use super::{
-        compile_catalog, compile_icu, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog,
-        FormatHost, MessageValue, MessageValues,
+        compile_catalog, compile_icu, serialize_compiled_catalog, CompileCatalogOptions,
+        CompileIcuOptions, CompiledCatalog, FormatHost, MessageValue, MessageValues,
+        SerializedCompiledMessageKind,
     };
     use crate::catalog::{Catalog, CatalogEntry, CatalogTranslation};
 
@@ -833,6 +959,79 @@ mod tests {
             compiled.format(&key, &values(&[("count", MessageValue::from(5usize))])),
             "5 Artikel"
         );
+    }
+
+    #[test]
+    fn serialize_compiled_catalog_returns_icu_ast_entries() {
+        let catalog = Catalog::from([(
+            String::from("Hello {name}!"),
+            CatalogEntry {
+                translation: Some(CatalogTranslation::Singular(String::from("Hallo {name}!"))),
+                ..CatalogEntry::default()
+            },
+        )]);
+
+        let serialized = serialize_compiled_catalog(&catalog, &CompileCatalogOptions::new("de"))
+            .expect("catalog should serialize");
+
+        assert_eq!(serialized.locale, "de");
+        assert_eq!(serialized.entries.len(), 1);
+        match &serialized.entries[0].message.kind {
+            SerializedCompiledMessageKind::Icu { ast } => assert!(!ast.is_empty()),
+            other => panic!("expected icu payload, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn serialize_compiled_catalog_preserves_gettext_plural_runtime_shape() {
+        let catalog = Catalog::from([(
+            String::from("One file"),
+            CatalogEntry {
+                translation: Some(CatalogTranslation::Plural(vec![
+                    String::from("Eine Datei"),
+                    String::from("{n} Dateien"),
+                ])),
+                plural_source: Some(String::from("{n} files")),
+                ..CatalogEntry::default()
+            },
+        )]);
+
+        let serialized = serialize_compiled_catalog(&catalog, &CompileCatalogOptions::new("de"))
+            .expect("catalog should serialize");
+
+        match &serialized.entries[0].message.kind {
+            SerializedCompiledMessageKind::GettextPlural { variable, forms } => {
+                assert_eq!(variable, "n");
+                assert_eq!(forms.len(), 2);
+            }
+            other => panic!("expected gettextPlural payload, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn serialize_compiled_catalog_uses_fallback_when_not_strict() {
+        let catalog = Catalog::from([(
+            String::from("broken"),
+            CatalogEntry {
+                translation: Some(CatalogTranslation::Singular(String::from("{broken"))),
+                ..CatalogEntry::default()
+            },
+        )]);
+
+        let serialized = serialize_compiled_catalog(
+            &catalog,
+            &CompileCatalogOptions {
+                locale: String::from("en"),
+                use_message_id: false,
+                strict: false,
+            },
+        )
+        .expect("catalog should serialize");
+
+        match &serialized.entries[0].message.kind {
+            SerializedCompiledMessageKind::Fallback { text } => assert_eq!(text, "{broken"),
+            other => panic!("expected fallback payload, got {other:?}"),
+        }
     }
 
     #[test]

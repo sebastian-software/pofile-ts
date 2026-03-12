@@ -6,10 +6,12 @@ use napi::bindgen_prelude::Result;
 use napi::Error;
 use napi_derive::napi;
 use pofile::{
-    compile_catalog, compile_icu, parse_icu, parse_po, stringify_po, Catalog, CatalogEntry,
-    CatalogTranslation, CompileCatalogOptions, CompileIcuOptions, CompiledCatalog, CompiledMessage,
-    IcuNode, IcuParseError, IcuParserOptions, IcuPluralOption, IcuPluralType, IcuSelectOption,
-    MessageValue, MessageValues, PoFile, PoItem, SerializeOptions,
+    compile_catalog, compile_icu, parse_icu, parse_po, serialize_compiled_catalog, stringify_po,
+    Catalog, CatalogEntry, CatalogTranslation, CompileCatalogOptions, CompileIcuOptions,
+    CompiledCatalog, CompiledMessage, IcuNode, IcuParseError, IcuParserOptions, IcuPluralOption,
+    IcuPluralType, IcuSelectOption, MessageValue, MessageValues, PoFile, PoItem, SerializeOptions,
+    SerializedCompiledCatalog, SerializedCompiledEntry, SerializedCompiledMessage,
+    SerializedCompiledMessageKind,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -217,6 +219,32 @@ enum JsIcuParseResult {
     },
 }
 
+#[derive(Debug, Serialize)]
+struct JsSerializedCompiledCatalog {
+    locale: String,
+    entries: Vec<JsSerializedCompiledEntry>,
+}
+
+#[derive(Debug, Serialize)]
+struct JsSerializedCompiledEntry {
+    key: String,
+    message: JsSerializedCompiledMessage,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "kind")]
+enum JsSerializedCompiledMessage {
+    #[serde(rename = "icu")]
+    Icu { ast: Vec<JsIcuNode> },
+    #[serde(rename = "gettextPlural")]
+    GettextPlural {
+        variable: String,
+        forms: Vec<JsSerializedCompiledMessage>,
+    },
+    #[serde(rename = "fallback")]
+    Fallback { text: String },
+}
+
 struct Registry<T> {
     next_id: AtomicU32,
     values: Mutex<BTreeMap<u32, Arc<T>>>,
@@ -392,6 +420,48 @@ impl From<IcuNode> for JsIcuNode {
     }
 }
 
+impl From<SerializedCompiledCatalog> for JsSerializedCompiledCatalog {
+    fn from(value: SerializedCompiledCatalog) -> Self {
+        Self {
+            locale: value.locale,
+            entries: value
+                .entries
+                .into_iter()
+                .map(JsSerializedCompiledEntry::from)
+                .collect(),
+        }
+    }
+}
+
+impl From<SerializedCompiledEntry> for JsSerializedCompiledEntry {
+    fn from(value: SerializedCompiledEntry) -> Self {
+        Self {
+            key: value.key,
+            message: JsSerializedCompiledMessage::from(value.message),
+        }
+    }
+}
+
+impl From<SerializedCompiledMessage> for JsSerializedCompiledMessage {
+    fn from(value: SerializedCompiledMessage) -> Self {
+        match value.kind {
+            SerializedCompiledMessageKind::Icu { ast } => Self::Icu {
+                ast: ast.into_iter().map(JsIcuNode::from).collect(),
+            },
+            SerializedCompiledMessageKind::GettextPlural { variable, forms } => {
+                Self::GettextPlural {
+                    variable,
+                    forms: forms
+                        .into_iter()
+                        .map(JsSerializedCompiledMessage::from)
+                        .collect(),
+                }
+            }
+            SerializedCompiledMessageKind::Fallback { text } => Self::Fallback { text },
+        }
+    }
+}
+
 #[napi]
 pub fn parse_po_json(input: String) -> Result<String> {
     let po = parse_po(&input);
@@ -496,6 +566,27 @@ pub fn compile_catalog_json(catalog_json: String, options_json: String) -> Resul
     .map_err(to_napi_error)?;
 
     Ok(compiled_catalog_registry().insert(compiled))
+}
+
+#[napi]
+pub fn serialize_compiled_catalog_json(
+    catalog_json: String,
+    options_json: String,
+) -> Result<String> {
+    let catalog = serde_json::from_str::<InputCatalog>(&catalog_json).map_err(to_napi_error)?;
+    let options =
+        serde_json::from_str::<InputCompileCatalogOptions>(&options_json).map_err(to_napi_error)?;
+    let serialized = serialize_compiled_catalog(
+        &input_catalog_to_catalog(catalog),
+        &CompileCatalogOptions {
+            locale: options.locale,
+            use_message_id: options.use_message_id.unwrap_or(true),
+            strict: options.strict.unwrap_or(false),
+        },
+    )
+    .map_err(to_napi_error)?;
+
+    serde_json::to_string(&JsSerializedCompiledCatalog::from(serialized)).map_err(to_napi_error)
 }
 
 #[napi]
