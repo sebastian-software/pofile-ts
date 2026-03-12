@@ -508,11 +508,11 @@ describe("serializeCompiledCatalog", () => {
 
   it("matches the JS fallback shape when native bindings are available", () => {
     const catalog: Catalog = {
-      "Hello {name}!": { translation: "Hallo {name}!" },
       "{count} item": {
         translation: ["{count} Artikel", "{count} Artikel"],
         pluralSource: "{count} items"
-      }
+      },
+      "Hello {name}!": { translation: "Hallo {name}!" }
     }
 
     const originalBinding = getNativeBinding()
@@ -522,6 +522,60 @@ describe("serializeCompiledCatalog", () => {
       __setNativeBindingCacheForTesting(null)
       const fallback = serializeCompiledCatalog(catalog, { locale: "de", useMessageId: false })
       expect(actual).toEqual(fallback)
+    } finally {
+      __setNativeBindingCacheForTesting(originalBinding)
+    }
+  })
+
+  it("sorts JS fallback entries to match native key order", () => {
+    const catalog: Catalog = {
+      zulu: { translation: "Zulu" },
+      alpha: { translation: "Alpha" },
+      middle: { translation: "Middle" }
+    }
+
+    const originalBinding = getNativeBinding()
+
+    try {
+      __setNativeBindingCacheForTesting(null)
+      const fallback = serializeCompiledCatalog(catalog, { locale: "en", useMessageId: false })
+      expect(fallback.entries.map((entry) => entry.key)).toEqual(["alpha", "middle", "zulu"])
+    } finally {
+      __setNativeBindingCacheForTesting(originalBinding)
+    }
+  })
+
+  it("rethrows native strict-mode errors instead of replacing them with JS fallback errors", () => {
+    const originalBinding = getNativeBinding()
+    const nativeError = new Error("native strict failure")
+    const mockBinding: NonNullable<ReturnType<typeof getNativeBinding>> = {
+      parsePoJson: () => "",
+      parseIcuJson: () => "",
+      stringifyPoJson: () => "",
+      compileIcuJson: () => 0,
+      formatCompiledMessageJson: () => "",
+      freeCompiledMessage: () => undefined,
+      compileCatalogJson: () => 0,
+      serializeCompiledCatalogJson: () => {
+        throw nativeError
+      },
+      formatCompiledCatalogJson: () => "",
+      compiledCatalogHas: () => false,
+      compiledCatalogKeysJson: () => "[]",
+      compiledCatalogSize: () => 0,
+      compiledCatalogLocale: () => "en",
+      freeCompiledCatalog: () => undefined,
+      bindingVersion: () => "test"
+    }
+
+    try {
+      __setNativeBindingCacheForTesting(mockBinding)
+      expect(() =>
+        serializeCompiledCatalog(
+          { broken: { translation: "{broken" } },
+          { locale: "en", useMessageId: false, strict: true }
+        )
+      ).toThrow(nativeError)
     } finally {
       __setNativeBindingCacheForTesting(originalBinding)
     }

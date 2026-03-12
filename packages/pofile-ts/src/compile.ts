@@ -284,6 +284,16 @@ function serializeCompiledCatalogJs(
     })
   }
 
+  entries.sort((left, right) => {
+    if (left.key < right.key) {
+      return -1
+    }
+    if (left.key > right.key) {
+      return 1
+    }
+    return 0
+  })
+
   return {
     locale: options.locale,
     entries
@@ -514,7 +524,10 @@ export function serializeCompiledCatalog(
         })
       )
     ) as SerializedCompiledCatalog
-  } catch {
+  } catch (error) {
+    if (options.strict) {
+      throw error
+    }
     return serializeCompiledCatalogJs(catalog, options)
   }
 }
