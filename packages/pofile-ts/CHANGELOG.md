@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.3](https://github.com/sebastian-software/pofile-ts/compare/v4.0.2...v4.0.3) (2026-03-13)
+
+
+### Bug Fixes
+
+* trigger ([6ec21b1](https://github.com/sebastian-software/pofile-ts/commit/6ec21b1ce88ca0f605863e9f1c1137b714e52575))
+
 ## [4.0.2](https://github.com/sebastian-software/pofile-ts/compare/v4.0.1...v4.0.2) (2026-03-13)
 
 
