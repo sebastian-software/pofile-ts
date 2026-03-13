@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.1",
-    "@lingui/core": "^5.9.2",
+    "@lingui/core": "^5.9.3",
     "gettext-parser": "^9.0.1",
     "intl-messageformat": "^11.1.2",
     "pofile": "^1.1.4",

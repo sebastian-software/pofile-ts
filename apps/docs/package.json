@@ -12,11 +12,11 @@
   "dependencies": {
     "@orama/orama": "^3.1.18",
     "@react-router/node": "^7.13.1",
-    "fumadocs-core": "16.6.13",
-    "fumadocs-mdx": "14.2.9",
+    "fumadocs-core": "16.6.17",
+    "fumadocs-mdx": "14.2.10",
     "fumadocs-typescript": "^5.1.5",
-    "fumadocs-ui": "16.6.13",
-    "isbot": "^5.1.35",
+    "fumadocs-ui": "16.6.17",
+    "isbot": "^5.1.36",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "^7.13.1"
@@ -25,14 +25,14 @@
     "@react-router/dev": "^7.13.1",
     "@tailwindcss/vite": "^4.2.1",
     "@types/mdx": "^2.0.13",
-    "@types/node": "^25.3.5",
+    "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "react-router-devtools": "^6.2.0",
     "serve": "^14.2.6",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^8.0.0",
     "vite-tsconfig-paths": "^6.1.1"
   }
 }
