@@ -80,7 +80,7 @@ async function runMultiple(
 
     for (const task of bench.tasks) {
       const existing = allResults.get(task.name) ?? []
-      existing.push(task.result!.hz)
+      existing.push(getTaskOps(task))
       allResults.set(task.name, existing)
     }
     process.stdout.write(` done\n`)
@@ -221,8 +221,8 @@ async function runIcuBenchmark() {
     await bench.run()
     printCompactResults(bench)
 
-    const pofileTsHz = bench.tasks.find((t) => t.name === "pofile-ts")!.result!.hz
-    const formatJsHz = bench.tasks.find((t) => t.name === "@formatjs")!.result!.hz
+    const pofileTsHz = getTaskOps(bench.tasks.find((t) => t.name === "pofile-ts")!)
+    const formatJsHz = getTaskOps(bench.tasks.find((t) => t.name === "@formatjs")!)
     patternResults.push({ name, pofileTsHz, formatJsHz })
   }
 
@@ -253,7 +253,7 @@ async function runIcuBenchmark() {
 
   console.log("\n  Summary:")
   console.log(
-    `    vs @formatjs: ${avgRatio.toFixed(1)}x faster (avg), ${(batchPofileTs.result!.hz / batchFormatJs.result!.hz).toFixed(1)}x faster (batch)`
+    `    vs @formatjs: ${avgRatio.toFixed(1)}x faster (avg), ${(getTaskOps(batchPofileTs) / getTaskOps(batchFormatJs)).toFixed(1)}x faster (batch)`
   )
 }
 
@@ -404,10 +404,10 @@ async function runCompilerBenchmark() {
 
   const pofileTask = catalogBench.tasks.find((t) => t.name === "pofile-ts")!
   const intlTask = catalogBench.tasks.find((t) => t.name === "intl-messageformat")!
-  const catalogRatio = pofileTask.result!.hz / intlTask.result!.hz
+  const catalogRatio = getTaskOps(pofileTask) / getTaskOps(intlTask)
 
   console.log(
-    `    → ${catalogRatio.toFixed(1)}x faster, ~${Math.round(pofileTask.result!.hz * 200).toLocaleString()} messages/s`
+    `    → ${catalogRatio.toFixed(1)}x faster, ~${Math.round(getTaskOps(pofileTask) * 200).toLocaleString()} messages/s`
   )
 
   // Summary
@@ -420,13 +420,13 @@ async function runCompilerBenchmark() {
 
   console.log("\n  Summary:")
   console.log(
-    `    Compilation: ${(compilePofileTs.result!.hz / compileIntlMF.result!.hz).toFixed(1)}x vs intl-messageformat`
+    `    Compilation: ${(getTaskOps(compilePofileTs) / getTaskOps(compileIntlMF)).toFixed(1)}x vs intl-messageformat`
   )
   console.log(
-    `    Runtime:     ${(runtimePofileTs.result!.hz / runtimeIntlMF.result!.hz).toFixed(1)}x vs intl-messageformat`
+    `    Runtime:     ${(getTaskOps(runtimePofileTs) / getTaskOps(runtimeIntlMF)).toFixed(1)}x vs intl-messageformat`
   )
   console.log(
-    `                 ${(runtimePofileTs.result!.hz / runtimeLinguiRaw.result!.hz).toFixed(1)}x vs @lingui (raw), ${(runtimePofileTs.result!.hz / runtimeLinguiCompiled.result!.hz).toFixed(1)}x vs @lingui (compiled)`
+    `                 ${(getTaskOps(runtimePofileTs) / getTaskOps(runtimeLinguiRaw)).toFixed(1)}x vs @lingui (raw), ${(getTaskOps(runtimePofileTs) / getTaskOps(runtimeLinguiCompiled)).toFixed(1)}x vs @lingui (compiled)`
   )
 }
 
@@ -531,11 +531,11 @@ function showFormatComparison() {
 // ============================================================================
 
 function printCompactResults(bench: Bench): void {
-  const fastest = Math.max(...bench.tasks.map((t) => t.result!.hz))
+  const fastest = Math.max(...bench.tasks.map((t) => getTaskOps(t)))
 
   for (const task of bench.tasks) {
-    const hz = task.result!.hz
-    const rme = task.result!.rme // Relative Margin of Error (%)
+    const hz = getTaskOps(task)
+    const rme = getTaskRme(task)
     const relative = (hz / fastest) * 100
     const barLength = Math.round(relative / 4)
     const bar = "█".repeat(barLength) + "░".repeat(25 - barLength)
@@ -547,6 +547,18 @@ function printCompactResults(bench: Bench): void {
       `    ${task.name.padEnd(16)} ${bar} ${Math.round(hz).toLocaleString().padStart(8)} ops/s${rmeStr} ${isFastest ? "⚡" : ""}`
     )
   }
+}
+
+function getTaskOps(task: Task): number {
+  const ops = task.result?.throughput.mean
+  if (ops === undefined || !Number.isFinite(ops)) {
+    throw new Error(`Benchmark task '${task.name}' did not produce throughput stats`)
+  }
+  return ops
+}
+
+function getTaskRme(task: Task): number {
+  return task.result?.throughput.rme ?? 0
 }
 
 run().catch(console.error)

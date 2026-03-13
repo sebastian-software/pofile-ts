@@ -18,7 +18,7 @@ description: The fast, modern PO file toolkit for JavaScript
 ### Core
 
 - **Parse PO Files** — Read PO files from strings, 20× faster than pofile, 7× faster than gettext-parser
-- **Serialize PO Files** — Convert PO data back to strings, 2.5× faster than pofile, 5× faster than gettext-parser
+- **Serialize PO Files** — Convert PO data back to strings, 2.5× faster than pofile, ~4.5× faster than gettext-parser
 - **Full PO Support** — Headers, comments, flags, plurals, and message context
 
 ### i18n Toolkit
@@ -26,7 +26,7 @@ description: The fast, modern PO file toolkit for JavaScript
 - **CLDR Plural Rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - **ICU Parser** — Parse ICU v1 messages, 5× faster and 4× smaller than FormatJS
-- **ICU Compiler** — Compile ICU to JavaScript functions, 4× faster at runtime
+- **ICU Compiler** — Compile ICU to JavaScript functions, 3-4× faster at runtime
 - **Plural Helpers** — Get categories, counts, and selector functions for any locale
 - **Extended Intl Formatters** — Lists, durations, relative times, and display names built-in
 
@@ -103,7 +103,7 @@ Realistic messages with plurals, selects, nested structures, and tags:
 | **Runtime**       | 792k op/s |         **3× faster** |         **4× faster** |
 | **Catalog (200)** |  ~1.35M/s |         **7× faster** |                     — |
 
-→ **4× faster** at runtime vs Lingui and FormatJS
+→ **3× faster** at runtime vs intl-messageformat, **4× faster** vs Lingui
 
 ## Bundle Size
 

@@ -19,12 +19,12 @@
 [![Node 20+](https://img.shields.io/badge/node-20%2B-brightgreen)](https://nodejs.org/)
 [![Bun](https://img.shields.io/badge/bun-compatible-f472b6)](https://bun.sh/)
 
-**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 4× faster runtime than Lingui/FormatJS, native CLDR plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+, Bun, and modern browsers.
+**pofile-ts** is a modern i18n toolkit for [GNU gettext](https://www.gnu.org/software/gettext/) PO files. Not just a parser — includes an ICU compiler with 3-4× faster runtime than Lingui/FormatJS, native CLDR plural rules, and format conversion helpers. Zero dependencies. TypeScript-first. Built for Node 20+, Bun, and modern browsers.
 
 ## Why pofile-ts?
 
 - **20× faster parsing** — Hand-optimized with first-char dispatch and fast-paths. No regex soup.
-- **ICU Compiler** — Compile ICU messages to JavaScript functions. 4× faster runtime than Lingui and FormatJS.
+- **ICU Compiler** — Compile ICU messages to JavaScript functions. 3-4× faster runtime than Lingui and FormatJS.
 - **Native CLDR plurals** — Uses `Intl.PluralRules` for all 100+ locales. Zero CLDR data in bundle.
 - **CSP-safe** — No `eval()`, no `new Function()`. Works in strict security environments.
 - **Modern-first** — Built for Node 20+, ESM-native, tree-shakeable. No legacy polyfills.
@@ -35,7 +35,7 @@
 ### Core
 
 - 📖 **Parse** PO files from strings — 20× faster than pofile, 7× faster than gettext-parser
-- ✏️ **Serialize** PO files back to strings — 2.5× faster than pofile, 5× faster than gettext-parser
+- ✏️ **Serialize** PO files back to strings — 2.5× faster than pofile, ~4.5× faster than gettext-parser
 - 🎯 **Full PO support** — headers, comments, flags, plurals, message context
 
 ### i18n Toolkit
@@ -43,7 +43,7 @@
 - 🌍 **CLDR plural rules** — Uses native `Intl.PluralRules`, zero bundle size for CLDR data
 - 🔄 **ICU MessageFormat** — Convert between Gettext plurals and ICU syntax
 - 🧩 **ICU Parser** — Parse and analyze ICU messages (<3KB gzipped, 5× faster than FormatJS)
-- ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (4× faster at runtime)
+- ⚡ **ICU Compiler** — Compile ICU messages to fast JavaScript functions (3-4× faster at runtime)
 - 🔢 **Plural helpers** — Get categories, counts, and selector functions for any locale
 - 🆕 **Extended Intl Formatters** — Lists, durations, relative times, and display names built-in
 
@@ -121,7 +121,7 @@ Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, numb
 
 ### ICU Compiler
 
-Compile ICU messages to fast JavaScript functions — 4× faster than Lingui and FormatJS at runtime:
+Compile ICU messages to fast JavaScript functions — about 3× faster than intl-messageformat and 4× faster than Lingui at runtime:
 
 ```typescript
 import { compileIcu, compileCatalog, generateCompiledCode } from "pofile-ts"
@@ -233,7 +233,7 @@ Compiling ICU messages to functions and executing them:
 | **Runtime**       | 792k op/s |         **3× faster** |         **4× faster** |
 | **Catalog (200)** |  ~1.35M/s |         **7× faster** |                     — |
 
-→ **4× faster** at runtime vs Lingui and FormatJS
+→ **3× faster** at runtime vs intl-messageformat, **4× faster** vs Lingui
 
 ## Bundle Size
 

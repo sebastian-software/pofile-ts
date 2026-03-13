@@ -27,7 +27,7 @@ export function meta({}: Route.MetaArgs) {
     {
       name: "description",
       content:
-        "Modern PO file toolkit for JavaScript. 20× faster parsing, ICU compiler with 4× faster runtime than Lingui/FormatJS. Zero dependencies, TypeScript-first, ESM-native."
+        "Modern PO file toolkit for JavaScript. 20× faster parsing, ICU compiler with 3-4× faster runtime than Lingui/FormatJS. Zero dependencies, TypeScript-first, ESM-native."
     }
   ]
 }
@@ -206,7 +206,7 @@ export default function Home() {
             <FeatureCard
               icon={<CompileIcon />}
               title="ICU Compiler"
-              description="Compile ICU messages to JavaScript functions. 4× faster runtime than Lingui and FormatJS — no AST interpretation."
+              description="Compile ICU messages to JavaScript functions. 3-4× faster runtime than Lingui and FormatJS - no AST interpretation."
               gradient="from-purple-500 to-fuchsia-500"
             />
             <FeatureCard
@@ -310,7 +310,7 @@ export default function Home() {
                 <BenchmarkBar label="@lingui" value={25} ops="204k/s" />
               </div>
               <p className="mt-4 text-sm font-semibold text-purple-600 dark:text-purple-400">
-                4× faster
+                3-4× faster
               </p>
             </div>
           </div>
