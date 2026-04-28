@@ -1,3 +1,5 @@
+[![Powered by Sebastian Software](https://img.shields.io/badge/Powered%20by-Sebastian%20Software-00718d?style=flat-square)](https://oss.sebastian-software.com)
+
 <p align="center">
   <a href="https://sebastian-software.github.io/pofile-ts/">
     <img src="logo.svg" alt="pofile-ts" width="120" height="120">
@@ -276,3 +278,20 @@ Maintained by [Sebastian Software](https://sebastian-software.de/).
 ## License
 
 [MIT](LICENSE) — Use it freely in personal and commercial projects.
+
+
+
+---
+
+<!-- sebastian-software-branding:start -->
+<p align="center">
+  <a href="https://oss.sebastian-software.com">
+    <img src="https://sebastian-brand.vercel.app/sebastian-software/logo-software.svg" alt="Sebastian Software" width="240" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://oss.sebastian-software.com">Open Source at Sebastian Software</a><br />
+  Copyright &copy; 2011&ndash;2026 Sebastian Software GmbH
+</p>
+<!-- sebastian-software-branding:end -->
