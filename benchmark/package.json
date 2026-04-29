@@ -8,13 +8,13 @@
     "generate-fixture": "tsx generate-fixture.ts"
   },
   "dependencies": {
-    "@formatjs/icu-messageformat-parser": "^3.5.1",
-    "@lingui/core": "^5.9.3",
-    "gettext-parser": "^9.0.1",
-    "intl-messageformat": "^11.1.2",
+    "@formatjs/icu-messageformat-parser": "^3.5.5",
+    "@lingui/core": "^6.0.0",
+    "gettext-parser": "^9.0.2",
+    "intl-messageformat": "^11.2.2",
     "pofile": "^1.1.4",
     "pofile-ts": "workspace:*",
-    "tinybench": "^6.0.0",
+    "tinybench": "^6.0.1",
     "tsx": "^4.21.0"
   }
 }
