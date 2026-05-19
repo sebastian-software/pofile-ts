@@ -20,7 +20,7 @@ export {
 export { catalogToItems, itemsToCatalog, mergeCatalogs } from "./catalog"
 
 // Compilation
-export { compileCatalog, generateCompiledCode } from "./compile"
+export { compileCatalog, compileCatalogToSerializable, generateCompiledCode } from "./compile"
 
 // Message ID generation
 export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./messageId"
@@ -95,7 +95,13 @@ export type { CodeGenContext, MessageCodeResult } from "./internal/codegen"
 export type { CreateHeadersOptions } from "./headers"
 export type { SourceReference, FormatReferenceOptions } from "./references"
 export type { Catalog, CatalogEntry, CatalogToItemsOptions, ItemsToCatalogOptions } from "./catalog"
-export type { CompileCatalogOptions, CompiledCatalog, GenerateCodeOptions } from "./compile"
+export type {
+  CompileCatalogOptions,
+  CompiledCatalog,
+  SerializableCompiledCatalog,
+  SerializableCompiledMessage,
+  GenerateCodeOptions
+} from "./compile"
 export type { GenerateIdsOptions } from "./messageId"
 
 // ICU MessageFormat types

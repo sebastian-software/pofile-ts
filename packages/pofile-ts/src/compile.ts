@@ -18,6 +18,7 @@
 import type { Catalog } from "./catalog"
 import type { FormatterUsage } from "./types"
 import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
+import type { IcuNode } from "./icu/types"
 import { compileIcu } from "./icu/compile"
 import { parseIcu } from "./icu/parser"
 import { generateMessageIdSync } from "./messageId"
@@ -194,6 +195,114 @@ function compileGettextPluralRuntime(
     const lastForm = compiledForms[compiledForms.length - 1]
     return lastForm ? lastForm(values) : String(count)
   }
+}
+
+// ============================================================================
+// Serializable Compilation (compileCatalogToSerializable)
+// ============================================================================
+
+/**
+ * JSON-safe representation of a compiled ICU message.
+ */
+export interface SerializableCompiledMessage {
+  /** Catalog key (messageId hash by default, or msgid when useMessageId is false). */
+  key: string
+
+  /** Original source msgid. */
+  msgid: string
+
+  /** Optional gettext context used when generating messageId keys. */
+  context?: string
+
+  /** Parsed ICU message tokens for singular messages. */
+  message?: IcuNode[]
+
+  /** Original gettext plural source for plural entries. */
+  pluralSource?: string
+
+  /** Variable used to select gettext plural forms. */
+  pluralVariable?: string
+
+  /** Parsed ICU message tokens for gettext plural forms. */
+  forms?: IcuNode[][]
+}
+
+/**
+ * JSON-safe compiled catalog payload for host bindings and generated modules.
+ */
+export interface SerializableCompiledCatalog {
+  /** Locale used for plural rules and Intl formatting. */
+  locale: string
+
+  /** Messages keyed by messageId hash by default, or msgid when useMessageId is false. */
+  messages: Record<string, SerializableCompiledMessage>
+
+  /** Number of compiled messages. */
+  size: number
+}
+
+/**
+ * Compiles a catalog into a JSON-safe representation.
+ *
+ * This keeps parsing and key generation inside pofile-ts while returning plain data that
+ * can cross process or language boundaries and be embedded by host adapters.
+ */
+export function compileCatalogToSerializable(
+  catalog: Catalog,
+  options: CompileCatalogOptions
+): SerializableCompiledCatalog {
+  const { locale, useMessageId = true, strict = false } = options
+  const messages: Record<string, SerializableCompiledMessage> = {}
+
+  for (const [msgid, entry] of Object.entries(catalog)) {
+    const translation = entry.translation
+
+    if (translation === undefined) {
+      continue
+    }
+
+    const key = useMessageId ? generateMessageIdSync(msgid, entry.context) : msgid
+    const base = {
+      key,
+      msgid,
+      ...(entry.context !== undefined ? { context: entry.context } : {})
+    }
+
+    if (Array.isArray(translation)) {
+      const pluralVariable = extractPluralVariable(msgid, entry.pluralSource) ?? DEFAULT_PLURAL_VAR
+      messages[key] = {
+        ...base,
+        ...(entry.pluralSource !== undefined ? { pluralSource: entry.pluralSource } : {}),
+        pluralVariable,
+        forms: translation.map((form) => parseSerializableMessage(form, strict))
+      }
+    } else {
+      messages[key] = {
+        ...base,
+        message: parseSerializableMessage(translation, strict)
+      }
+    }
+  }
+
+  return {
+    locale,
+    messages,
+    size: Object.keys(messages).length
+  }
+}
+
+function parseSerializableMessage(message: string, strict: boolean): IcuNode[] {
+  const parsed = parseIcu(message)
+
+  if (parsed.success) {
+    return parsed.ast
+  }
+
+  if (strict) {
+    throw new Error(parsed.errors[0]?.message ?? "Invalid ICU message")
+  }
+
+  return [{ type: "literal", value: message }]
 }
 
 // ============================================================================

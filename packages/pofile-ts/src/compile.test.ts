@@ -390,3 +390,81 @@ describe("generateCompiledCode", () => {
     expect(code).toContain("_pf(_n)")
   })
 })
+
+describe("compileCatalogToSerializable", () => {
+  it("returns a JSON-safe payload for simple messages", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      "Hello {name}!": { translation: "Hallo {name}!", context: "greeting" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+    const key = Object.keys(compiled.messages)[0]!
+
+    expect(compiled.locale).toBe("de")
+    expect(compiled.size).toBe(1)
+    expect(key).toHaveLength(8)
+    expect(compiled.messages[key]!).toEqual({
+      key,
+      msgid: "Hello {name}!",
+      context: "greeting",
+      message: [
+        { type: "literal", value: "Hallo " },
+        { type: "argument", value: "name" },
+        { type: "literal", value: "!" }
+      ]
+    })
+    expect(JSON.parse(JSON.stringify(compiled))).toEqual(compiled)
+  })
+
+  it("uses msgid keys when useMessageId is false", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Hello: { translation: "Hallo" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de", useMessageId: false })
+
+    expect(compiled.messages.Hello?.key).toBe("Hello")
+    expect(compiled.messages.Hello?.message).toEqual([{ type: "literal", value: "Hallo" }])
+  })
+
+  it("serializes gettext plural forms", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      "One file": {
+        translation: ["Eine Datei", "{n} Dateien"],
+        pluralSource: "{n} files"
+      }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+    const entry = Object.values(compiled.messages)[0]!
+
+    expect(entry.pluralSource).toBe("{n} files")
+    expect(entry.pluralVariable).toBe("n")
+    expect(entry.forms).toEqual([
+      [{ type: "literal", value: "Eine Datei" }],
+      [
+        { type: "argument", value: "n" },
+        { type: "literal", value: " Dateien" }
+      ]
+    ])
+  })
+
+  it("falls back to literal tokens for invalid ICU unless strict", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Broken: { translation: "Hello {name" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+
+    expect(Object.values(compiled.messages)[0]?.message).toEqual([
+      { type: "literal", value: "Hello {name" }
+    ])
+    expect(() => compileCatalogToSerializable(catalog, { locale: "de", strict: true })).toThrow(
+      /ICU syntax error/
+    )
+  })
+})
