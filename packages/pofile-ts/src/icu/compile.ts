@@ -88,6 +88,10 @@ export interface CompileIcuOptions {
  */
 export type MessageValues = Record<string, unknown>
 
+function stringifyMessageValue(value: unknown): string {
+  return String(value)
+}
+
 /**
  * Return type of a compiled message function.
  * - string: when no tags are used
@@ -487,7 +491,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return typeof val === "string" ? val : stringifyMessageValue(val)
       }
 
     case "number": {
@@ -503,7 +507,7 @@ function compileNode(
           if (val == null) {
             return `{${node.value}}`
           }
-          return typeof val === "string" ? val : String(val as string | number | boolean)
+          return typeof val === "string" ? val : stringifyMessageValue(val)
         }
       }
 
@@ -517,7 +521,7 @@ function compileNode(
             if (val == null) {
               return `{${node.value}}`
             }
-            return typeof val === "string" ? val : String(val as string | number | boolean)
+            return typeof val === "string" ? val : stringifyMessageValue(val)
           }
           const currency = typeof values?.currency === "string" ? values.currency : "USD"
           let formatter = currencyCache.get(currency)
@@ -538,7 +542,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return typeof val === "string" ? val : stringifyMessageValue(val)
       }
     }
 
@@ -559,7 +563,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return typeof val === "string" ? val : stringifyMessageValue(val)
       }
     }
 
@@ -580,7 +584,7 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return typeof val === "string" ? val : stringifyMessageValue(val)
       }
     }
 
@@ -611,7 +615,7 @@ function compileNode(
         // Duration can be a DurationLike object or we format it manually
         // DurationFormat (Baseline 2025) - runtime check for older environments
         if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
-          const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
+          const style = node.style ?? "long"
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           const formatter = new (Intl as any).DurationFormat(ctx.locale, { style })
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
@@ -670,7 +674,7 @@ function compileNode(
         if (val == null) {
           return "#"
         }
-        return typeof val === "string" ? val : String(val as string | number | boolean)
+        return typeof val === "string" ? val : stringifyMessageValue(val)
       }
 
     case "tag":
@@ -755,7 +759,7 @@ function compileSelect(
         ? ""
         : typeof selectorVal === "string"
           ? selectorVal
-          : String(selectorVal as string | number | boolean)
+          : stringifyMessageValue(selectorVal)
 
     // Try exact match, fall back to "other"
     const resolver = compiledOptions[selector] ?? compiledOptions.other
@@ -809,7 +813,7 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
         if (typeof resolved === "string") {
           result += resolved
         } else if (resolved != null) {
-          result += String(resolved as string | number | boolean)
+          result += stringifyMessageValue(resolved)
         }
       }
     }

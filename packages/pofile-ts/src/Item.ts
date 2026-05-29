@@ -112,7 +112,7 @@ function appendMsgstr(
   if (msgstrLen > 1) {
     appendMultipleMsgstr(lines, msgstr, prefix, options)
   } else if (hasPlural && (msgstrLen === 0 || !msgstr[0])) {
-    appendEmptyMsgstr(lines, (item.nplurals as number | undefined) ?? 2, prefix)
+    appendEmptyMsgstr(lines, item.nplurals, prefix)
   } else {
     appendSingleMsgstr(lines, item, hasPlural, prefix, options)
   }
