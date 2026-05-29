@@ -88,10 +88,6 @@ export interface CompileIcuOptions {
  */
 export type MessageValues = Record<string, unknown>
 
-function stringifyMessageValue(value: unknown): string {
-  return String(value)
-}
-
 /**
  * Return type of a compiled message function.
  * - string: when no tags are used
@@ -491,7 +487,8 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : stringifyMessageValue(val)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
     case "number": {
@@ -507,7 +504,8 @@ function compileNode(
           if (val == null) {
             return `{${node.value}}`
           }
-          return typeof val === "string" ? val : stringifyMessageValue(val)
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          return typeof val === "string" ? val : String(val as string | number | boolean)
         }
       }
 
@@ -521,7 +519,8 @@ function compileNode(
             if (val == null) {
               return `{${node.value}}`
             }
-            return typeof val === "string" ? val : stringifyMessageValue(val)
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            return typeof val === "string" ? val : String(val as string | number | boolean)
           }
           const currency = typeof values?.currency === "string" ? values.currency : "USD"
           let formatter = currencyCache.get(currency)
@@ -542,7 +541,8 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : stringifyMessageValue(val)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -563,7 +563,8 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : stringifyMessageValue(val)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -584,7 +585,8 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        return typeof val === "string" ? val : stringifyMessageValue(val)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
 
@@ -674,7 +676,8 @@ function compileNode(
         if (val == null) {
           return "#"
         }
-        return typeof val === "string" ? val : stringifyMessageValue(val)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
     case "tag":
@@ -759,7 +762,8 @@ function compileSelect(
         ? ""
         : typeof selectorVal === "string"
           ? selectorVal
-          : stringifyMessageValue(selectorVal)
+          : // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            String(selectorVal as string | number | boolean)
 
     // Try exact match, fall back to "other"
     const resolver = compiledOptions[selector] ?? compiledOptions.other
@@ -813,7 +817,8 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
         if (typeof resolved === "string") {
           result += resolved
         } else if (resolved != null) {
-          result += stringifyMessageValue(resolved)
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          result += String(resolved as string | number | boolean)
         }
       }
     }
