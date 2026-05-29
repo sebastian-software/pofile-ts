@@ -487,7 +487,6 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
@@ -504,7 +503,6 @@ function compileNode(
           if (val == null) {
             return `{${node.value}}`
           }
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           return typeof val === "string" ? val : String(val as string | number | boolean)
         }
       }
@@ -519,7 +517,6 @@ function compileNode(
             if (val == null) {
               return `{${node.value}}`
             }
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
             return typeof val === "string" ? val : String(val as string | number | boolean)
           }
           const currency = typeof values?.currency === "string" ? values.currency : "USD"
@@ -541,7 +538,6 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
@@ -563,7 +559,6 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
@@ -585,7 +580,6 @@ function compileNode(
         if (val == null) {
           return `{${node.value}}`
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
     }
@@ -617,7 +611,7 @@ function compileNode(
         // Duration can be a DurationLike object or we format it manually
         // DurationFormat (Baseline 2025) - runtime check for older environments
         if (typeof Intl !== "undefined" && "DurationFormat" in Intl) {
-          const style = node.style ?? "long"
+          const style = (node.style ?? "long") as "long" | "short" | "narrow" | "digital"
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           const formatter = new (Intl as any).DurationFormat(ctx.locale, { style })
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
@@ -676,7 +670,6 @@ function compileNode(
         if (val == null) {
           return "#"
         }
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         return typeof val === "string" ? val : String(val as string | number | boolean)
       }
 
@@ -762,8 +755,7 @@ function compileSelect(
         ? ""
         : typeof selectorVal === "string"
           ? selectorVal
-          : // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-            String(selectorVal as string | number | boolean)
+          : String(selectorVal as string | number | boolean)
 
     // Try exact match, fall back to "other"
     const resolver = compiledOptions[selector] ?? compiledOptions.other
@@ -817,7 +809,6 @@ function createResolver(parts: unknown[]): (values?: MessageValues) => string {
         if (typeof resolved === "string") {
           result += resolved
         } else if (resolved != null) {
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
           result += String(resolved as string | number | boolean)
         }
       }

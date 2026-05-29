@@ -20,6 +20,7 @@ export default tseslint.config(
     },
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "@typescript-eslint/restrict-template-expressions": "off",
       complexity: ["error", { max: 10 }],
       curly: ["error", "all"]
