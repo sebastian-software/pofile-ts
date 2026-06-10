@@ -100,6 +100,9 @@ export type {
   CompiledCatalog,
   SerializableCompiledCatalog,
   SerializableCompiledMessage,
+  SerializableCompiledMessageBase,
+  SerializableCompiledSingularMessage,
+  SerializableCompiledPluralMessage,
   GenerateCodeOptions
 } from "./compile"
 export type { GenerateIdsOptions } from "./messageId"

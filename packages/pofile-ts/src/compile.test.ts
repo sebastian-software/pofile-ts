@@ -408,6 +408,7 @@ describe("compileCatalogToSerializable", () => {
       key,
       msgid: "Hello {name}!",
       context: "greeting",
+      kind: "singular",
       message: [
         { type: "literal", value: "Hallo " },
         { type: "argument", value: "name" },
@@ -426,7 +427,11 @@ describe("compileCatalogToSerializable", () => {
     const compiled = compileCatalogToSerializable(catalog, { locale: "de", useMessageId: false })
 
     expect(compiled.messages.Hello?.key).toBe("Hello")
-    expect(compiled.messages.Hello?.message).toEqual([{ type: "literal", value: "Hallo" }])
+    expect(compiled.messages.Hello?.kind).toBe("singular")
+    if (compiled.messages.Hello?.kind !== "singular") {
+      throw new Error("Expected singular message")
+    }
+    expect(compiled.messages.Hello.message).toEqual([{ type: "literal", value: "Hallo" }])
   })
 
   it("serializes gettext plural forms", async () => {
@@ -441,6 +446,10 @@ describe("compileCatalogToSerializable", () => {
     const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
     const entry = Object.values(compiled.messages)[0]!
 
+    expect(entry.kind).toBe("plural")
+    if (entry.kind !== "plural") {
+      throw new Error("Expected plural message")
+    }
     expect(entry.pluralSource).toBe("{n} files")
     expect(entry.pluralVariable).toBe("n")
     expect(entry.forms).toEqual([
@@ -460,11 +469,16 @@ describe("compileCatalogToSerializable", () => {
 
     const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
 
-    expect(Object.values(compiled.messages)[0]?.message).toEqual([
-      { type: "literal", value: "Hello {name" }
-    ])
+    const entry = Object.values(compiled.messages)[0]
+    expect(entry?.kind).toBe("singular")
+    if (entry?.kind !== "singular") {
+      throw new Error("Expected singular message")
+    }
+    expect(entry.message).toEqual([{ type: "literal", value: "Hello {name" }])
+
+    const { IcuSyntaxError } = await import("./icu/parser")
     expect(() => compileCatalogToSerializable(catalog, { locale: "de", strict: true })).toThrow(
-      /ICU syntax error/
+      IcuSyntaxError
     )
   })
 })

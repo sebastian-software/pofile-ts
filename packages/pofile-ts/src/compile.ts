@@ -20,7 +20,7 @@ import type { FormatterUsage } from "./types"
 import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
 import type { IcuNode } from "./icu/types"
 import { compileIcu } from "./icu/compile"
-import { parseIcu } from "./icu/parser"
+import { IcuParser, parseIcu } from "./icu/parser"
 import { generateMessageIdSync } from "./messageId"
 import { getPluralCategories, getPluralFunction } from "./plurals"
 import {
@@ -202,9 +202,9 @@ function compileGettextPluralRuntime(
 // ============================================================================
 
 /**
- * JSON-safe representation of a compiled ICU message.
+ * Shared fields for JSON-safe compiled ICU messages.
  */
-export interface SerializableCompiledMessage {
+export interface SerializableCompiledMessageBase {
   /** Catalog key (messageId hash by default, or msgid when useMessageId is false). */
   key: string
 
@@ -213,19 +213,40 @@ export interface SerializableCompiledMessage {
 
   /** Optional gettext context used when generating messageId keys. */
   context?: string
+}
+
+/**
+ * JSON-safe representation of a singular compiled ICU message.
+ */
+export interface SerializableCompiledSingularMessage extends SerializableCompiledMessageBase {
+  kind: "singular"
 
   /** Parsed ICU message tokens for singular messages. */
-  message?: IcuNode[]
+  message: IcuNode[]
+}
+
+/**
+ * JSON-safe representation of gettext plural compiled ICU message forms.
+ */
+export interface SerializableCompiledPluralMessage extends SerializableCompiledMessageBase {
+  kind: "plural"
 
   /** Original gettext plural source for plural entries. */
   pluralSource?: string
 
   /** Variable used to select gettext plural forms. */
-  pluralVariable?: string
+  pluralVariable: string
 
   /** Parsed ICU message tokens for gettext plural forms. */
-  forms?: IcuNode[][]
+  forms: IcuNode[][]
 }
+
+/**
+ * JSON-safe representation of a compiled ICU message.
+ */
+export type SerializableCompiledMessage =
+  | SerializableCompiledSingularMessage
+  | SerializableCompiledPluralMessage
 
 /**
  * JSON-safe compiled catalog payload for host bindings and generated modules.
@@ -272,6 +293,7 @@ export function compileCatalogToSerializable(
       const pluralVariable = extractPluralVariable(msgid, entry.pluralSource) ?? DEFAULT_PLURAL_VAR
       messages[key] = {
         ...base,
+        kind: "plural",
         ...(entry.pluralSource !== undefined ? { pluralSource: entry.pluralSource } : {}),
         pluralVariable,
         forms: translation.map((form) => parseSerializableMessage(form, strict))
@@ -279,6 +301,7 @@ export function compileCatalogToSerializable(
     } else {
       messages[key] = {
         ...base,
+        kind: "singular",
         message: parseSerializableMessage(translation, strict)
       }
     }
@@ -292,14 +315,14 @@ export function compileCatalogToSerializable(
 }
 
 function parseSerializableMessage(message: string, strict: boolean): IcuNode[] {
+  if (strict) {
+    return new IcuParser(message).parse()
+  }
+
   const parsed = parseIcu(message)
 
   if (parsed.success) {
     return parsed.ast
-  }
-
-  if (strict) {
-    throw new Error(parsed.errors[0]?.message ?? "Invalid ICU message")
   }
 
   return [{ type: "literal", value: message }]
