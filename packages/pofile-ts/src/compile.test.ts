@@ -434,6 +434,20 @@ describe("compileCatalogToSerializable", () => {
     expect(compiled.messages.Hello.message).toEqual([{ type: "literal", value: "Hallo" }])
   })
 
+  it("skips untranslated entries", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Hello: { translation: "Hallo" },
+      Untranslated: {}
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de", useMessageId: false })
+
+    expect(compiled.size).toBe(1)
+    expect(compiled.messages.Hello).toBeDefined()
+    expect(compiled.messages.Untranslated).toBeUndefined()
+  })
+
   it("serializes gettext plural forms", async () => {
     const { compileCatalogToSerializable } = await import("./compile")
     const catalog: Catalog = {
