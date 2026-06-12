@@ -28,6 +28,10 @@ export { generateMessageId, generateMessageIdSync, generateMessageIds } from "./
 // Plural utilities
 export { parsePluralForms, getPluralCategories, getPluralCount, getPluralFunction } from "./plurals"
 
+// Pseudolocalization utilities
+export { pseudoLocalize, pseudoLocalizeWithOptions } from "./pseudo"
+export type { PseudoLocalizeOptions } from "./pseudo"
+
 // Comment utilities
 export { splitMultilineComments } from "./comments"
 

@@ -121,6 +121,21 @@ hasPlural("Hello {name}") // false
 
 Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, number/date/time formatting, tags, and escaping. Trade-offs for size: no AST location tracking, styles stored as opaque strings.
 
+### Pseudolocalization
+
+Preview untranslated UI and layout expansion while preserving message syntax:
+
+```typescript
+import { pseudoLocalize } from "pofile-ts"
+
+pseudoLocalize(
+  "Hello {name}, you have {count, plural, one {# file} other {# files}} in <0>cart</0>"
+)
+// → "[Ĥëľľø~~ {name}, ÿøü ĥàṽë~~ {count, plural, one {# ƒïľë~} other {# ƒïľëš~~}} ïñ~ <0>çàřŧ~</0>]"
+```
+
+`pseudoLocalize()` accents and expands translatable text but leaves ICU placeholders, plural/select branches, `#` markers, number/date/time/list formatters, and tag names such as `<0>...</0>` intact.
+
 ### ICU Compiler
 
 Compile ICU messages to fast JavaScript functions — about 3× faster than intl-messageformat and 4× faster than Lingui at runtime:
@@ -278,8 +293,6 @@ Maintained by [Sebastian Software](https://sebastian-software.de/).
 ## License
 
 [MIT](LICENSE) — Use it freely in personal and commercial projects.
-
-
 
 ---
 
