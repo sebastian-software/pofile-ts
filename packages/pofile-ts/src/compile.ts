@@ -18,8 +18,9 @@
 import type { Catalog } from "./catalog"
 import type { FormatterUsage } from "./types"
 import type { CompiledMessageFunction, MessageValues, MessageResult } from "./icu/compile"
+import type { IcuNode } from "./icu/types"
 import { compileIcu } from "./icu/compile"
-import { parseIcu } from "./icu/parser"
+import { IcuParser, parseIcu } from "./icu/parser"
 import { generateMessageIdSync } from "./messageId"
 import { getPluralCategories, getPluralFunction } from "./plurals"
 import {
@@ -194,6 +195,137 @@ function compileGettextPluralRuntime(
     const lastForm = compiledForms[compiledForms.length - 1]
     return lastForm ? lastForm(values) : String(count)
   }
+}
+
+// ============================================================================
+// Serializable Compilation (compileCatalogToSerializable)
+// ============================================================================
+
+/**
+ * Shared fields for JSON-safe compiled ICU messages.
+ */
+export interface SerializableCompiledMessageBase {
+  /** Catalog key (messageId hash by default, or msgid when useMessageId is false). */
+  key: string
+
+  /** Original source msgid. */
+  msgid: string
+
+  /** Optional gettext context used when generating messageId keys. */
+  context?: string
+}
+
+/**
+ * JSON-safe representation of a singular compiled ICU message.
+ */
+export interface SerializableCompiledSingularMessage extends SerializableCompiledMessageBase {
+  kind: "singular"
+
+  /** Parsed ICU message tokens for singular messages. */
+  message: IcuNode[]
+}
+
+/**
+ * JSON-safe representation of gettext plural compiled ICU message forms.
+ */
+export interface SerializableCompiledPluralMessage extends SerializableCompiledMessageBase {
+  kind: "plural"
+
+  /** Original gettext plural source for plural entries. */
+  pluralSource?: string
+
+  /** Variable used to select gettext plural forms. */
+  pluralVariable: string
+
+  /** Parsed ICU message tokens for gettext plural forms. */
+  forms: IcuNode[][]
+}
+
+/**
+ * JSON-safe representation of a compiled ICU message.
+ */
+export type SerializableCompiledMessage =
+  | SerializableCompiledSingularMessage
+  | SerializableCompiledPluralMessage
+
+/**
+ * JSON-safe compiled catalog payload for host bindings and generated modules.
+ */
+export interface SerializableCompiledCatalog {
+  /** Locale used for plural rules and Intl formatting. */
+  locale: string
+
+  /** Messages keyed by messageId hash by default, or msgid when useMessageId is false. */
+  messages: Record<string, SerializableCompiledMessage>
+
+  /** Number of compiled messages. */
+  size: number
+}
+
+/**
+ * Compiles a catalog into a JSON-safe representation.
+ *
+ * This keeps parsing and key generation inside pofile-ts while returning plain data that
+ * can cross process or language boundaries and be embedded by host adapters.
+ */
+export function compileCatalogToSerializable(
+  catalog: Catalog,
+  options: CompileCatalogOptions
+): SerializableCompiledCatalog {
+  const { locale, useMessageId = true, strict = false } = options
+  const messages: Record<string, SerializableCompiledMessage> = {}
+
+  for (const [msgid, entry] of Object.entries(catalog)) {
+    const translation = entry.translation
+
+    if (translation === undefined) {
+      continue
+    }
+
+    const key = useMessageId ? generateMessageIdSync(msgid, entry.context) : msgid
+    const base = {
+      key,
+      msgid,
+      ...(entry.context !== undefined ? { context: entry.context } : {})
+    }
+
+    if (Array.isArray(translation)) {
+      const pluralVariable = extractPluralVariable(msgid, entry.pluralSource) ?? DEFAULT_PLURAL_VAR
+      messages[key] = {
+        ...base,
+        kind: "plural",
+        ...(entry.pluralSource !== undefined ? { pluralSource: entry.pluralSource } : {}),
+        pluralVariable,
+        forms: translation.map((form) => parseSerializableMessage(form, strict))
+      }
+    } else {
+      messages[key] = {
+        ...base,
+        kind: "singular",
+        message: parseSerializableMessage(translation, strict)
+      }
+    }
+  }
+
+  return {
+    locale,
+    messages,
+    size: Object.keys(messages).length
+  }
+}
+
+function parseSerializableMessage(message: string, strict: boolean): IcuNode[] {
+  if (strict) {
+    return new IcuParser(message).parse()
+  }
+
+  const parsed = parseIcu(message)
+
+  if (parsed.success) {
+    return parsed.ast
+  }
+
+  return [{ type: "literal", value: message }]
 }
 
 // ============================================================================

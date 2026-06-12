@@ -126,7 +126,12 @@ Supports ICU MessageFormat v1: arguments, plurals, selects, selectordinals, numb
 Compile ICU messages to fast JavaScript functions — about 3× faster than intl-messageformat and 4× faster than Lingui at runtime:
 
 ```typescript
-import { compileIcu, compileCatalog, generateCompiledCode } from "pofile-ts"
+import {
+  compileIcu,
+  compileCatalog,
+  compileCatalogToSerializable,
+  generateCompiledCode
+} from "pofile-ts"
 
 // Compile a single message
 const greet = compileIcu("Hello {name}!", { locale: "en" })
@@ -156,6 +161,10 @@ size({ bytes: 512 }) // → "512 kB"
 // Compile an entire catalog at runtime
 const compiled = compileCatalog(catalog, { locale: "de" })
 compiled.format("messageId", { name: "Sebastian" })
+
+// Or return JSON-safe parsed message tokens for host bindings
+const payload = compileCatalogToSerializable(catalog, { locale: "de" })
+JSON.stringify(payload) // safe to pass across process/language boundaries
 
 // Or generate static code for build-time compilation
 const code = generateCompiledCode(catalog, { locale: "de" })
@@ -278,8 +287,6 @@ Maintained by [Sebastian Software](https://sebastian-software.de/).
 ## License
 
 [MIT](LICENSE) — Use it freely in personal and commercial projects.
-
-
 
 ---
 

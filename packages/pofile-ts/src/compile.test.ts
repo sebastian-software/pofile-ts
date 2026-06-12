@@ -390,3 +390,109 @@ describe("generateCompiledCode", () => {
     expect(code).toContain("_pf(_n)")
   })
 })
+
+describe("compileCatalogToSerializable", () => {
+  it("returns a JSON-safe payload for simple messages", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      "Hello {name}!": { translation: "Hallo {name}!", context: "greeting" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+    const key = Object.keys(compiled.messages)[0]!
+
+    expect(compiled.locale).toBe("de")
+    expect(compiled.size).toBe(1)
+    expect(key).toHaveLength(8)
+    expect(compiled.messages[key]!).toEqual({
+      key,
+      msgid: "Hello {name}!",
+      context: "greeting",
+      kind: "singular",
+      message: [
+        { type: "literal", value: "Hallo " },
+        { type: "argument", value: "name" },
+        { type: "literal", value: "!" }
+      ]
+    })
+    expect(JSON.parse(JSON.stringify(compiled))).toEqual(compiled)
+  })
+
+  it("uses msgid keys when useMessageId is false", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Hello: { translation: "Hallo" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de", useMessageId: false })
+
+    expect(compiled.messages.Hello?.key).toBe("Hello")
+    expect(compiled.messages.Hello?.kind).toBe("singular")
+    if (compiled.messages.Hello?.kind !== "singular") {
+      throw new Error("Expected singular message")
+    }
+    expect(compiled.messages.Hello.message).toEqual([{ type: "literal", value: "Hallo" }])
+  })
+
+  it("skips untranslated entries", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Hello: { translation: "Hallo" },
+      Untranslated: {}
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de", useMessageId: false })
+
+    expect(compiled.size).toBe(1)
+    expect(compiled.messages.Hello).toBeDefined()
+    expect(compiled.messages.Untranslated).toBeUndefined()
+  })
+
+  it("serializes gettext plural forms", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      "One file": {
+        translation: ["Eine Datei", "{n} Dateien"],
+        pluralSource: "{n} files"
+      }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+    const entry = Object.values(compiled.messages)[0]!
+
+    expect(entry.kind).toBe("plural")
+    if (entry.kind !== "plural") {
+      throw new Error("Expected plural message")
+    }
+    expect(entry.pluralSource).toBe("{n} files")
+    expect(entry.pluralVariable).toBe("n")
+    expect(entry.forms).toEqual([
+      [{ type: "literal", value: "Eine Datei" }],
+      [
+        { type: "argument", value: "n" },
+        { type: "literal", value: " Dateien" }
+      ]
+    ])
+  })
+
+  it("falls back to literal tokens for invalid ICU unless strict", async () => {
+    const { compileCatalogToSerializable } = await import("./compile")
+    const catalog: Catalog = {
+      Broken: { translation: "Hello {name" }
+    }
+
+    const compiled = compileCatalogToSerializable(catalog, { locale: "de" })
+
+    const entry = Object.values(compiled.messages)[0]
+    expect(entry?.kind).toBe("singular")
+    if (entry?.kind !== "singular") {
+      throw new Error("Expected singular message")
+    }
+    expect(entry.message).toEqual([{ type: "literal", value: "Hello {name" }])
+
+    const { IcuSyntaxError } = await import("./icu/parser")
+    expect(() => compileCatalogToSerializable(catalog, { locale: "de", strict: true })).toThrow(
+      IcuSyntaxError
+    )
+  })
+})
