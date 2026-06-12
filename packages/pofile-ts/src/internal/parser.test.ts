@@ -150,6 +150,33 @@ describe("parser", () => {
       expect(po.items[3]?.obsolete).toBe(true)
       expect(po.items[3]?.msgid).toBe("Second commented item")
     })
+
+    it("preserves obsolete state for duplicate msgid entries", () => {
+      const po = parsePo(`msgid ""
+msgstr ""
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. Comment A
+#. Comment A again
+#. Hello comment
+#. js-lingui-explicit-id
+#: collect/componentA/componentA.js:2
+#: collect/componentA/componentA.js:3
+#: collect/componentA/index.js:1
+msgid "Hello World"
+msgstr ""
+
+#~ msgid "Hello World"
+#~ msgstr "Ahoj Brno"
+`)
+
+      expect(po.items).toHaveLength(2)
+      expect(po.items[0]?.msgid).toBe("Hello World")
+      expect(po.items[0]?.obsolete).toBe(false)
+      expect(po.items[1]?.msgid).toBe("Hello World")
+      expect(po.items[1]?.msgstr).toEqual(["Ahoj Brno"])
+      expect(po.items[1]?.obsolete).toBe(true)
+    })
   })
 
   describe("C-string escapes", () => {

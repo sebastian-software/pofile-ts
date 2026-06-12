@@ -138,12 +138,12 @@ export function parseItems(lines: string[], po: PoFile, nplurals: string | undef
     let line = rawLine.trim()
 
     // Handle obsolete markers inline to avoid object allocation
-    if (line.startsWith("#~")) {
+    const obsolete = line.startsWith("#~")
+    if (obsolete) {
       line = line.substring(2).trim()
-      state.obsoleteCount++
     }
 
-    parseLine(line, state, po, nplurals)
+    parseLine(line, obsolete, state, po, nplurals)
   }
 
   // Finish last item
@@ -160,6 +160,7 @@ export function parseItems(lines: string[], po: PoFile, nplurals: string | undef
  */
 function parseLine(
   line: string,
+  obsolete: boolean,
   state: ParserState,
   po: PoFile,
   nplurals: string | undefined
@@ -171,7 +172,7 @@ function parseLine(
   const firstChar = line[0]
 
   if (firstChar === '"') {
-    appendMultilineValue(line, state)
+    appendMultilineValue(line, obsolete, state)
     return
   }
 
@@ -181,7 +182,7 @@ function parseLine(
   }
 
   if (firstChar === "m") {
-    parseKeywordLine(line, state, po, nplurals)
+    parseKeywordLine(line, obsolete, state, po, nplurals)
   }
 }
 
@@ -230,6 +231,7 @@ function parseCommentLine(
  */
 function parseKeywordLine(
   line: string,
+  obsolete: boolean,
   state: ParserState,
   po: PoFile,
   nplurals: string | undefined
@@ -237,12 +239,12 @@ function parseKeywordLine(
   if (line.startsWith("msgid_plural")) {
     state.item.msgid_plural = extractString(line)
     state.context = "msgid_plural"
-    state.noCommentLineCount++
+    countValueLine(state, obsolete)
   } else if (line.startsWith("msgid")) {
     finishItem(state, po, nplurals)
     state.item.msgid = extractString(line)
     state.context = "msgid"
-    state.noCommentLineCount++
+    countValueLine(state, obsolete)
   } else if (line.startsWith("msgstr")) {
     // Parse plural index from msgstr[N] - bracket at position 6
     if (line[6] === "[") {
@@ -253,12 +255,12 @@ function parseKeywordLine(
     }
     state.item.msgstr[state.plural] = extractString(line)
     state.context = "msgstr"
-    state.noCommentLineCount++
+    countValueLine(state, obsolete)
   } else if (line.startsWith("msgctxt")) {
     finishItem(state, po, nplurals)
     state.item.msgctxt = extractString(line)
     state.context = "msgctxt"
-    state.noCommentLineCount++
+    countValueLine(state, obsolete)
   }
 }
 
@@ -291,8 +293,8 @@ function parseMetadata(line: string, item: PoItem): void {
 /**
  * Appends a continuation line to the current context.
  */
-function appendMultilineValue(line: string, state: ParserState): void {
-  state.noCommentLineCount++
+function appendMultilineValue(line: string, obsolete: boolean, state: ParserState): void {
+  countValueLine(state, obsolete)
   const value = extractString(line)
 
   switch (state.context) {
@@ -308,6 +310,13 @@ function appendMultilineValue(line: string, state: ParserState): void {
     case "msgctxt":
       state.item.msgctxt = (state.item.msgctxt ?? "") + value
       break
+  }
+}
+
+function countValueLine(state: ParserState, obsolete: boolean): void {
+  state.noCommentLineCount++
+  if (obsolete) {
+    state.obsoleteCount++
   }
 }
 
